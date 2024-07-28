@@ -430,8 +430,19 @@ void ShutdownTeensy(void);
 #define FILTERPIN40M                31    // 40M filter relay
 #define FILTERPIN20M                28    // 20M filter relay
 #define FILTERPIN15M                29    // 15M filter relay
-#define RXTX                        22    // Transmit/Receive
+#define RXTX                        22    // Transmit/Receive (H=TX,L=RX)
 #define PTT                         37    // Transmit/Receive
+#define XMIT_MODE                   34    // Transmit mode (H=SSB,L=CW) (V12 hardware)
+#define CW_ON_OFF                   33    // CW on / off (H=ON,L=OFF) (V12 hardware)
+// KI3P: added mode definitions to make programming easier (V12 hardware)
+#define XMIT_SSB                    1
+#define XMIT_CW                     0
+#define CAL_OFF                     0
+#define CAL_ON                      1
+#define CW_OFF                      0
+#define CW_ON                       1
+// KI3P: V12 does not have a hardware audio amp mute. It reuses the pin for calibration
+#define CAL                         38    // RX board calibration control (H=CAL,L=normal)
 #define MUTE                        38    // Mute Audio,  HIGH = "On" Audio available from Audio PA, LOW = Mute audio
 //========================================= Switch pins
 #define BAND_MENUS                  100    // encoder2 button = button3SW

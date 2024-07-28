@@ -2726,9 +2726,20 @@ void setup() {
   pinMode(FILTERPIN40M, OUTPUT);
   pinMode(FILTERPIN80M, OUTPUT);
   pinMode(RXTX, OUTPUT);
-  pinMode(MUTE, OUTPUT);
-  digitalWrite(MUTE, LOW);
   pinMode(PTT, INPUT_PULLUP);
+  // KI3P: V12 reuses the audio mute pin for RF board calibration.
+  // It also has pins for transmit mode control and CW hardware control.
+  #if defined(V12HWR)
+  pinMode(CAL, OUTPUT); 
+  digitalWrite(CAL, CAL_OFF);
+  pinMode(XMIT_MODE, OUTPUT);
+  digitalWrite(XMIT_MODE, XMIT_SSB);
+  pinMode(CW_ON_OFF, OUTPUT);
+  digitalWrite(CW_ON_OFF, CW_OFF);
+  #else
+  pinMode(MUTE, OUTPUT); 
+  digitalWrite(MUTE, LOW);
+  #endif
 #if !defined(G0ORX_FRONTPANEL)
   pinMode(BUSY_ANALOG_PIN, INPUT);
   pinMode(FILTER_ENCODER_A, INPUT);
@@ -3027,7 +3038,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
   switch (radioState) {
     case (SSB_RECEIVE_STATE):
       if (lastState != radioState) {  // G0ORX 01092023
-        digitalWrite(MUTE, LOW);      // Audio Mute off
+        #if !defined(V12HWR)
+        digitalWrite(MUTE, LOW);      // KI3P, no MUTE function in V12
+        #endif
         modeSelectInR.gain(0, 1);
         modeSelectInL.gain(0, 1);
         digitalWrite(RXTX, LOW);  //xmit off
@@ -3068,8 +3081,13 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       }
       xrState = TRANSMIT_STATE;
       // centerTuneFlag = 1;  Not required with revised tuning scheme.  KF5N July 22, 2023
-      digitalWrite(MUTE, HIGH);  //  Mute Audio  (HIGH=Mute)
+      #if !defined(V12HWR)
+      digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
+      #endif
       digitalWrite(RXTX, HIGH);  //xmit on
+      #if defined(V12HWR)
+      digitalWrite(XMIT_MODE, XMIT_SSB); // KI3P, July 28, 2024
+      #endif
       xrState = TRANSMIT_STATE;
       modeSelectInR.gain(0, 0);
       modeSelectInL.gain(0, 0);
@@ -3110,7 +3128,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
   switch (radioState) {
     case CW_RECEIVE_STATE:
       if (lastState != radioState) {  // G0ORX 01092023
-        digitalWrite(MUTE, LOW);      //turn off mute
+        #if !defined(V12HWR)
+        digitalWrite(MUTE, LOW);      // KI3P, no MUTE function in V12
+        #endif
         T41State = CW_RECEIVE;
         ShowTransmitReceiveStatus();
         xrState = RECEIVE_STATE;
@@ -3136,7 +3156,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       CW_ExciterIQData();
       xrState = TRANSMIT_STATE;
       ShowTransmitReceiveStatus();
-      digitalWrite(MUTE, HIGH);  //   Mute Audio  (HIGH=Mute)
+      #if !defined(V12HWR)
+      digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
+      #endif
       modeSelectInR.gain(0, 0);
       modeSelectInL.gain(0, 0);
       modeSelectInExR.gain(0, 0);
@@ -3147,17 +3169,25 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       cwTimer = millis();
       while (millis() - cwTimer <= cwTransmitDelay) {  //Start CW transmit timer on
         digitalWrite(RXTX, HIGH);
+        #if defined(V12HWR)
+        // KI3P: when hardware CW is added, this line should change to XMIT_CW
+        digitalWrite(XMIT_MODE, XMIT_SSB); // KI3P, July 28, 2024
+        #endif
         if (digitalRead(paddleDit) == LOW && keyType == 0) {       // AFP 09-25-22  Turn on CW signal
           cwTimer = millis();                                      //Reset timer
           modeSelectOutExL.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
           modeSelectOutExR.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
-          digitalWrite(MUTE, LOW);                                 // unmutes audio
+          #if !defined(V12HWR)
+          digitalWrite(MUTE, LOW);                               // KI3P, no MUTE function in V12o
+          #endif
           modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);  // Sidetone  AFP 10-01-22
           //  modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
         } else {
           if (digitalRead(paddleDit) == HIGH && keyType == 0) {  //Turn off CW signal
             keyPressedOn = 0;
-            digitalWrite(MUTE, HIGH);     // mutes audio
+            #if !defined(V12HWR)
+            digitalWrite(MUTE, HIGH);     // KI3P, no MUTE function in V12
+            #endif
             modeSelectOutExL.gain(0, 0);  //Power = 0
             modeSelectOutExR.gain(0, 0);
             modeSelectOutL.gain(1, 0);  // Sidetone off
@@ -3174,7 +3204,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       CW_ExciterIQData();
       xrState = TRANSMIT_STATE;
       ShowTransmitReceiveStatus();
-      digitalWrite(MUTE, HIGH);  //   Mute Audio  (HIGH=Mute)
+      #if !defined(V12HWR)
+      digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
+      #endif
       modeSelectInR.gain(0, 0);
       modeSelectInL.gain(0, 0);
       modeSelectInExR.gain(0, 0);
@@ -3186,6 +3218,10 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       cwTimer = millis();
       while (millis() - cwTimer <= cwTransmitDelay) {
         digitalWrite(RXTX, HIGH);  //Turns on relay
+        #if defined(V12HWR)
+        // KI3P: when hardware CW is added, this line should change to XMIT_CW
+        digitalWrite(XMIT_MODE, XMIT_SSB); // KI3P, July 28, 2024
+        #endif
         CW_ExciterIQData();
         modeSelectInR.gain(0, 0);
         modeSelectInL.gain(0, 0);
@@ -3201,7 +3237,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
           while (millis() - ditTimerOn <= transmitDitLength) {       // JJP 8/19/23
             modeSelectOutExL.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
             modeSelectOutExR.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
-            digitalWrite(MUTE, LOW);                                 // unmutes audio
+            #if !defined(V12HWR)
+            digitalWrite(MUTE, LOW);                                // KI3P, no MUTE function in V12
+            #endif
             modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);  // Sidetone
                                                                      //  modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
             CW_ExciterIQData();                                      // Creates CW output signal
@@ -3225,7 +3263,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
             while (millis() - dahTimerOn <= 3UL * transmitDitLength) {  // JJP 8/19/23
               modeSelectOutExL.gain(0, powerOutCW[currentBand]);        //AFP 10-21-22
               modeSelectOutExR.gain(0, powerOutCW[currentBand]);        //AFP 10-21-22
-              digitalWrite(MUTE, LOW);                                  // unmutes audio
+              #if !defined(V12HWR)
+              digitalWrite(MUTE, LOW);                                  // KI3P, no MUTE function in V12
+              #endif
               modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);   // Dah sidetone was using constants.  KD0RC
                                                                         //   modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
               CW_ExciterIQData();                                       // Creates CW output signal

@@ -63,7 +63,9 @@ int CalibrateOptions(int IQChoice) {
           xrState = TRANSMIT_STATE;
           ShowTransmitReceiveStatus();
           SetFreq();                 //  AFP 10-02-22
-          digitalWrite(MUTE, HIGH);  //   Mute Audio  (HIGH=Mute)
+          #if !defined(V12HWR)
+          digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
+          #endif
           modeSelectInR.gain(0, 0);
           modeSelectInL.gain(0, 0);
           modeSelectInExR.gain(0, 0);
