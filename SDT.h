@@ -18,9 +18,9 @@ extern struct maps myMapFiles[];
 #include "RF_CONTROL.h"
 #endif // V12HWR
 
-// KI3P: added support for lowpass and bandpass filter boards
-
-//#define DEBUG_MESSAGES
+#ifdef DEBUG
+#define DEBUG_MESSAGES
+#endif
 
 #ifdef DEBUG_MESSAGES
 #define Debug(x) Serial.println(x)
@@ -28,6 +28,7 @@ extern struct maps myMapFiles[];
 #define Debug(x)
 #endif
 
+// KI3P: added support for lowpass and bandpass filter boards
 #if defined(K9HZ_LPF)
 #include "K9HZ_LPF_Control.h"
 #endif // K9HZ_LPF 
@@ -442,8 +443,11 @@ void ShutdownTeensy(void);
 #define CW_OFF                      0
 #define CW_ON                       1
 // KI3P: V12 does not have a hardware audio amp mute. It reuses the pin for calibration
+#ifdef V12HWR
 #define CAL                         38    // RX board calibration control (H=CAL,L=normal)
+#else
 #define MUTE                        38    // Mute Audio,  HIGH = "On" Audio available from Audio PA, LOW = Mute audio
+#endif
 //========================================= Switch pins
 #define BAND_MENUS                  100    // encoder2 button = button3SW
 #define BAND_PLUS                   101    // BAND+ = button2SW

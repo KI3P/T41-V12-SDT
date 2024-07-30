@@ -14,12 +14,12 @@ void RFControlInit() {
 
   failed=false;
 
-  mcp.begin_I2C(0x27);
+  mcp.begin_I2C(MCP23017_ADDR);
   if (!mcp.begin_I2C(MCP23017_ADDR)) {
     ShowMessageOnWaterfall("RF MCP23017 not found at 0x"+String(MCP23017_ADDR,HEX));
     failed=true;
   }
-
+  Debug("Initialising RF board");
   if(!failed) {
     mcp.pinMode(0, OUTPUT);
     mcp.pinMode(1, OUTPUT);

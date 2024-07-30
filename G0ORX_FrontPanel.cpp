@@ -179,6 +179,7 @@ static void interrupt2() {
 
 void FrontPanelInit() {
   bool failed=false;
+  Debug("Initializing G0ORX front panel");
 
   // Set Wire1 I2C bus to 1MHz and start
   //Wire1.setClock(1000000UL);

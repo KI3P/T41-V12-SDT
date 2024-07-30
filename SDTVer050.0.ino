@@ -2965,7 +2965,7 @@ void setup() {
   sdCardPresent = SDPresentCheck();  // JJP 7/18/23
   lastState = 1111;                  // To make sure the receiver will be configured on the first pass through.  KF5N September 3, 2023
   decodeStates = state0;             // Initialize the Morse decoder.
-
+  Debug("Setup complete");
 }
 //============================================================== END setup() =================================================================
 //===============================================================================================================================

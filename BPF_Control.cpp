@@ -14,6 +14,7 @@ void BPFControlInit() {
    * Set up the BPF which is connected via the BANDS connector on Wire2 *
    **********************************************************************/
   if (mcpBPF.begin_I2C(BPF_ADDR,&Wire2)){
+    Debug("Initialising BPF board");
     mcpBPF.enableAddrPins();
     // Set all pins to be outputs
     for (int i=0;i<16;i++){
@@ -23,6 +24,7 @@ void BPFControlInit() {
     BPF_GPAB_state = BPF_BAND_BYPASS;
     mcpBPF.writeGPIOAB(BPF_GPAB_state); 
   } else {
+    Debug("BPF MCP23017 not found at 0x"+String(BPF_ADDR,HEX));
     ShowMessageOnWaterfall("BPF MCP23017 not found at 0x"+String(BPF_ADDR,HEX));
   }
 }

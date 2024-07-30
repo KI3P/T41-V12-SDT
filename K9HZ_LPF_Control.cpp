@@ -16,6 +16,7 @@ void K9HZLPFControlInit() {
    * Set up the K9HZ LPF which is connected via the BANDS connector *
    ******************************************************************/
   if (mcpLPF.begin_I2C(K9HZ_LPF_ADDR,&Wire2)){
+    Debug("Initializing K9HZ LPF board");
     mcpLPF.enableAddrPins();
     // Set all pins to be outputs
     for (int i=0;i<16;i++){
@@ -27,13 +28,16 @@ void K9HZLPFControlInit() {
     mcpLPF.writeGPIOB(LPF_GPB_state); 
     Debug("Startup LPF GPB state: "+String(LPF_GPB_state,DEC));
   } else {
+    Debug("LPF MCP23017 not found at 0x"+String(K9HZ_LPF_ADDR,HEX));
     ShowMessageOnWaterfall("LPF MCP23017 not found at 0x"+String(K9HZ_LPF_ADDR,HEX));
   }
   // This is the ADC module for the SWR meter
   if (!swrADC.begin(AD7991_I2C_ADDR1,&Wire2)){
+    Debug("AD7991 not found at 0x"+String(AD7991_I2C_ADDR1,HEX));
     ShowMessageOnWaterfall("AD7991 not found at 0x"+String(AD7991_I2C_ADDR1,HEX));
 
     if (!swrADC.begin(AD7991_I2C_ADDR2,&Wire2)){
+      Debug("AD7991 found at alternative 0x"+String(AD7991_I2C_ADDR2,HEX));
       ShowMessageOnWaterfall("AD7991 found at alternative 0x"+String(AD7991_I2C_ADDR2,HEX));
     }
   }
