@@ -4,8 +4,6 @@
 #include "SDT.h"
 #endif
 
-#define MCP23017_ADDR 0x27
-
 static Adafruit_MCP23X17 mcp;
 static bool failed;
 
@@ -14,10 +12,13 @@ void RFControlInit() {
 
   failed=false;
 
-  mcp.begin_I2C(MCP23017_ADDR);
-  if (!mcp.begin_I2C(MCP23017_ADDR)) {
-    ShowMessageOnWaterfall("RF MCP23017 not found at 0x"+String(MCP23017_ADDR,HEX));
+  mcp.begin_I2C(RF_MCP23017_ADDR);
+  if (!mcp.begin_I2C(RF_MCP23017_ADDR)) {
+    bit_results.RF_I2C_present = false;
+    //ShowMessageOnWaterfall("RF MCP23017 not found at 0x"+String(RF_MCP23017_ADDR,HEX));
     failed=true;
+  } else {
+    bit_results.RF_I2C_present = true;
   }
   Debug("Initialising RF board");
   if(!failed) {
@@ -77,7 +78,6 @@ void RFControl_Enable_Prescaler(bool status) {
 void SetRF_InAtten(int attenIn) {
   int nQ;
   int rem;
-  //mcp.begin_I2C(0x27);
 
   if(!failed) {
     for (int i = 0; i < 6; i++) {
@@ -99,7 +99,6 @@ void SetRF_InAtten(int attenIn) {
 void SetRF_OutAtten(int attenOut) {
   int nQ;
   int rem;
-  //mcp.begin_I2C(0x27);
 
   if(!failed) {
     for (int i = 0; i < 6; i++) {

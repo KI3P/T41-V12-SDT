@@ -2150,6 +2150,10 @@ double elapsed_micros_idx_t = 0;
 double elapsed_micros_mean;
 double elapsed_micros_sum;
 
+#ifdef V12HWR // KI3P, 10/16/24
+struct BIT bit_results;
+#endif // V12HWR
+
 /*****
   Purpose: To read the local time
 
@@ -2659,6 +2663,107 @@ void Splash() {
   tft.fillWindow(RA8875_BLACK);
 }
 
+#if defined(V12HWR)
+void BIT_display() {
+  int centerCall;
+  tft.fillWindow(RA8875_BLACK);
+  tft.setFontScale(3);
+  tft.setTextColor(RA8875_GREEN);
+  tft.setCursor(XPIXELS / 3 - 120, YPIXELS / 10);
+  tft.print("BIT Report");
+
+  // decide on short splash if all pass, long splash if fail
+  bool short_splash = true;
+  tft.setFontScale(1);
+    
+  char tmpbuf[50];
+  uint32_t yoff = 0;
+  #if defined(G0ORX_FRONTPANEL)
+  tft.setCursor(0, YPIXELS / 4 + yoff);
+  if (!bit_results.G0ORX_PANEL_I2C_present){
+    tft.setTextColor(RA8875_RED);
+    sprintf(tmpbuf,"Front panel MCP23017 I2C not found at 0x%02X & 0x%02X",G0ORX_PANEL_MCP23017_ADDR_1,G0ORX_PANEL_MCP23017_ADDR_2);
+    tft.print(tmpbuf);
+    short_splash = false;
+  } else {
+    tft.setTextColor(RA8875_GREEN);
+    tft.print("Front Panel MCP23017 I2C: PASS");
+  }
+  yoff += 30;
+  #endif
+
+  tft.setCursor(0, YPIXELS / 4 + yoff);
+  if (!bit_results.BPF_I2C_present){
+    tft.setTextColor(RA8875_RED);
+    sprintf(tmpbuf,"BPF MCP23017 I2C not found at 0x%02X",BPF_MCP23017_ADDR);
+    tft.print(tmpbuf);
+    short_splash = false;
+  } else {
+    tft.setTextColor(RA8875_GREEN);
+    tft.print("BPF MCP23017 I2C:         PASS");
+  }
+  yoff += 30;
+
+  tft.setCursor(0, YPIXELS / 4 + yoff);
+  if (!bit_results.RF_I2C_present){
+    tft.setTextColor(RA8875_RED);
+    sprintf(tmpbuf,"RF MCP23017 I2C not found at 0x%02X",RF_MCP23017_ADDR);
+    tft.print(tmpbuf);
+    short_splash = false;
+  } else {
+    tft.setTextColor(RA8875_GREEN);
+    tft.print("RF MCP23017 I2C:          PASS");
+  }
+  yoff += 30;
+
+  tft.setCursor(0, YPIXELS / 4 + yoff);
+  if (!bit_results.RF_Si5351_present){
+    tft.setTextColor(RA8875_RED);
+    sprintf(tmpbuf,"RF SI5351 I2C not found at 0x%02X",SI5351_BUS_BASE_ADDR);
+    tft.print(tmpbuf);
+    short_splash = false;
+  } else {
+    tft.setTextColor(RA8875_GREEN);
+    tft.print("RF SI5351 I2C:            PASS");
+  }
+  yoff += 30;
+
+  tft.setCursor(0, YPIXELS / 4 + yoff);
+  if (!bit_results.K9HZ_LPF_I2C_present){
+    tft.setTextColor(RA8875_RED);
+    sprintf(tmpbuf,"K9HZ LPF MCP23017 I2C not found at 0x%02X",K9HZ_LPF_MCP23017_ADDR);
+    tft.print(tmpbuf);
+    short_splash = false;
+  } else {
+    tft.setTextColor(RA8875_GREEN);
+    tft.print("K9HZ LPF MCP23017 I2C:    PASS");
+  }
+  yoff += 30;
+
+  #ifdef K9HZ_LPF_SWR_AD7991
+  tft.setCursor(0, YPIXELS / 4 + yoff);
+  if (!bit_results.K9HZ_LPF_AD7991_present){
+    tft.setTextColor(RA8875_RED);
+    sprintf(tmpbuf,"K9HZ LPF AD7991 I2C not found at 0x%02X or 0x%02X",AD7991_I2C_ADDR1,AD7991_I2C_ADDR2);
+    tft.print(tmpbuf);
+    short_splash = false;
+  } else {
+    tft.setTextColor(RA8875_GREEN);
+    tft.print("K9HZ LPF AD7991 I2C:      PASS");
+  }
+  yoff += 30;
+  #endif //K9HZ_LPF_SWR_AD7991
+
+  if (short_splash){
+    MyDelay(BIT_DELAY_SHORT);
+  } else {
+    MyDelay(BIT_DELAY_LONG);
+  }
+  tft.fillWindow(RA8875_BLACK);
+}
+#endif // V12HWR
+
+
 //===============================================================================================================================
 //==========================  Setup ================================
 /*****
@@ -2685,27 +2790,6 @@ void setup() {
   setTime(now());
   Teensy3Clock.set(now());  // set the RTC
   T4_rtc_set(Teensy3Clock.get());
-// G0ORX - moved to seperate source file
-/*
-  mcp.begin_I2C(0x27);
-
-  mcp.pinMode(0, OUTPUT);
-  mcp.pinMode(1, OUTPUT);
-  mcp.pinMode(2, OUTPUT);
-  mcp.pinMode(3, OUTPUT);
-  mcp.pinMode(4, OUTPUT);
-  mcp.pinMode(5, OUTPUT);
-  mcp.pinMode(6, OUTPUT);
-  mcp.pinMode(7, OUTPUT);
-  mcp.pinMode(8, OUTPUT);
-  mcp.pinMode(9, OUTPUT);
-  mcp.pinMode(10, OUTPUT);
-  mcp.pinMode(11, OUTPUT);
-  mcp.pinMode(12, OUTPUT);
-  mcp.pinMode(13, OUTPUT);
-  mcp.pinMode(14, OUTPUT);
-  mcp.pinMode(15, OUTPUT);
-*/
 
   sgtl5000_1.setAddress(LOW);
   sgtl5000_1.enable();
@@ -2864,7 +2948,14 @@ void setup() {
                                                               // KF5N.  Moved Si5351 start-up to setup. JJP  7/14/23
   //si5351.init(SI5351_CRYSTAL_LOAD_10PF, Si_5351_crystal, freqCorrectionFactor);  //JJP  7/14/23
   if(!si5351.init(SI5351_CRYSTAL_LOAD_8PF, Si_5351_crystal, freqCorrectionFactor)) {
-    Serial.println("Initailize si5351 failed!");
+    #ifdef V12HWR
+    bit_results.RF_Si5351_present = false;
+    #endif
+    Serial.println("Initialize si5351 failed!");
+  } else {
+    #ifdef V12HWR
+    bit_results.RF_Si5351_present = true;
+    #endif
   }
   MyDelay(100L);
 
@@ -2879,7 +2970,37 @@ void setup() {
   //si5351.pll_reset(SI5351_PLLA);  // G0ORX Added
   //si5351.pll_reset(SI5351_PLLB);  // G0ORX Added
 
+  #if defined(V12HWR)
+    RFControlInit();
+    SetRF_InAtten(currentRF_InAtten);
+    SetRF_OutAtten(currentRF_OutAtten);
+    RFControl_Enable_Prescaler(currentBand==BAND_630M || currentBand==BAND_160M);
 
+    // KI3P: Configure the pins for the auto shutdown
+    pinMode(BEGIN_TEENSY_SHUTDOWN, INPUT); // positive pulse tells Teensy to start shutdown routine
+    pinMode(SHUTDOWN_COMPLETE, OUTPUT);
+    digitalWrite(SHUTDOWN_COMPLETE,0); // positive pulse completes shutdown
+  #endif // V12HRW
+
+  // KI3P -- Added K9HZ LPF board support
+  #if defined(K9HZ_LPF)
+    Wire2.begin();
+    K9HZLPFControlInit();
+  #endif // K9HZ_LPF
+
+  // KI3P -- Added BPF board support
+  #if defined(V12BPF)
+    Wire2.begin();
+    BPFControlInit();
+  #endif // V12BPF
+
+  #if defined(G0ORX_FRONTPANEL)
+    FrontPanelInit();
+  #endif // G0ORX_FRONTPANEL
+
+  #if defined(V12HWR)
+  BIT_display();
+  #endif
 
   if (xmtMode == CW_MODE && decoderFlag == DECODE_OFF) {
     decoderFlag = DECODE_OFF;  // JJP 7/1/23
@@ -2934,37 +3055,10 @@ void setup() {
   comp1.setPreGain_dB(-10);  //set the gain of the Left-channel gain processor
   comp2.setPreGain_dB(-10);  //set the gain of the Right-channel gain processor
 
-#if defined(V12HWR)
-  RFControlInit();
-  SetRF_InAtten(currentRF_InAtten);
-  SetRF_OutAtten(currentRF_OutAtten);
-  RFControl_Enable_Prescaler(currentBand==BAND_630M || currentBand==BAND_160M);
-
-  // KI3P: Configure the pins for the auto shutdown
-  pinMode(BEGIN_TEENSY_SHUTDOWN, INPUT); // positive pulse tells Teensy to start shutdown routine
-  pinMode(SHUTDOWN_COMPLETE, OUTPUT);
-  digitalWrite(SHUTDOWN_COMPLETE,0); // positive pulse completes shutdown
-#endif // V12HRW
-
-// KI3P -- Added K9HZ LPF board support
-#if defined(K9HZ_LPF)
-  Wire2.begin();
-  K9HZLPFControlInit();
-#endif // K9HZ_LPF
-
-// KI3P -- Added BPF board support
-#if defined(V12BPF)
-  Wire2.begin();
-  BPFControlInit();
-#endif // V12BPF
-
-#if defined(G0ORX_FRONTPANEL)
-  FrontPanelInit();
-#endif // G0ORX_FRONTPANEL
-
   sdCardPresent = SDPresentCheck();  // JJP 7/18/23
   lastState = 1111;                  // To make sure the receiver will be configured on the first pass through.  KF5N September 3, 2023
   decodeStates = state0;             // Initialize the Morse decoder.
+  
   Debug("Setup complete");
 }
 //============================================================== END setup() =================================================================
@@ -2993,7 +3087,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
   CATSerialEvent();
 #endif
 
-  // KI3P: Check for signal to begin shutdown. This should be done with an ISR instead.
+  // KI3P: Check for signal to begin shutdown and perform shutdown routine if requested
   if (digitalRead(BEGIN_TEENSY_SHUTDOWN) == HIGH){
     ShutdownTeensy();
   }

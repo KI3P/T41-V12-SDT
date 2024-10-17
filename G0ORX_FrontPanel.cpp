@@ -53,9 +53,6 @@ enum {
   RELEASED
 };
 
-#define MCP23017_ADDR_1 0x20
-#define MCP23017_ADDR_2 0x21
-
 #define INT_PIN_1 14
 #define INT_PIN_2 15
 
@@ -180,19 +177,27 @@ static void interrupt2() {
 void FrontPanelInit() {
   bool failed=false;
   Debug("Initializing G0ORX front panel");
-
+  #ifdef V12HWR
+  bit_results.G0ORX_PANEL_I2C_present = true;
+  #endif
   // Set Wire1 I2C bus to 1MHz and start
   //Wire1.setClock(1000000UL);
   Wire1.begin();
 
-  if (!mcp1.begin_I2C(MCP23017_ADDR_1,&Wire1)) {
-    ShowMessageOnWaterfall("MCP23017 not found at 0x"+String(MCP23017_ADDR_1,HEX));
+  if (!mcp1.begin_I2C(G0ORX_PANEL_MCP23017_ADDR_1,&Wire1)) {
+    //ShowMessageOnWaterfall("MCP23017 not found at 0x"+String(G0ORX_PANEL_MCP23017_ADDR_1,HEX));
     failed=true;
+    #ifdef V12HWR
+    bit_results.G0ORX_PANEL_I2C_present = false;
+    #endif
   }
 
-  if (!mcp2.begin_I2C(MCP23017_ADDR_2,&Wire1)) {
-    ShowMessageOnWaterfall("MCP23017 not found at 0x"+String(MCP23017_ADDR_2,HEX));
+  if (!mcp2.begin_I2C(G0ORX_PANEL_MCP23017_ADDR_2,&Wire1)) {
+    //ShowMessageOnWaterfall("MCP23017 not found at 0x"+String(G0ORX_PANEL_MCP23017_ADDR_2,HEX));
     failed=true;
+    #ifdef V12HWR
+    bit_results.G0ORX_PANEL_I2C_present = false;
+    #endif
   }
 
   if(failed) return;

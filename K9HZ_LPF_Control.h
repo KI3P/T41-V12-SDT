@@ -4,8 +4,6 @@
 #include <Adafruit_MCP23X17.h> 
 #include "AD7991.h"
 
-#define K9HZ_LPF_ADDR 0x25
-
 extern Adafruit_MCP23X17 mcpLPF; // connected to Wire2
 extern AD7991 swrADC; // on K9HZ LPF board
 extern uint8_t LPF_GPB_state;

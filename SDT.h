@@ -1903,6 +1903,19 @@ extern float s_hotT_ROOM;     /*!< The value of s_hotTemp minus room temperature
 extern float myLat;
 extern float myLong;
 
+#ifdef V12HWR // KI3P, 10/16/24
+// Define a structure to hold the results of built-in-test routine
+struct BIT {
+  bool RF_I2C_present;
+  bool RF_Si5351_present;
+  bool BPF_I2C_present;
+  bool K9HZ_LPF_I2C_present;
+  bool K9HZ_LPF_AD7991_present;
+  bool G0ORX_PANEL_I2C_present;
+};
+extern struct BIT bit_results;
+#endif // V12HWR
+
 //====== SAM stuff AFP 11-02-22
 extern float32_t a[3 * SAM_PLL_HILBERT_STAGES + 3];
 extern float32_t b[3 * SAM_PLL_HILBERT_STAGES + 3];

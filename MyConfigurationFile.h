@@ -1,27 +1,63 @@
-// G0ORX Preferences
+//==============================================================
+// This file is used to configure the specifics of your radio by 
+// commenting/uncommenting/modifying particular #define statements
+// to select which hardware you installed and any modifications to
+// their addresses. You can also select which extra software capa-
+// bilities you want to include in the same way. If you need to re-
+// map Teensy pins or change the operation of the front panel buttons
+// please edit SDT.h
+//==============================================================
 
-// G0ORX - For Memory testing
-// Uncomment to exclude BEARING and/or BODE code
-//#define EXCLUDE_BEARING
-//#define EXCLUDE_BODE
+//====================== Hardware selections ===================
+
+// Select either V11 hardware or V12 hardware
+//#define V11HWR   // Selectes Si5351 clock frequencies for the 4x frequency method           
+#define V12HWR     // Selects the V12 BPF, K9HZ LPF, V12 RF control, and affects Si5351
+
+#ifdef V12HWR
+  // Set the I2C addresses of the LPF, BPF, and RF boards
+  #define K9HZ_LPF_MCP23017_ADDR  0x25
+  #define BPF_MCP23017_ADDR       0x24
+  #define RF_MCP23017_ADDR        0x27
+
+  // K9HZ LPF options
+  // Uncomment the appropriate line below to select which power detection option 
+  // you populated in the SWR meter
+  #define K9HZ_LPF_SWR_LOG_AMP
+  //#define K9HZ_LPF_SWR_DIODE
+
+  // Uncomment the appropriate line below to select which detected power readout 
+  // option you populated in the SWR meter
+  #define K9HZ_LPF_SWR_AD7991
+  //#define K9HZ_LPF_SWR_ANALOG
+#endif //V12HWR
+
+// You can't change the Si5351 address, but it sometimes differs from the default 
+// of 0x60. Change it here if needed.
+#define SI5351_BUS_BASE_ADDR    0x60
 
 // Uncomment if using G0ORX or K9HZ MCP23017 Front Panel
 #define G0ORX_FRONTPANEL
 
-#if defined(G0ORX_FRONTPANEL)
-#include "G0ORX_FrontPanel.h"
-#endif // G0ORX_FRONTPANEL
+// Set the I2C addresses of the front panel board
+#define G0ORX_PANEL_MCP23017_ADDR_1 0x20
+#define G0ORX_PANEL_MCP23017_ADDR_2 0x21
+
+// Pick one of the following encoder configurations
+#define                           NORM_ENCODER                              // Leave as is UNLESS...
+//#define                           FOURSQRP                                // ...you are using the 4 States QRP kit
+
+//====================== Software selections ===================
+
+// Uncomment to exclude BEARING and/or BODE code
+//#define EXCLUDE_BEARING
+//#define EXCLUDE_BODE
 
 // Uncomment if using G0ORX Kenwood TS-2000 CAT interface
 #define G0ORX_CAT
 
-#if defined(G0ORX_CAT)
-#include "G0ORX_CAT.h"
-#endif // G0ORX_CAT
-
 // G0ORX_AUDIO_DISPLAY draws a Time Domain plot of the Microphone when transmitting
 #define G0ORX_AUDIO_DISPLAY
-
 
 //====================== User Specific Preferences =============
 
@@ -60,6 +96,8 @@
 #define DEFAULT_POWER_LEVEL       10                                        // Startup power level. Probably 20 for most people
 #define FAST_TUNE_INCREMENT    	  1			 		                                // Default from above for fine tune
 #define SPLASH_DELAY              1000L                                     // How long to show Splash screen. Use 1000 for testing, 4000 normally
+#define BIT_DELAY_LONG            10000L                                    // How long to show BIT screen with errors
+#define BIT_DELAY_SHORT           1000L                                     // How long to show BIT screen when no error
 #define STARTUP_BAND        			BAND_40M                                  // This is the 40M band. see around line 575 in SDT.h // G0ORX changed from 1
 
 #define CENTER_SCREEN_X           400
@@ -67,15 +105,8 @@
 #define IMAGE_CORNER_X            190                                       // ImageWidth = 378 Therefore 800 - 378 = 422 / 2 = 211
 #define IMAGE_CORNER_Y            40                                        // ImageHeight = 302 Therefore 480 - 302 = 178 / 2 = 89
 #define RAY_LENGTH                190
-// ==== Pick one of the following encoder configurations
-#define                           NORM_ENCODER                              // Leave as is UNLESS...
-//#define                           FOURSQRP                                // ...you are using the 4 States QRP kit
 
-//#define V11HWR           // Selectes Si5351 clock frequencies for the 4x frequency method           
-#define V12HWR             // selects the Si5351 direst quadruture clock output for V12 hardware.
-// KI3P: Added define variables to enable lowpass and bandpass filter boards
-#define K9HZ_LPF           // Selects the K9HZ LPF board
-#define V12BPF             // Selects the V12 BPF board
+//=========== Applying hardware/software selections ============
 
 // Set multiplication factors for your QSD and QSE boards.
 #ifdef NORM_ENCODER
@@ -86,4 +117,15 @@
   #define MASTER_CLK_MULT_TX 4
 #endif 
 
+#if defined(G0ORX_FRONTPANEL)
+#include "G0ORX_FrontPanel.h"
+#endif // G0ORX_FRONTPANEL
 
+#if defined(G0ORX_CAT)
+#include "G0ORX_CAT.h"
+#endif // G0ORX_CAT
+
+#ifdef V12HWR
+  #define K9HZ_LPF           // Selects the K9HZ LPF board
+  #define V12BPF             // Selects the V12 BPF board
+#endif //V12HWR
