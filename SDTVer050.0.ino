@@ -12,6 +12,15 @@
 
   Any and all other uses, written or implied, by the GPLv3 license are forbidden without written 
   permission from from Jack Purdum, W8TEE, and Al Peter, AC8GY.
+V050.? 10/17/23 Oliver King, KI3P
+  1. Added support for V12 features:
+  1.1 Shutdown routine
+  1.2 K9HZ LPF board control (band select only)
+  1.3 V12 BPF board control
+  1.4 Teensy pin assignment changes
+  1.5 Built-in test to check I2C connections on start
+  2. Merged in John Melton G0ORX's changes for new band definitions, JSON, RF control
+
 V050.0 7/4/24  Jack Purdum, W8TEE
   1. Sectivated SELECT button to end Bode Plot
   2. Removed a number of redundant variables and uncalled functions.
