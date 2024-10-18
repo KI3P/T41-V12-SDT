@@ -20,7 +20,7 @@ Steps to reproduce the behavior:
 A clear and concise description of what you expected to happen.
 
 **Affected radio board**
-Which board or system component the issue affects. e.g., RF board, output audio.
+Which board or system component the issue affects and its version number. e.g., V12 RF board, Teensy output audio.
 
 **Desktop environment (if relevant for error):**
  - OS: [e.g. Windows]
