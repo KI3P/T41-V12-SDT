@@ -1912,6 +1912,7 @@ struct BIT {
   bool K9HZ_LPF_I2C_present;
   bool K9HZ_LPF_AD7991_present;
   bool G0ORX_PANEL_I2C_present;
+  byte AD7991_I2C_ADDR;
 };
 extern struct BIT bit_results;
 #endif // V12HWR

@@ -2696,7 +2696,8 @@ void BIT_display() {
     short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
-    tft.print("Front Panel MCP23017 I2C: PASS");
+    sprintf(tmpbuf,"Front panel MCP23017 I2C: 0x%02X & 0x%02X  PASS",G0ORX_PANEL_MCP23017_ADDR_1,G0ORX_PANEL_MCP23017_ADDR_2);
+    tft.print(tmpbuf);
   }
   yoff += 30;
   #endif
@@ -2709,7 +2710,9 @@ void BIT_display() {
     short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
-    tft.print("BPF MCP23017 I2C:         PASS");
+    sprintf(tmpbuf,"BPF MCP23017 I2C:            0x%02X      PASS",BPF_MCP23017_ADDR);
+    tft.print(tmpbuf);
+    
   }
   yoff += 30;
 
@@ -2721,7 +2724,8 @@ void BIT_display() {
     short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
-    tft.print("RF MCP23017 I2C:          PASS");
+    sprintf(tmpbuf,"RF MCP23017 I2C:             0x%02X      PASS",RF_MCP23017_ADDR);
+    tft.print(tmpbuf);
   }
   yoff += 30;
 
@@ -2733,7 +2737,9 @@ void BIT_display() {
     short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
-    tft.print("RF SI5351 I2C:            PASS");
+    sprintf(tmpbuf,"RF SI5351 I2C:               0x%02X      PASS",SI5351_BUS_BASE_ADDR);
+    tft.print(tmpbuf);
+    
   }
   yoff += 30;
 
@@ -2745,7 +2751,8 @@ void BIT_display() {
     short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
-    tft.print("K9HZ LPF MCP23017 I2C:    PASS");
+    sprintf(tmpbuf,"K9HZ LPF MCP23017 I2C:       0x%02X      PASS",K9HZ_LPF_MCP23017_ADDR);
+    tft.print(tmpbuf);
   }
   yoff += 30;
 
@@ -2758,7 +2765,8 @@ void BIT_display() {
     short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
-    tft.print("K9HZ LPF AD7991 I2C:      PASS");
+    sprintf(tmpbuf,"K9HZ LPF AD7991 I2C:         0x%02X      PASS",bit_results.AD7991_I2C_ADDR);
+    tft.print(tmpbuf);
   }
   yoff += 30;
   #endif //K9HZ_LPF_SWR_AD7991

@@ -34,7 +34,6 @@ void K9HZLPFControlInit() {
     //ShowMessageOnWaterfall("LPF MCP23017 not found at 0x"+String(K9HZ_LPF_MCP23017_ADDR,HEX));
   }
   // This is the ADC module for the SWR meter
-  
   if (!swrADC.begin(AD7991_I2C_ADDR1,&Wire2)){
     bit_results.K9HZ_LPF_AD7991_present = false;
     Debug("AD7991 not found at 0x"+String(AD7991_I2C_ADDR1,HEX));
@@ -42,11 +41,13 @@ void K9HZLPFControlInit() {
 
     if (!swrADC.begin(AD7991_I2C_ADDR2,&Wire2)){
       bit_results.K9HZ_LPF_AD7991_present = true;
+      bit_results.AD7991_I2C_ADDR = AD7991_I2C_ADDR2;
       Debug("AD7991 found at alternative 0x"+String(AD7991_I2C_ADDR2,HEX));
       //ShowMessageOnWaterfall("AD7991 found at alternative 0x"+String(AD7991_I2C_ADDR2,HEX));
     }
   } else {
     bit_results.K9HZ_LPF_AD7991_present = true;
+    bit_results.AD7991_I2C_ADDR = AD7991_I2C_ADDR1;
   }
 }
 
