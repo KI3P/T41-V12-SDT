@@ -7,6 +7,7 @@ This repository hosts the code for the T41-EP Software Defined Transceiver (SDT)
 The T41-EP is a fully open-source radio. This repository hosts the transceiver software. The hardware designs are hosted on Bill-K9HZ's [GitHub repository](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24). The primary forum for discussions on the T41-EP radio is on [Groups.io](https://groups.io/g/SoftwareControlledHamRadio/topics).
 
 ### Design philosophy
+
 The EP stands for Experimenter's Platform because the T41-EP is designed around 5 small printed circuit boards (100mm x 100mm) that can be easily swapped for boards of you own design. Because the T41-EP project is completely Open Source, you have complete access to the C source code that controls the T41-EP as well as the hardware schematics and Gerber files (for making your own PCBs). 
 
 ### Hardware purchase
@@ -17,9 +18,9 @@ Kits for the prior hardware version (V11) were produced and sold by the [4SQRP c
 
 ### Major software variants
 
-There are two primary software baselines for the T41-EP radio. Greg KF5N has produced the [T41 Extreme Experimenters Edition (T41EEE)](https://github.com/Greg-R/T41EEE) which implements innovative features but currently only supports V11 hardware.
+There are two primary software baselines for the T41-EP radio. Greg KF5N has produced the [T41 Extreme Experimenters Edition (T41EEE)](https://github.com/Greg-R/T41EEE) which implements innovative features but currently only supports V11 hardware. [Terrance KN6ZDE](https://github.com/tmr4/T41_SDR) has a fork that implements mouse and keyboard input, a beacon monitor, and has implemented a new modes like NFM and some data modes.
 
-This repository hosts the "official" software for the [V12 hardware](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24). It merges the original software written by Jack and Al with the additional features written by [John Melton-G0ORX](https://github.com/g0orx/SDTVer050.0). You are encouraged to fork this repository, experiment, and submit pull requests! 
+This repository hosts the "official" software for the [V12 hardware](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24). It merges the original software written by Jack and Al with the additional features written by [John Melton-G0ORX](https://github.com/g0orx/SDTVer050.0). You are encouraged to fork this repository, experiment, and submit pull requests!
 
 # SDTVer050.?
 
@@ -42,7 +43,7 @@ V12 hardware features that still need to be supported in software include:
 * K9HZ LPF SWR meter
 * K9HZ LPF transverter selection
 * K9HZ LPF 100W amp selection
-* K9HZ LPF antenna selection.
+* K9HZ LPF antenna selection
 
 # Compiling
 
