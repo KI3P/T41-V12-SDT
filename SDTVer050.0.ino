@@ -12,6 +12,7 @@
 
   Any and all other uses, written or implied, by the GPLv3 license are forbidden without written 
   permission from from Jack Purdum, W8TEE, and Al Peter, AC8GY.
+  
 V050.? 10/17/23 Oliver King, KI3P
   1. Added support for V12 features:
   1.1 Shutdown routine
@@ -2673,6 +2674,15 @@ void Splash() {
 }
 
 #if defined(V12HWR)
+/*****
+  Purpose: Display the status of the I2C peripherals on start-up.
+
+  Parameter list:
+    void
+
+  Return value:
+    void
+*****/
 void BIT_display() {
   int centerCall;
   tft.fillWindow(RA8875_BLACK);

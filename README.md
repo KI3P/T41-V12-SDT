@@ -8,19 +8,19 @@ The T41-EP is a fully open-source radio. This repository hosts the transceiver s
 
 ### Design philosophy
 
-The EP stands for Experimenter's Platform because the T41-EP is designed around 5 small printed circuit boards (100mm x 100mm) that can be easily swapped for boards of you own design. Because the T41-EP project is completely Open Source, you have complete access to the C source code that controls the T41-EP as well as the hardware schematics and Gerber files (for making your own PCBs). 
+The EP stands for Experimenter's Platform because the T41-EP is designed around 5 small printed circuit boards (100mm x 100mm) that can be easily swapped for boards of your own design. Because the T41-EP project is completely Open Source, you have complete access to the C/C++ source code that controls the T41-EP as well as the KiCad design files, schematics, and Gerber files. 
 
 ### Hardware purchase
 
-The latest version (V12) of the bare PCBs are available for less than $5 each on the [discussion forum](https://groups.io/g/SoftwareControlledHamRadio). If you prefer a partially-assembled kit,  Justin AI6YM sells them on his [website](https://ai6ym.radio/t41-ep-sdt/).
+The latest version (V12.6) of the bare PCBs are available for less than $5 each on the [discussion forum](https://groups.io/g/SoftwareControlledHamRadio). If you prefer a partially-assembled kit,  Justin AI6YM sells them on his [website](https://ai6ym.radio/t41-ep-sdt/).
 
 Kits for the prior hardware version (V11) were produced and sold by the [4SQRP club](http://www.4sqrp.com/T41main.php).
 
 ### Major software variants
 
-There are two primary software baselines for the T41-EP radio. Greg KF5N has produced the [T41 Extreme Experimenters Edition (T41EEE)](https://github.com/Greg-R/T41EEE) which implements innovative features but currently only supports V11 hardware. [Terrance KN6ZDE](https://github.com/tmr4/T41_SDR) has a fork that implements mouse and keyboard input, a beacon monitor, and has implemented a new modes like NFM and some data modes.
+There are three primary software forks for the T41-EP radio. Greg KF5N has produced the [T41 Extreme Experimenters Edition (T41EEE)](https://github.com/Greg-R/T41EEE) which implements innovative features but currently only supports V11 hardware. [Terrance KN6ZDE](https://github.com/tmr4/T41_SDR) has a fork that implements mouse and keyboard input, a beacon monitor, and has implemented new modes like NFM and some data modes.
 
-This repository hosts the "official" software for the [V12 hardware](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24). It merges the original software written by Jack and Al with the additional features written by [John Melton-G0ORX](https://github.com/g0orx/SDTVer050.0). You are encouraged to fork this repository, experiment, and submit pull requests!
+This repository hosts the "official" vanilla fork for the [V12.6 hardware](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24). It merges the original software written by Jack and Al with the additional features written by [John Melton-G0ORX](https://github.com/g0orx/SDTVer050.0). We aspire to merge in changes and features implemented by others if they are supported by unmodified V12.6 hardware. You are encouraged to fork this repository, experiment, and submit pull requests if you develop a feature others will like! Your help tackling the list of [Issues](https://github.com/KI3P/SDTVer050.0/issues) would also be valuable.
 
 # SDTVer050.?
 
@@ -31,14 +31,14 @@ This version has the following extra software features:
 * Kenwood TS-2000 CAT interface
 * Built-in-test for I2C errors
 
-The V12 hardware features currently supported in this version include:
+The V12.6 hardware features currently supported in this version include:
 
 * Shutdown routine using the ATTiny85 on the main board
-* V12 BPF board
+* V12.6 BPF board
 * K9HZ LPF board (band select only)
 * G0ORX / K9HZ MCP23017 front panel and encoders
 
-V12 hardware features that still need to be supported in software include:
+V12.6 hardware features that still need to be supported in software include:
 
 * K9HZ LPF SWR meter
 * K9HZ LPF transverter selection
@@ -52,7 +52,7 @@ To build this version configure Arduino IDE to use the [Teensyduino](https://www
 * Tools->Optimize->Faster with LTO
 * Tools->USB Type->Dual Serial
 
-The memory Usage with these options set and both G0ORX_FRONTPANEL and G0ORX_CAT enabled should look something like:
+The memory Usage with these options set and both `G0ORX_FRONTPANEL` and `G0ORX_CAT` enabled should look something like:
 
 ```
    FLASH: code:274516, data:93624, headers:8684   free for files:7749640
