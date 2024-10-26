@@ -127,7 +127,7 @@ void ButtonBandIncrease() {
   EraseSpectrumDisplayContainer();
   DrawSpectrumDisplayContainer();
   SetBand();
-  //SetFreq();
+  SetFreq();
   ShowFrequency();
   ShowSpectrumdBScale();
   MyDelay(1L);
@@ -225,7 +225,7 @@ void ButtonBandDecrease() {
   EraseSpectrumDisplayContainer();
   DrawSpectrumDisplayContainer();
   SetBand();
-  //SetFreq();
+  SetFreq();
   ShowFrequency();
   MyDelay(1L);
   ShowSpectrumdBScale();

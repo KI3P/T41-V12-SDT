@@ -134,7 +134,23 @@ const float32_t atanTable[68] = {
     sinBuffer2[kf] = sin(theta);
   }
   }*/
-
+/*****
+  Purpose: Correct Phase angle between I andQ channels
+  Parameter list:
+    void
+  Return value;
+    void
+*****/
+void IQXPhaseCorrection(float32_t *I_buffer, float32_t *Q_buffer, float32_t factor, uint32_t blocksize) {
+  float32_t temp_buffer[blocksize];
+  if (factor < 0.0) {  // mix a bit of I into Q
+    arm_scale_f32(I_buffer, factor, temp_buffer, blocksize);
+    arm_add_f32(Q_buffer, temp_buffer, Q_buffer, blocksize);
+  } else {  // mix a bit of Q into I
+    arm_scale_f32(Q_buffer, factor, temp_buffer, blocksize);
+    arm_add_f32(I_buffer, temp_buffer, I_buffer, blocksize);
+  }
+}  // end IQphase_correction
 /*****
   Purpose: Correct Phase angle between I andQ channels
   Parameter list:

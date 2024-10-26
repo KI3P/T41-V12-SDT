@@ -104,8 +104,8 @@ void ProcessIQData()
 
     arm_biquad_cascade_df2T_f32(&s1_Receive, float_buffer_L, float_buffer_L, 2048); //AFP 09-23-22
     arm_biquad_cascade_df2T_f32(&s1_Receive, float_buffer_R, float_buffer_R, 2048); //AFP 09-23-22*/
-        arm_biquad_cascade_df2T_f32(&s1_Receive2, float_buffer_L, float_buffer_L, 2048); //AFP 11-03-22
-    arm_biquad_cascade_df2T_f32(&s1_Receive2, float_buffer_R, float_buffer_R, 2048); //AFP 11-03-22
+        //arm_biquad_cascade_df2T_f32(&s1_Receive2, float_buffer_L, float_buffer_L, 2048); //AFP 11-03-22
+    //arm_biquad_cascade_df2T_f32(&s1_Receive2, float_buffer_R, float_buffer_R, 2048); //AFP 11-03-22
     
 
     //===========================
@@ -148,7 +148,8 @@ void ProcessIQData()
       IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
     } else {
       if (bands[currentBand].mode == DEMOD_USB || bands[currentBand].mode == DEMOD_AM || bands[currentBand].mode == DEMOD_SAM) {
-        arm_scale_f32 (float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS); //AFP 04-14-22
+        // KI3P merge notes: the calibration process has a positive sign for amp, so changing to match that
+        arm_scale_f32 (float_buffer_L, IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS); //AFP 04-14-22
         IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
       }
     }
@@ -209,13 +210,6 @@ void ProcessIQData()
     /**********************************************************************************  AFP 12-31-20
         S-Meter & dBm-display ?? not usually called
      **********************************************************************************/
-    //============================== AFP 10-22-22  Begin new
-    if (calibrateFlag == 1) {
-      CalibrateOptions(IQChoice);
-    }
-
-    //============================== AFP 10-21-22  End new
-
 
     /*************************************************************************************************
         freq_conv2()

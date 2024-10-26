@@ -284,6 +284,42 @@ void EncoderVolume()  //============================== AFP 10-22-22  Begin new
 
 
 /*****
+  Purpose: Use the fine tune encoder to change the value of a number in some other function
+
+  Parameter list:
+    int minValue                the lowest value allowed
+    int maxValue                the largest value allowed
+    int startValue              the numeric value to begin the count
+    int increment               the amount by which each increment changes the value
+    char prompt[]               the input prompt
+  Return value;
+    int                         the new value
+*****/
+int GetFineTuneValueLive(int minValue, int maxValue, int startValue, int increment, char prompt[])
+{
+  int currentValue = startValue;
+  tft.setFontScale((enum RA8875tsize)1);
+  tft.setTextColor(RA8875_WHITE);
+  tft.fillRect(250, 449, 285, CHAR_HEIGHT, RA8875_BLACK);
+  tft.setCursor(257, 450);
+  tft.print(prompt);
+  tft.setCursor(440, 450);
+  tft.print(startValue, 10);
+  if (fineTuneEncoderMove != 0) {
+    currentValue += fineTuneEncoderMove * increment;  // Bump up or down...
+    if (currentValue < minValue)
+      currentValue = minValue;
+    else if (currentValue > maxValue)
+      currentValue = maxValue;
+
+    tft.setCursor(440, 450);
+    tft.print(startValue, 10);
+    fineTuneEncoderMove = 0;
+  }
+  return currentValue;
+}
+
+/*****
   Purpose: Use the encoder to change the value of a number in some other function
 
   Parameter list:
@@ -516,6 +552,10 @@ FASTRUN  // Causes function to be allocated in RAM1 at startup for fastest perfo
     }
 #endif // G0ORX_FRONTPANEL
   }
+  // stop function execution at this point if we're using the fine tune
+  // encoder as part of the calibration process
+  if (calOnFlag) return; 
+  // if not, then continue using the fine tune encoder for its named purpose
   NCOFreq += stepFineTune * fineTuneEncoderMove;  //AFP 11-01-22
   //freqStopBode += 1000000 * fineTuneEncoderMove;
   centerTuneFlag = 1;
@@ -580,7 +620,6 @@ FASTRUN  // Causes function to be allocated in RAM1 at startup for fastest perfo
       break;
   }
 #endif // G0ORX_FRONTPANEL
-
   if (calibrateFlag == 0 && !mainMenuWindowActive) {                                // AFP 10-22-22
     filter_pos = last_filter_pos - 5 * filterEncoderMove;  // AFP 10-22-22
   }                                                        // AFP 10-22-22

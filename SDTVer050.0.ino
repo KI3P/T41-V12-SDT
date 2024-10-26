@@ -13,7 +13,14 @@
   Any and all other uses, written or implied, by the GPLv3 license are forbidden without written 
   permission from from Jack Purdum, W8TEE, and Al Peter, AC8GY.
   
-V050.? 10/17/23 Oliver King, KI3P
+V050.2 a 10-17-26 Al Peter,AC8GY
+  Extensively revised the Process2 File to allow Calibrate using the V12.6 hardware.
+    1. Requires the 12.6 version RF board with the Cal jumper installed
+    2. Both Input and Output Attenuators must be installed and active.
+    3. No external calble are required. Simply short the Cal jumpers during the Receive and Xmit I/Q calibration sessions.
+    4. Calibration values are stored in EEPROM.
+
+V050.1 10/17/24 Oliver King, KI3P
   1. Added support for V12 features:
   1.1 Shutdown routine
   1.2 K9HZ LPF board control (band select only)
@@ -2974,7 +2981,7 @@ void setup() {
   MyDelay(100L);
                                                               // KF5N.  Moved Si5351 start-up to setup. JJP  7/14/23
   //si5351.init(SI5351_CRYSTAL_LOAD_10PF, Si_5351_crystal, freqCorrectionFactor);  //JJP  7/14/23
-  if(!si5351.init(SI5351_CRYSTAL_LOAD_8PF, Si_5351_crystal, freqCorrectionFactor)) {
+  if(!si5351.init(SI5351_LOAD_CAPACITANCE, Si_5351_crystal, freqCorrectionFactor)) {
     #ifdef V12HWR
     bit_results.RF_Si5351_present = false;
     #endif
@@ -2987,9 +2994,9 @@ void setup() {
   MyDelay(100L);
 
   //si5351.set_ms_source(SI5351_CLK2, SI5351_PLLB);                                //  Allows CLK1 and CLK2 to exceed 100 MHz simultaneously.
-  si5351.drive_strength(SI5351_CLK0, SI5351_DRIVE_2MA); // G0ORX Added and changed drive from 8MA
-  si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_2MA);                          //AFP 10-13-22
-  si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_2MA);                          //CWP AFP 10-13-22
+  si5351.drive_strength(SI5351_CLK0, SI5351_DRIVE_CURRENT); // G0ORX Added and changed drive from 8MA
+  si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_CURRENT);                          //AFP 10-13-22
+  si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_CURRENT);                          //CWP AFP 10-13-22
 
   si5351.set_ms_source(SI5351_CLK0, SI5351_PLLA); // G0ORX Added
   si5351.set_ms_source(SI5351_CLK1, SI5351_PLLA); // G0ORX Added
@@ -3273,8 +3280,15 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       ShowSpectrum();  // if removed CW signal on is 2 mS
       break;
     case CW_TRANSMIT_STRAIGHT_STATE:
+      #if !(defined(V12HWR))
       powerOutCW[currentBand] = (-.0133 * transmitPowerLevel * transmitPowerLevel + .7884 * transmitPowerLevel + 4.5146) * CWPowerCalibrationFactor[currentBand];
       CW_ExciterIQData();
+      #else
+      si5351.output_enable(SI5351_CLK2, 1);
+      //si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_8MA);
+      Clk2SetFreq = ((centerFreq)*SI5351_FREQ_MULT);
+      si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
+      #endif
       xrState = TRANSMIT_STATE;
       ShowTransmitReceiveStatus();
       #if !defined(V12HWR)
@@ -3287,35 +3301,51 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       modeSelectOutR.gain(0, 0);
       modeSelectOutExL.gain(0, 0);
       modeSelectOutExR.gain(0, 0);
+      // KI3P merge notes: I don't understand why signal is routed to RX input via cal here by AFP, so don't do it
+      //digitalWrite(CAL,CAL_ON); // CW Signal Off, CAL on
+
+      digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
       cwTimer = millis();
       while (millis() - cwTimer <= cwTransmitDelay) {  //Start CW transmit timer on
         digitalWrite(RXTX, HIGH);
         #if defined(V12HWR)
-        // KI3P: when hardware CW is added, this line should change to XMIT_CW
-        digitalWrite(XMIT_MODE, XMIT_SSB); // KI3P, July 28, 2024
+        digitalWrite(XMIT_MODE, XMIT_CW); // KI3P, July 28, 2024
         #endif
         if (digitalRead(paddleDit) == LOW && keyType == 0) {       // AFP 09-25-22  Turn on CW signal
           cwTimer = millis();                                      //Reset timer
+          #if !defined(V12HWR)
           modeSelectOutExL.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
           modeSelectOutExR.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
-          #if !defined(V12HWR)
-          digitalWrite(MUTE, LOW);                               // KI3P, no MUTE function in V12o
-          #endif
+          digitalWrite(MUTE, LOW);
           modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);  // Sidetone  AFP 10-01-22
           //  modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
+          #else
+          digitalWrite(CW_ON_OFF, CW_ON);
+          // KI3P merge notes: I don't understand why CAL is invoked here by AFP, so don't do it
+          //MyDelay(1.5);  // Wait 1.5mS
+          //digitalWrite(CAL,CAL_OFF);  //CW Signal on, CAL off
+          #endif  
         } else {
           if (digitalRead(paddleDit) == HIGH && keyType == 0) {  //Turn off CW signal
             keyPressedOn = 0;
             #if !defined(V12HWR)
-            digitalWrite(MUTE, HIGH);     // KI3P, no MUTE function in V12
-            #endif
+            digitalWrite(MUTE, HIGH);
             modeSelectOutExL.gain(0, 0);  //Power = 0
             modeSelectOutExR.gain(0, 0);
             modeSelectOutL.gain(1, 0);  // Sidetone off
             modeSelectOutR.gain(1, 0);
+            #else
+            digitalWrite(CW_ON_OFF, CW_OFF);  //Turn off CW signal thru wave shape circuit
+            // KI3P merge notes: I don't understand why CAL is invoked here by AFP, so don't do it
+            //MyDelay(8); // Delay to allow CW signal to ramp down
+            //digitalWrite(CAL, CAL_ON);  // CW Signal Off, CAL On
+            #endif
+
           }
         }
+        #if !defined(V12HWR)
         CW_ExciterIQData();
+        #endif
       }
       modeSelectOutExL.gain(0, 0);  //Power = 0 //AFP 10-11-22
       modeSelectOutExR.gain(0, 0);  //AFP 10-11-22
@@ -3336,12 +3366,13 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       modeSelectOutR.gain(0, 0);
       modeSelectOutExL.gain(0, 0);
       modeSelectOutExR.gain(0, 0);
+
+      digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
       cwTimer = millis();
       while (millis() - cwTimer <= cwTransmitDelay) {
         digitalWrite(RXTX, HIGH);  //Turns on relay
         #if defined(V12HWR)
-        // KI3P: when hardware CW is added, this line should change to XMIT_CW
-        digitalWrite(XMIT_MODE, XMIT_SSB); // KI3P, July 28, 2024
+        digitalWrite(XMIT_MODE, XMIT_CW); // KI3P, October 26, 2024
         #endif
         CW_ExciterIQData();
         modeSelectInR.gain(0, 0);
@@ -3356,24 +3387,30 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
           ditTimerOn = millis();
           //          while (millis() - ditTimerOn <= ditLength) {
           while (millis() - ditTimerOn <= transmitDitLength) {       // JJP 8/19/23
+            #if !defined(V12HWR)
             modeSelectOutExL.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
             modeSelectOutExR.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
-            #if !defined(V12HWR)
-            digitalWrite(MUTE, LOW);                                // KI3P, no MUTE function in V12
-            #endif
+            digitalWrite(MUTE, LOW);
             modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);  // Sidetone
-                                                                     //  modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
+            //modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
             CW_ExciterIQData();                                      // Creates CW output signal
+            #else
+            digitalWrite(CW_ON_OFF, CW_ON);
+            #endif
             keyPressedOn = 0;
           }
           ditTimerOff = millis();
           //          while (millis() - ditTimerOff <= ditLength - 10) {  //Time between
           while (millis() - ditTimerOff <= transmitDitLength - 10L) {  // JJP 8/19/23
+            #if !defined(V12HWR)
             modeSelectOutExL.gain(0, 0);                               //Power =0
             modeSelectOutExR.gain(0, 0);
             modeSelectOutL.gain(1, 0);  // Sidetone off
             modeSelectOutR.gain(1, 0);
             CW_ExciterIQData();
+            #else
+            digitalWrite(CW_ON_OFF, CW_OFF);
+            #endif
             keyPressedOn = 0;
           }
         } else {
@@ -3382,28 +3419,36 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
             dahTimerOn = millis();
             //            while (millis() - dahTimerOn <= 3UL * ditLength) {
             while (millis() - dahTimerOn <= 3UL * transmitDitLength) {  // JJP 8/19/23
+              #if !defined(V12HWR)
               modeSelectOutExL.gain(0, powerOutCW[currentBand]);        //AFP 10-21-22
               modeSelectOutExR.gain(0, powerOutCW[currentBand]);        //AFP 10-21-22
-              #if !defined(V12HWR)
-              digitalWrite(MUTE, LOW);                                  // KI3P, no MUTE function in V12
-              #endif
+              digitalWrite(MUTE, LOW);
               modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);   // Dah sidetone was using constants.  KD0RC
-                                                                        //   modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
+              //modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
               CW_ExciterIQData();                                       // Creates CW output signal
+              #else
+              digitalWrite(CW_ON_OFF, CW_ON);
+              #endif
               keyPressedOn = 0;
             }
             ditTimerOff = millis();
             //            while (millis() - ditTimerOff <= ditLength - 10UL) {  //Time between characters                         // mutes audio
             while (millis() - ditTimerOff <= transmitDitLength - 10UL) {  // JJP 8/19/23
+              #if !defined(V12HWR)
               modeSelectOutExL.gain(0, 0);                                //Power =0
               modeSelectOutExR.gain(0, 0);
               modeSelectOutL.gain(1, 0);  // Sidetone off
               modeSelectOutR.gain(1, 0);
               CW_ExciterIQData();
+              #else
+              digitalWrite(CW_ON_OFF, CW_OFF);
+              #endif
             }
           }
         }
+        #if !defined(V12HWR)
         CW_ExciterIQData();
+        #endif
         keyPressedOn = 0;  // Fix for keyer click-clack.  KF5N August 16, 2023
       }                    //End Relay timer
 

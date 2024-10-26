@@ -2,6 +2,8 @@
 #include "SDT.h"
 #endif
 
+#ifndef V12HWR // changes are so extensive for calibration in V12, this file supports only V11 and earlier
+
 // Updates to DoReceiveCalibration() and DoXmitCalibrate() functions by KF5N.  July 20, 2023
 // Updated PlotCalSpectrum() function to clean up graphics.  KF5N August 3, 2023
 // Major clean-up of calibration.  KF5N August 16, 2023
@@ -59,8 +61,8 @@ void CalibratePreamble(int setZoom) {
   userScale = currentScale;  //  Remember user preference so it can be reset when done.  KF5N
   currentScale = 1;          //  Set vertical scale to 10 dB during calibration.  KF5N
   updateDisplayFlag = 0;
-  #if !defined(V12HWR)
-  digitalWrite(MUTE, LOW);  // KI3P, no MUTE function in V12
+  #ifndef V12HWR
+  digitalWrite(MUTE, LOW);
   #endif
   xrState = RECEIVE_STATE;
   T41State = CW_RECEIVE;
@@ -77,9 +79,7 @@ void CalibratePreamble(int setZoom) {
   centerFreq = TxRxFreq;
   NCOFreq = 0L;
   xrState = TRANSMIT_STATE;
-  #if !defined(V12HWR)
-  digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
-  #endif
+  digitalWrite(MUTE, HIGH); 
   digitalWrite(RXTX, HIGH);  // Turn on transmitter.
   ShowTransmitReceiveStatus();
   ShowSpectrumdBScale();
@@ -537,3 +537,5 @@ float PlotCalSpectrum(int x1, int cal_bins[2], int capture_bins) {
   tft.writeTo(L1);
   return adjdB;
 }
+
+#endif // V12HWR

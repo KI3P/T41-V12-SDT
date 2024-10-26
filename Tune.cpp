@@ -81,8 +81,91 @@ Clk0SetFreq = ((centerFreq * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT) * MA
 
   CAUTION: SI5351_FREQ_MULT is set in the si5253.h header file and is 100UL
 *****/
-void SetFreqCal(void) {  // July 7 2023 KF5N
+void SetFreqCal(void) {   
+   
+                                  // V12 hardware using Si5351 quadrature clocks.
+
+// Note CW specific code is not yet implimented in this version.
+ // long freqCal;
+  Clk1SetFreq = ((centerFreq * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT);
+  multiple = EvenDivisor(Clk1SetFreq / SI5351_FREQ_MULT);
+
+  pll_freq = freq * multiple;
+
+  pll_freq = Clk1SetFreq * multiple;
+  freq = pll_freq / multiple;
+  si5351.output_enable(SI5351_CLK0, 1);
+  si5351.output_enable(SI5351_CLK1, 1);
+  //si5351.output_enable(SI5351_CLK2, 0);
+  si5351.set_freq_manual(freq, pll_freq, SI5351_CLK0);
+  si5351.set_freq_manual(freq, pll_freq, SI5351_CLK1);
+  // freqCal = (centerFreq + 21000) * SI5351_FREQ_MULT;
+  // si5351.output_enable(SI5351_CLK2, 1);
+  //si5351.set_freq_manual(Clk1SetFreq, pll_freq, SI5351_CLK2);
+  si5351.set_phase(SI5351_CLK0, 0);
+  //si5351.set_freq_manual(0, pll_freq, SI5351_CLK2);
+  si5351.set_phase(SI5351_CLK0, 0);
+  si5351.set_phase(SI5351_CLK1, multiple);
+  if (multiple != oldMultiple) {
+    si5351.pll_reset(SI5351_PLLA);
+    si5351.pll_reset(SI5351_PLLB);
+    //Serial.println("Reset");
+    //if(calOnFlag == 1){
+    Clk1SetFreq = ((centerFreq * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT);
+    multiple = EvenDivisor(Clk1SetFreq / SI5351_FREQ_MULT);
+    long pll_freq = Clk1SetFreq * multiple;
+//    freqCal = (centerFreq + 21000) * SI5351_FREQ_MULT;
+    si5351.output_enable(SI5351_CLK2, 1);
+    si5351.set_freq_manual((centerFreq + 21000) * SI5351_FREQ_MULT, pll_freq, SI5351_CLK2);
+    // }
+  }
+  oldMultiple = multiple;
+  si5351.output_enable(SI5351_CLK2, 0);
+  /*
+  Serial.print("freq=");
+  Serial.println(freq);
+  Serial.print("pll_freq=");
+  Serial.println(pll_freq);
+  Serial.print("multiple=");
+  Serial.println(multiple);
+  */
+ 
+  DrawFrequencyBarValue();
+
+ 
+  if (radioState == SSB_TRANSMIT_STATE) {
+    Clk1SetFreq = (TxRxFreq * SI5351_FREQ_MULT) * MASTER_CLK_MULT;  // AFP 09-27-22
+  } else if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {
+    if (bands[currentBand].mode == DEMOD_LSB) {
+      Clk1SetFreq = (((TxRxFreq + CWFreqShift + calFreqShift) * SI5351_FREQ_MULT)) * MASTER_CLK_MULT;  // AFP 09-27-22;   flip CWFreqShift, sign originally minus
+    } else {
+      if (bands[currentBand].mode == DEMOD_USB) {
+        Clk1SetFreq = (((TxRxFreq - CWFreqShift - calFreqShift) * SI5351_FREQ_MULT)) * MASTER_CLK_MULT;  // AFP 10-01-22;  flip CWFreqShift, sign originally plus
+      }
+    }
+  }
+
+  //  The receive LO frequency is not dependent on mode or sideband.  CW frequency shift is done in DSP code.
+ //Clk2SetFreq = ((centerFreq * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT) * MASTER_CLK_MULT;
+
+  if (radioState == SSB_RECEIVE_STATE || radioState == CW_RECEIVE_STATE) {   //  Receive state
+    si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
+    si5351.output_enable(SI5351_CLK0, 1);
+    si5351.output_enable(SI5351_CLK1, 1);  // CLK2 (transmit) off during receive to prevent birdies
+    //si5351.output_enable(SI5351_CLK2, 0);
+  }
+
+  if (radioState == SSB_TRANSMIT_STATE || radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {  // Transmit state
+    si5351.set_freq(Clk1SetFreq, SI5351_CLK1);
+    //si5351.output_enable(SI5351_CLK2, 0);  // CLK2 (receive) off during transmit to prevent spurious outputs
+    si5351.output_enable(SI5351_CLK1, 1);
+  }
+  //=====================  AFP 10-03-22 =================
+  DrawFrequencyBarValue();
+
+
 }
+
 
 /***** //AFP 10-11-22 all new
   Purpose:  Reset tuning to center
@@ -188,8 +271,8 @@ void SetFreq() {  //AFP
   pll_freq = Clk1SetFreq * multiple;
   freq = pll_freq / multiple;
 
-  //si5351.output_enable(SI5351_CLK0, 1);
-  //si5351.output_enable(SI5351_CLK1, 1);
+  si5351.output_enable(SI5351_CLK0, 1);
+  si5351.output_enable(SI5351_CLK1, 1);
   //si5351.output_enable(SI5351_CLK2, 0);
   si5351.set_freq_manual(freq, pll_freq, SI5351_CLK0);
   si5351.set_freq_manual(freq, pll_freq, SI5351_CLK1);
@@ -202,21 +285,21 @@ void SetFreq() {  //AFP
   si5351.set_phase(SI5351_CLK1, multiple);
   if (multiple != oldMultiple) {
     si5351.pll_reset(SI5351_PLLA);
-    //si5351.pll_reset(SI5351_PLLB);
+    si5351.pll_reset(SI5351_PLLB);
     //Serial.println("Reset");
     //if(calOnFlag == 1){
-    //Clk1SetFreq = ((centerFreq * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT);
-    //multiple = EvenDivisor(Clk1SetFreq / SI5351_FREQ_MULT);
+    Clk1SetFreq = ((centerFreq * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT);
+    multiple = EvenDivisor(Clk1SetFreq / SI5351_FREQ_MULT);
     //long pll_freq = Clk1SetFreq * multiple;
 //    freqCal = (centerFreq + 21000) * SI5351_FREQ_MULT;
     //si5351.output_enable(SI5351_CLK2, 1);
     //si5351.set_freq_manual((centerFreq + 21000) * SI5351_FREQ_MULT, pll_freq, SI5351_CLK2);
     // }
 
-    oldMultiple = multiple;
+    //oldMultiple = multiple;
   }
-  //oldMultiple = multiple;
-  //si5351.output_enable(SI5351_CLK2, 0);
+  oldMultiple = multiple;
+  si5351.output_enable(SI5351_CLK2, 0);
 /*
   Serial.print("freq=");
   Serial.println(freq);
@@ -233,7 +316,7 @@ void SetFreq() {  //AFP
   } else {
     si5351.set_freq_manual(0, pll_freq, SI5351_CLK2);
   }*/
-  //DrawFrequencyBarValue();
+  DrawFrequencyBarValue();
 
   #else                 // Version V11 and earlier  #endif
 

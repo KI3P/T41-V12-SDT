@@ -58,6 +58,10 @@ extern struct maps myMapFiles[];
 // == Modified Si linbrary must be included in folder with T41 code
 #include "si5351.h"
 //#include <si5351.h>                                 // https://github.com/etherkit/Si5351Arduino
+// Add define variables for drive current and load capacitance
+#define SI5351_LOAD_CAPACITANCE SI5351_CRYSTAL_LOAD_8PF
+#define SI5351_DRIVE_CURRENT SI5351_DRIVE_2MA
+
 #include <RA8875.h>                                 // https://github.com/mjs513/RA8875/tree/RA8875_t4
 #if defined(G0ORX_FRONTPANEL)
 #include "G0ORX_Rotary.h"
@@ -183,6 +187,9 @@ extern struct maps myMapFiles[];
 #define UNUSED_2                    15
 #define UNUSED_3                    16
 #define UNUSED_4                    17
+#define CAL_CHANGE_TYPE             16
+#define CAL_CHANGE_INC              17
+
 
 #define MENU_BAILOUT_VALUE          17    // Used to exit from main menu list 
 
@@ -432,9 +439,11 @@ void ShutdownTeensy(void);
 #define FILTERPIN20M                28    // 20M filter relay
 #define FILTERPIN15M                29    // 15M filter relay
 #define RXTX                        22    // Transmit/Receive (H=TX,L=RX)
-#define PTT                         37    // Transmit/Receive
-#define XMIT_MODE                   34    // Transmit mode (H=SSB,L=CW) (V12 hardware)
 #define CW_ON_OFF                   33    // CW on / off (H=ON,L=OFF) (V12 hardware)
+#define XMIT_MODE                   34    // Transmit mode (H=SSB,L=CW) (V12 hardware)
+#define KEY1                        35    // Tip for Straight key
+#define KEY2                        36    // Ring
+#define PTT                         37    // Transmit/Receive
 // KI3P: added mode definitions to make programming easier (V12 hardware)
 #define XMIT_SSB                    1
 #define XMIT_CW                     0
@@ -2302,7 +2311,11 @@ void CalcNotchBins();
 void Calculatedbm();
 int  CalibrateOptions(int IQChoice); // AFP 10-22-22, changed JJP 2/3/23
 void CalibratePreamble();   // KF5N August 14, 2023
+#ifndef V12HWR
 void CalibratePrologue();   // KF5N August 14, 2023
+#else
+void CalibratePost();   //  August 14, 2023
+#endif
 int  CalibrateFrequency();
 void CaptureKeystrokes();
 void CenterFastTune();
@@ -2386,6 +2399,7 @@ void FreqShift2();
 float goertzel_mag(int numSamples, int TARGET_FREQUENCY, int SAMPLING_RATE, float* data);
 int  GetEncoderValue(int minValue, int maxValue, int startValue, int increment, char prompt[]);
 float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[]);//AFP 10-22-22
+int GetFineTuneValueLive(int minValue, int maxValue, int startValue, int increment, char prompt[]);
 void GetFavoriteFrequency();
 
 //double HaversineDistance(double hLat, double hLon, double dxLat, double dxLon);
@@ -2398,6 +2412,7 @@ void InitLMSNoiseReduction();
 void initTempMon(uint16_t freq, uint32_t lowAlarmTemp, uint32_t highAlarmTemp, uint32_t panicAlarmTemp);
 int  IQOptions();
 void IQPhaseCorrection(float32_t *I_buffer, float32_t *Q_buffer, float32_t factor, uint32_t blocksize);
+void IQXPhaseCorrection(float32_t *I_buffer, float32_t *Q_buffer, float32_t factor, uint32_t blocksize);
 float32_t Izero(float32_t x);
 
 void JackClusteredArrayMax(int32_t *array, int32_t elements, int32_t *maxCount, int32_t *maxIndex, int32_t *firstDit, int32_t spread);
@@ -2429,6 +2444,7 @@ int  NROptions();
 
 //int  PostProcessorAudio();
 float PlotCalSpectrum(int x1, int cal_bins[2], int capture_bins);
+float PlotCalSpectrumEx(int x1, int cal_bins[2], int capture_bins); //  AFP 10/17/2024
 int  ProcessButtonPress(int valPin);
 void ProcessEqualizerChoices(int EQType, char *title);
 void ProcessIQData();
@@ -2553,7 +2569,9 @@ void Xanr();
 int  Xmit_IQ_Cal(); //AFP 09-21-22
 
 void ZoomFFTPrep();
+void ZoomFFTPrep2();
 void ZoomFFTExe(uint32_t blockSize);
+void ZoomFFTExeCal(uint32_t blockSize);
 
 #if defined(G0ORX_AUDIO_DISPLAY)
  extern float32_t mic_audio_buffer[];
