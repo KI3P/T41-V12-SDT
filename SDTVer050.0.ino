@@ -3173,6 +3173,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         modeSelectInR.gain(0, 1);
         modeSelectInL.gain(0, 1);
         digitalWrite(RXTX, LOW);  //xmit off
+        #ifdef V12HWR
+        setBPFPath(BPF_IN_RX_PATH);
+        #endif
         T41State = SSB_RECEIVE;
         xrState = RECEIVE_STATE;
         modeSelectInR.gain(0, 1);
@@ -3216,6 +3219,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       digitalWrite(RXTX, HIGH);  //xmit on
       #if defined(V12HWR)
       digitalWrite(XMIT_MODE, XMIT_SSB); // KI3P, July 28, 2024
+      setBPFPath(BPF_IN_TX_PATH);
       #endif
       xrState = TRANSMIT_STATE;
       modeSelectInR.gain(0, 0);
@@ -3263,6 +3267,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         T41State = CW_RECEIVE;
         ShowTransmitReceiveStatus();
         xrState = RECEIVE_STATE;
+        #ifdef V12HWR
+        setBPFPath(BPF_IN_RX_PATH);
+        #endif
         //SetFreq();   // KF5N
         modeSelectInR.gain(0, 1);
         modeSelectInL.gain(0, 1);
@@ -3296,6 +3303,10 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       ShowTransmitReceiveStatus();
       #if !defined(V12HWR)
       digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
+      #endif
+
+      #ifdef V12HWR
+      setBPFPath(BPF_IN_TX_PATH);
       #endif
       modeSelectInR.gain(0, 0);
       modeSelectInL.gain(0, 0);
@@ -3364,6 +3375,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       #endif
       xrState = TRANSMIT_STATE;
       ShowTransmitReceiveStatus();
+      #ifdef V12HWR
+      setBPFPath(BPF_IN_TX_PATH);
+      #endif
       modeSelectInR.gain(0, 0);
       modeSelectInL.gain(0, 0);
       modeSelectInExR.gain(0, 0);

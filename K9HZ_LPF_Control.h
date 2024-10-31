@@ -29,6 +29,9 @@ extern uint8_t LPF_GPA_state;
 // GPA1   RX BPF          0 (BPF in path)
 // GPA2-GPA7   Not used
 #define LPF_STARTUP_STATE_A 0x00
+#define BPF_IN_RX_PATH   0
+#define BPF_IN_TX_PATH   1
+#define BPF_NOT_IN_PATH  2
 
 // Register B pin mapping:
 // Bit    Description     Default
@@ -44,5 +47,6 @@ extern uint8_t LPF_GPA_state;
 
 void K9HZLPFControlInit();
 void setLPFBand(int currentBand);
+void setBPFPath(int pathSelection);
 
 #endif // K9HZ_LPF_CONTROL_h

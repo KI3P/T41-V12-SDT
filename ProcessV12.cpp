@@ -393,7 +393,6 @@ void ProcessIQData2() {
 
   if (bands[currentBand].mode == DEMOD_LSB) {
     arm_scale_f32(float_buffer_L_EX, -IQXAmpCorrectionFactor[currentBand], float_buffer_L_EX, 256);        //Adjust level of L buffer // AFP 2-11-23
-    // KI3P merge notes: changed this from IQPhase... to IQXPhase...
     IQXPhaseCorrection(float_buffer_L_EX, float_buffer_R_EX, IQXPhaseCorrectionFactor[currentBand], 256);  // Adjust phase
   } else {
     if (bands[currentBand].mode == DEMOD_USB) {

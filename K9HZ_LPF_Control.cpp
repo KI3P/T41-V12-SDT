@@ -107,3 +107,21 @@ void setLPFBand(int currentBand) {
   Debug("Set LPF GPA state: "+String(LPF_GPA_state,DEC));
   Debug("Set LPF GPB state: "+String(LPF_GPB_state,DEC));
 }
+
+void setBPFPath(int pathSelection){
+  switch (pathSelection){
+    case BPF_IN_RX_PATH:
+      LPF_GPA_state = (LPF_GPA_state & 0b11111100) | 0b00000010;
+      break;
+    case BPF_IN_TX_PATH:
+      LPF_GPA_state = (LPF_GPA_state & 0b11111100) | 0b00000001;
+      break;
+    case BPF_NOT_IN_PATH:
+      LPF_GPA_state = (LPF_GPA_state & 0b11111100) | 0b00000000;
+      break;
+    default:
+      Debug("Invalid BPF path selection for K9HZ LPF Control!");
+      break;
+  }
+  mcpLPF.writeGPIOA(LPF_GPA_state); 
+}
