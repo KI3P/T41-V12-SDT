@@ -121,10 +121,7 @@ void ShowSpectrum()  //AFP Extensively Modified 3-15-21 Adjusted 12-13-21 to ali
     } else updateDisplayFlag = 0;  //  Do not save the the display data for the remainder of the
 
     FilterSetSSB();                                           // Insert Filter encoder update here  AFP 06-22-22
-    // KI3P merge notes: Al had this if commented out; check this
-    if (T41State == SSB_RECEIVE || T41State == CW_RECEIVE) {  // AFP 08-24-22
-      ProcessIQData();                                        // Call the Audio process from within the display routine to eliminate conflicts with drawing the spectrum and waterfall displays
-    }
+    ProcessIQData();                                          // Call the Audio process from within the display routine to eliminate conflicts with drawing the spectrum and waterfall displays
     EncoderCenterTune();                                      // Moved the tuning encoder to reduce lag times and interference during tuning.
     y_new   = pixelnew[x1];
     y1_new  = pixelnew[x1 - 1];

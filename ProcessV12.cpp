@@ -454,15 +454,16 @@ void ProcessIQData2() {
       arm_scale_f32(float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 04-14-22
       IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
     } else {
+      // USB is treated different than LSB because we include the sign flip in Q (to
+      // select the upper sideband) in this multiplication for convenience. It applies
+      // a multiplication by -1 that is presumably applied during RECEIVE states, but
+      // I can't find the damn thing
       if (bands[currentBand].mode == DEMOD_USB) {
         arm_scale_f32(float_buffer_L, IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 04-14-22  changed sign
         IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
       }
     }
-
-    //spectrum_zoom = zoomIndex;
     spectrum_zoom = SPECTRUM_ZOOM_1;
-    // Serial.print("BUFFER_SIZE * N_BLOCKS= ");Serial.println(BUFFER_SIZE * N_BLOCKS);
     if (spectrum_zoom == SPECTRUM_ZOOM_1) {  // && display_S_meter_or_spectrum_state == 1)
       zoom_display = 1;
       CalcZoom1Magn();  //AFP Moved to display function

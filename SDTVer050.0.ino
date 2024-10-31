@@ -12,9 +12,10 @@
 
   Any and all other uses, written or implied, by the GPLv3 license are forbidden without written 
   permission from from Jack Purdum, W8TEE, and Al Peter, AC8GY.
-  
-V050.2 a 10-17-26 Al Peter,AC8GY
-  Extensively revised the Process2 File to allow Calibrate using the V12.6 hardware.
+
+V050.2 10-17-26 Al Peter,AC8GY
+  Extensively revised the Process2 File to allow Calibrate using the V12.6 hardware. This file is
+  included as ProcessV12.cpp given the scope of its modifications.
     1. Requires the 12.6 version RF board with the Cal jumper installed
     2. Both Input and Output Attenuators must be installed and active.
     3. No external calble are required. Simply short the Cal jumpers during the Receive and Xmit I/Q calibration sessions.
@@ -3288,6 +3289,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       //si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_8MA);
       Clk2SetFreq = ((centerFreq)*SI5351_FREQ_MULT);
       si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
+      digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
+      digitalWrite(XMIT_MODE, XMIT_CW); // KI3P, July 28, 2024
       #endif
       xrState = TRANSMIT_STATE;
       ShowTransmitReceiveStatus();
@@ -3301,16 +3304,13 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       modeSelectOutR.gain(0, 0);
       modeSelectOutExL.gain(0, 0);
       modeSelectOutExR.gain(0, 0);
-      // KI3P merge notes: I don't understand why signal is routed to RX input via cal here by AFP, so don't do it
+      // KI3P merge notes: AFP routes signal is routed to RX input via cal here, I suspect to
+      // ensure that the transmit power is even lower when off
       //digitalWrite(CAL,CAL_ON); // CW Signal Off, CAL on
-
-      digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
       cwTimer = millis();
       while (millis() - cwTimer <= cwTransmitDelay) {  //Start CW transmit timer on
         digitalWrite(RXTX, HIGH);
-        #if defined(V12HWR)
-        digitalWrite(XMIT_MODE, XMIT_CW); // KI3P, July 28, 2024
-        #endif
+      
         if (digitalRead(paddleDit) == LOW && keyType == 0) {       // AFP 09-25-22  Turn on CW signal
           cwTimer = millis();                                      //Reset timer
           #if !defined(V12HWR)
@@ -3321,10 +3321,10 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
           //  modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
           #else
           digitalWrite(CW_ON_OFF, CW_ON);
-          // KI3P merge notes: I don't understand why CAL is invoked here by AFP, so don't do it
+          // Now route the CW signal to the antenna
           //MyDelay(1.5);  // Wait 1.5mS
-          //digitalWrite(CAL,CAL_OFF);  //CW Signal on, CAL off
-          #endif  
+          //digitalWrite(CAL,CAL_OFF);  // point hose to antenna
+          #endif
         } else {
           if (digitalRead(paddleDit) == HIGH && keyType == 0) {  //Turn off CW signal
             keyPressedOn = 0;
@@ -3336,11 +3336,10 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
             modeSelectOutR.gain(1, 0);
             #else
             digitalWrite(CW_ON_OFF, CW_OFF);  //Turn off CW signal thru wave shape circuit
-            // KI3P merge notes: I don't understand why CAL is invoked here by AFP, so don't do it
+            // And route the CW signal away from the output
             //MyDelay(8); // Delay to allow CW signal to ramp down
             //digitalWrite(CAL, CAL_ON);  // CW Signal Off, CAL On
             #endif
-
           }
         }
         #if !defined(V12HWR)
@@ -3352,12 +3351,19 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       digitalWrite(RXTX, LOW);      // End Straight Key Mode
       break;
     case CW_TRANSMIT_KEYER_STATE:
+      #if !defined(V12HWR)
       CW_ExciterIQData();
+      digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
+      #else
+      si5351.output_enable(SI5351_CLK2, 1);
+      //si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_8MA);
+      Clk2SetFreq = ((centerFreq)*SI5351_FREQ_MULT);
+      si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
+      digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
+      digitalWrite(XMIT_MODE, XMIT_CW); // KI3P, July 28, 2024
+      #endif
       xrState = TRANSMIT_STATE;
       ShowTransmitReceiveStatus();
-      #if !defined(V12HWR)
-      digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
-      #endif
       modeSelectInR.gain(0, 0);
       modeSelectInL.gain(0, 0);
       modeSelectInExR.gain(0, 0);
@@ -3366,14 +3372,12 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       modeSelectOutR.gain(0, 0);
       modeSelectOutExL.gain(0, 0);
       modeSelectOutExR.gain(0, 0);
-
-      digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
       cwTimer = millis();
       while (millis() - cwTimer <= cwTransmitDelay) {
         digitalWrite(RXTX, HIGH);  //Turns on relay
         #if defined(V12HWR)
-        digitalWrite(XMIT_MODE, XMIT_CW); // KI3P, October 26, 2024
-        #endif
+        digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
+        #else 
         CW_ExciterIQData();
         modeSelectInR.gain(0, 0);
         modeSelectInL.gain(0, 0);
@@ -3381,7 +3385,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         modeSelectInExL.gain(0, 0);
         modeSelectOutL.gain(0, 0);
         modeSelectOutR.gain(0, 0);
-
+        #endif
+        
         if (digitalRead(paddleDit) == LOW) {  // Keyer Dit
           cwTimer = millis();
           ditTimerOn = millis();

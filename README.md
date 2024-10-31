@@ -51,6 +51,7 @@ To build this version configure Arduino IDE to use the [Teensyduino](https://www
 
 * Tools->Optimize->Faster with LTO
 * Tools->USB Type->Dual Serial
+* Tools->CPU Speed->528 MHz
 
 The memory Usage with these options set and both `G0ORX_FRONTPANEL` and `G0ORX_CAT` enabled should look something like:
 

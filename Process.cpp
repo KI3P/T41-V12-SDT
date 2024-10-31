@@ -141,20 +141,17 @@ void ProcessIQData()
       IQ amplitude and phase correction
     ***********************************************************************************************/
 
-    // Manual IQ amplitude correction
+    // Manual IQ amplitude and phase correction
     // to be honest: we only correct the amplitude of the I channel ;-)
     if (bands[currentBand].mode == DEMOD_LSB || bands[currentBand].mode == DEMOD_AM || bands[currentBand].mode == DEMOD_SAM) {
       arm_scale_f32 (float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS); //AFP 04-14-22
       IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
     } else {
       if (bands[currentBand].mode == DEMOD_USB || bands[currentBand].mode == DEMOD_AM || bands[currentBand].mode == DEMOD_SAM) {
-        // KI3P merge notes: the calibration process has a positive sign for amp, so changing to match that
-        arm_scale_f32 (float_buffer_L, IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS); //AFP 04-14-22
+        arm_scale_f32 (float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS); //AFP 04-14-22
         IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
       }
     }
-    // IQ phase correction
-
 
     /**********************************************************************************  AFP 12-31-20
         Perform a 256 point FFT for the spectrum display on the basis of the first 256 complex values
@@ -321,11 +318,11 @@ void ProcessIQData()
         audioSpectBuffer[1024 - k] = (iFFT_buffer[k] * iFFT_buffer[k]);
       }
       for (int k = 0; k < 256; k++) {
-        if (bands[currentBand].mode == 0  || bands[currentBand].mode == DEMOD_AM || bands[currentBand].mode == DEMOD_SAM) {  //AFP 10-26-22
+        if (bands[currentBand].mode == DEMOD_USB  || bands[currentBand].mode == DEMOD_AM || bands[currentBand].mode == DEMOD_SAM) {  //AFP 10-26-22
           //audioYPixel[k] = 20+  map((int)displayScale[currentScale].dBScale * log10f((audioSpectBuffer[1024 - k] + audioSpectBuffer[1024 - k + 1] + audioSpectBuffer[1024 - k + 2]) / 3), 0, 100, 0, 120);
           audioYPixel[k] = 50 +  map(15 * log10f((audioSpectBuffer[1024 - k] + audioSpectBuffer[1024 - k + 1] + audioSpectBuffer[1024 - k + 2]) / 3), 0, 100, 0, 120);
         }
-        else if (bands[currentBand].mode == 1) {//AFP 10-26-22
+        else if (bands[currentBand].mode == DEMOD_LSB) {//AFP 10-26-22
           //audioYPixel[k] = 20+   map((int)displayScale[currentScale].dBScale * log10f((audioSpectBuffer[k] + audioSpectBuffer[k + 1] + audioSpectBuffer[k + 2]) / 3), 0, 100, 0, 120);
           audioYPixel[k] = 50 +   map(15 * log10f((audioSpectBuffer[k] + audioSpectBuffer[k + 1] + audioSpectBuffer[k + 2]) / 3), 0, 100, 0, 120);
         }
