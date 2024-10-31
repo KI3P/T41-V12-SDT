@@ -277,8 +277,10 @@ void DoXmitCalibrate() {
   tft.setCursor(550, 350);
   tft.print("Calibrate");
   IQChoice = 3;
-  SetRF_InAtten(30);
-  SetRF_OutAtten(20);
+  SetRF_InAtten(20);
+  int out_atten = 20;
+  int previous_atten = out_atten;
+  SetRF_OutAtten(out_atten);
 //  int userFloor = currentNoiseFloor[currentBand];  // Store the user's floor setting.
   //zoomIndex = 0;
   calTypeFlag = 1;
@@ -293,7 +295,6 @@ void DoXmitCalibrate() {
 
   T41State = SSB_XMIT;
   digitalWrite(CAL, CAL_ON);  // Turn on transmitter.
-  digitalWrite(KEY1, LOW);   // Turn on transmitter.
   digitalWrite(XMIT_MODE, XMIT_SSB);  // Turn on transmitter.
   ShowTransmitReceiveStatus();
   while (true) {
@@ -306,11 +307,11 @@ void DoXmitCalibrate() {
     }
     switch (task) {
       // Toggle gain and phase
-      case (UNUSED_1):
+      case (CAL_CHANGE_TYPE):
         IQEXChoice = !IQEXChoice;  //IQEXChoice=0, Gain  IQEXChoice=1, Phase
         break;
       // Toggle increment value
-      case (UNUSED_2):  //
+      case (CAL_CHANGE_INC):  //
         corrChange = !corrChange;
         if (corrChange == 1) {          // Toggle increment value
           correctionIncrement = 0.001;  // AFP 2-11-23
@@ -324,8 +325,8 @@ void DoXmitCalibrate() {
         break;
       case (MENU_OPTION_SELECT):  // Save values and exit calibration.
         tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
-        EEPROMData.IQXAmpCorrectionFactor[currentBandA] = IQAmpCorrectionFactor[currentBandA];
-        EEPROMData.IQXPhaseCorrectionFactor[currentBandA] = IQPhaseCorrectionFactor[currentBandA];
+        EEPROMData.IQXAmpCorrectionFactor[currentBand] = IQXAmpCorrectionFactor[currentBand];
+        EEPROMData.IQXPhaseCorrectionFactor[currentBand] = IQXPhaseCorrectionFactor[currentBand];
         tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
         IQChoice = 6;  // AFP 2-11-23
         break;
@@ -336,21 +337,19 @@ void DoXmitCalibrate() {
     if (task != -1) lastUsedTask = task;  //  Save the last used task.
     task = -100;                          // Reset task after it is used.
     //  Read encoder and update values.
-    //Serial.println("353");
     if (IQEXChoice == 0) {
-      //Serial.println("354");
-      IQXAmpCorrectionFactor[currentBandA] = GetEncoderValueLive(-2.0, 2.0, IQXAmpCorrectionFactor[currentBandA], correctionIncrement, (char *)"IQ Gain X");
-      //IQAmpCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain");
-      Serial.print("IQXAmpCorrectionFactor= ");
-      Serial.println(IQXAmpCorrectionFactor[currentBandA]);
+      IQXAmpCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain X");
     } else {
-      IQXPhaseCorrectionFactor[currentBandA] = GetEncoderValueLive(-2.0, 2.0, IQXPhaseCorrectionFactor[currentBandA], correctionIncrement, (char *)"IQ Phase X");
-      Serial.print("IQXPhaseCorrectionFactor= ");
-      Serial.println(IQXPhaseCorrectionFactor[currentBandA]);
+      IQXPhaseCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase X");
     }
-
+    // Adjust the value of the TX attenuator:
+    out_atten = GetFineTuneValueLive(0,31,out_atten,1,(char *)"Out Atten");
+    // Update via I2C if the attenuation value changed
+    if (out_atten != previous_atten){
+        SetRF_OutAtten(out_atten);
+        previous_atten = out_atten;
+    }
     if (val == MENU_OPTION_SELECT) {
-      //CalibratePost();
       break;
     }
   }  // end while
@@ -385,7 +384,7 @@ void ProcessIQData2() {
 
   bandOutputFactor = bandCouplingFactor[currentBand] * CWPowerCalibrationFactor[currentBand] / CWPowerCalibrationFactor[1];  //AFP 2-7-23
 
-  // Generate I and Q for the transmit or receive calibration.  
+  // Generate I and Q for the transmit calibration.  
   if (IQChoice == 2 || IQChoice == 3) {                                   // 
                                                                           // Serial.println("IQChoice 2");
     arm_scale_f32(cosBuffer3, bandOutputFactor, float_buffer_L_EX, 256);  // AFP 2-11-23 Use pre-calculated sin & cos instead of Hilbert
@@ -450,7 +449,6 @@ void ProcessIQData2() {
 
     // Manual IQ amplitude correction
     if (bands[currentBand].mode == DEMOD_LSB) {
-      //Serial.println("if  rec demod lsb");
       arm_scale_f32(float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 04-14-22
       IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
     } else {
@@ -545,6 +543,12 @@ void ShowSpectrum2()  //AFP 2-10-23
     cal_bins[0] = 185;
     cal_bins[1] = 326;
   }  // Receive calibration, USB.  
+  /******************************
+   * The bin calculation is a lot simpler for the transmit scenario. The same
+   * LO clock is used for transmit and receive, so the bin tone and image are
+   * found symmetric around the center of the FFT. This offset is 3 kHz (see 
+   * sineTone() in Utility.cpp), which is 3/375 = 8 bins offset from bin 256.
+   ******************************/
   if (calTypeFlag == 1 && bands[currentBand].mode == DEMOD_LSB) {
     cal_bins[0] = 247;
     cal_bins[1] = 265;
