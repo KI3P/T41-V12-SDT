@@ -292,9 +292,6 @@ int AGCOptions() {
 int IQOptions()  //============================== AFP 10-22-22  All new
 {
   calibrateFlag = 1;
-  //const char *IQOptions[] = { "Freq Cal", "CW PA Cal", "Rec Cal", "Xmit Cal", "SSB PA Cal", "Cancel" };  //AFP 10-21-22
-  //const char *IQOptions[] = {"Rec Cal", "Xmit Cal", "Freq Cal", "SSB PA Cal", "CW PA Cal", "Cancel"}; //AFP 10-21-22
-  IQChoice = SubmenuSelect(secondaryChoices[11], 6, 0);  //AFP 10-21-22
   IQChoice = secondaryMenuIndex;
   CalibrateOptions(IQChoice);
   return IQChoice;
