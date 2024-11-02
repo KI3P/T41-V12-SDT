@@ -2,6 +2,19 @@
 #include "SDT.h"
 #endif
 
+// Fine frequency tune control with variable speed by Harry Brash GM3RVL
+bool FastTune = true;    //  HMB
+uint32_t FT_last_time;   // millis() of last fine tune step   HMB
+bool FT_ON = false;      // In fast tunung mode HMB
+int FT_step_counter = 0; // how many fast steps have there been continuously HMB
+int last_FT_step_size = 1; // so can go back HMB
+const unsigned long FT_on_ms = 30;  // time between FTsteps below which increases the step size
+const unsigned long FT_cancel_ms = 400;  // time between steps above which FT is cancelled
+const int FT_trig = 4;  // number of short steps to trigger fast tune,
+const int FT_step = 500;  // Hz step in Fast Tune
+unsigned long MS_temp;    // HMB
+unsigned long FT_delay;   // HMB
+
 /*****
   Purpose: EncoderFilter
 
@@ -556,7 +569,32 @@ FASTRUN  // Causes function to be allocated in RAM1 at startup for fastest perfo
   // encoder as part of the calibration process
   if (calOnFlag) return; 
   // if not, then continue using the fine tune encoder for its named purpose
-  NCOFreq += stepFineTune * fineTuneEncoderMove;  //AFP 11-01-22
+
+  //----------------------------------------------------
+  // Fine frequency tune control with variable speed by Harry Brash GM3RVL
+  MS_temp = millis();   // HMB...
+  FT_delay = MS_temp - FT_last_time;
+  FT_last_time = MS_temp;
+  if (FT_ON) {           // Check if FT should be cancelled (FT_delay>=FT_cancel_ms)
+    if (FT_delay>=FT_cancel_ms) {
+      FT_ON = false;
+      EEPROMData.stepFineTune = last_FT_step_size;
+    } 
+  }
+  else {      //  FT is off so check for short delays
+    if (FT_delay<=FT_on_ms) {
+      FT_step_counter +=1;
+    }
+    if (FT_step_counter>=FT_trig) {
+      last_FT_step_size = EEPROMData.stepFineTune;
+      EEPROMData.stepFineTune = FT_step;
+      FT_step_counter = 0;
+      FT_ON = true;
+    }
+  }
+  //----------------------------------------------------
+
+  NCOFreq += EEPROMData.stepFineTune * fineTuneEncoderMove;  //AFP 11-01-22
   //freqStopBode += 1000000 * fineTuneEncoderMove;
   centerTuneFlag = 1;
   // ============  AFP 10-28-22
