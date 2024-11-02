@@ -22,7 +22,7 @@ There are three primary software forks for the T41-EP radio. Greg KF5N has produ
 
 This repository hosts the "official" vanilla fork for the [V12.6 hardware](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24). It merges the original software written by Jack and Al with the additional features written by [John Melton-G0ORX](https://github.com/g0orx/SDTVer050.0). We aspire to merge in changes and features implemented by others if they are supported by unmodified V12.6 hardware. You are encouraged to fork this repository, experiment, and submit pull requests if you develop a feature others will like! Your help tackling the list of [Issues](https://github.com/KI3P/SDTVer050.0/issues) would also be valuable.
 
-# SDTVer050.?
+# SDTVer050.2
 
 This version has the following extra software features:
 
@@ -40,6 +40,8 @@ The V12.6 hardware features currently supported in this version include:
 
 V12.6 hardware features that still need to be supported in software include:
 
+* Varying and saving TX & RX digital step attenuator values
+* CW power amp calibration using digital step attenuators
 * K9HZ LPF SWR meter
 * K9HZ LPF transverter selection
 * K9HZ LPF 100W amp selection

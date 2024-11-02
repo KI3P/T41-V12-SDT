@@ -814,7 +814,7 @@ void CaptureKeystrokes() {
           }
           break;
 
-        case UNUSED_3:  // Erase last entry
+        case BEARING_ERASE:  // Erase last entry
           delay(200L);
           bufferIndex--;                       // Move back in the buffer
           keyboardBuffer[bufferIndex] = '\0';  // Make it a string
@@ -824,7 +824,7 @@ void CaptureKeystrokes() {
           tft.print(keyboardBuffer);
           break;
 
-        case UNUSED_4:  // They are all finished
+        case BEARING_DONE:  // They are all finished
           return;
 
         default:
@@ -1517,7 +1517,7 @@ int BearingMaps() {
     if (valPin != BOGUS_PIN_READ) {              // If a button was pushed...
       buttonIndex = ProcessButtonPress(valPin);  // Winner, winner...chicken dinner!
       switch (buttonIndex) {
-        case UNUSED_4:  // Pressed pushbutton 18
+        case BEARING_DONE:  // Pressed pushbutton 18
           doneViewing = true;
           break;
         default:

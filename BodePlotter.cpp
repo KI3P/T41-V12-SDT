@@ -230,13 +230,13 @@ for(int j=0;j<63;j++){
             tft.setCursor(700, 20);
             tft.print(bands[currentBandA].name);
             break;
-          case UNUSED_1:  // Pressed pushbutton 14 save current plot
+          case BODE_SAVE:
             for (int iFreq1 = 0; iFreq1 < numBodePoints; iFreq1++) {
               BodePlotValuesSave[iFreq1] = BodePlotValues[iFreq1];
               BodePlotFreqSave[iFreq1] = BodePlotFreq[iFreq1];
             }
             break;
-          case UNUSED_3:  // Pressed pushbutton 14 save current plot
+          case BODE_BAND:
             if (plotBodeBandFlag == 0) {
               DrawBodePlotContainer();
               plotBodeBandFlag = 1;
@@ -247,7 +247,7 @@ for(int j=0;j<63;j++){
             }
             //DrawPlots();
             break;
-          case UNUSED_2:  // Pressed pushbutton 14 save current plot
+          case BODE_REF:
             if (plotBodeRefFlag == 0) {
               plotBodeRefFlag = 1;
             } else if (plotBodeRefFlag == 1) {
@@ -257,7 +257,6 @@ for(int j=0;j<63;j++){
 
             //DrawPlots();
             break;
-          case UNUSED_4:              // Pressed pushbutton 18
           case MENU_OPTION_SELECT:    // All done
             doneViewing = 1;
             BodePlotFlag = 0;
@@ -311,7 +310,7 @@ void DrawPlots() {
     if (valPin != BOGUS_PIN_READ) {  // If a button was pushed...
       buttonIndex = ProcessButtonPress(valPin);
 
-      if (buttonIndex == UNUSED_4) {  // Pressed pushbutton 18
+      if (buttonIndex == BODE_DONE) {  // Pressed pushbutton 18
         doneViewing = 1;
         break;
       }

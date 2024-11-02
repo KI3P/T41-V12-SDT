@@ -228,19 +228,16 @@ int (*functionPtr[])() = { &CWOptions, &RFOptions, &VFOSelect,
       UpdateDecoderField();
       break;
 
-    case UNUSED_1:  // 14
+    case BEARING:  // 17
       break;
 
-    case UNUSED_2:  // 15
-      break;
-
-    case UNUSED_3:  // 16
+    case DDE:  // 16
       if (calOnFlag == 0) {
         ButtonFrequencyEntry();
       }
       break;
 
-    case UNUSED_4:  // 17
+/*    case UNUSED_4:  // 17
       // temp use as PTT
 #if defined(G0ORX_FRONTPANEL)
       if(my_ptt==HIGH) {
@@ -249,7 +246,7 @@ int (*functionPtr[])() = { &CWOptions, &RFOptions, &VFOSelect,
         my_ptt=HIGH;
       }
 #endif
-      break;
+      break;*/
 
 #if defined(G0ORX_FRONTPANEL)
     case 18: // 18 - Encoder 1 SW (Volume)

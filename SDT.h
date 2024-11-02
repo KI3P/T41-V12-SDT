@@ -168,7 +168,7 @@ extern struct maps myMapFiles[];
 #define EACH_MENU_WIDTH               260
 #define BOTH_MENU_WIDTHS             (EACH_MENU_WIDTH * 2 + 30)
 
-
+/*
 #define MENU_OPTION_SELECT           0     // Switches changed for new menu system JJP 3/10/24
 #define MAIN_MENU_UP                 1
 #define BAND_UP                      2
@@ -189,12 +189,10 @@ extern struct maps myMapFiles[];
 #define UNUSED_4                    17
 #define CAL_CHANGE_TYPE             16
 #define CAL_CHANGE_INC              17
-
+*/
 
 #define MENU_BAILOUT_VALUE          17    // Used to exit from main menu list 
 
-
-/*
 #define MENU_OPTION_SELECT           0     // These are the expected values from the switch ladder
 #define MAIN_MENU_UP                 1
 #define BAND_UP                      2
@@ -210,10 +208,18 @@ extern struct maps myMapFiles[];
 #define FINE_TUNE_INCREMENT         12
 #define DECODER_TOGGLE              13
 #define MAIN_TUNE_INCREMENT         14
-#define RESET_TUNING                15    // AFP 10-11-22
-#define UNUSED_1                    16    // AFP 10-11-22
-#define BEARING                     17    // AFP 10-11-22
-*/
+#define RESET_TUNING                15
+#define DDE                         16
+#define BEARING                     17
+#define CAL_CHANGE_TYPE             16
+#define CAL_CHANGE_INC              17
+#define BODE_SAVE                   15
+#define BODE_BAND                   16
+#define BODE_REF                    17
+#define BODE_DONE                   14
+#define BEARING_ERASE               16
+#define BEARING_DONE                17
+
 //=======================================================
 #define XPIXELS                     800           // This is for the 5.0" display
 #define YPIXELS                     480
