@@ -292,7 +292,7 @@ void DoXmitCalibrate() {
   userZoomIndex = spectrum_zoom;  // Save the zoom index so it can be reset at the conclusion.   August 12, 2023
   zoomIndex = setZoom - 1;
   //ButtonZoom();
-
+  bool calState = true;
   T41State = SSB_XMIT;
   digitalWrite(CAL, CAL_ON);  // Turn on transmitter.
   digitalWrite(XMIT_MODE, XMIT_SSB);  // Turn on transmitter.
@@ -306,6 +306,15 @@ void DoXmitCalibrate() {
       else task = BOGUS_PIN_READ;
     }
     switch (task) {
+      case (CAL_TOGGLE_OUTPUT):
+        // Toggle the transmit signal between the CAL line and the RF output 
+        if (calState){
+          calState = false;
+        } else {
+          calState = true;
+        }
+        digitalWrite(CAL, calState);
+        break;
       // Toggle gain and phase
       case (CAL_CHANGE_TYPE):
         IQEXChoice = !IQEXChoice;  //IQEXChoice=0, Gain  IQEXChoice=1, Phase

@@ -213,6 +213,7 @@ extern struct maps myMapFiles[];
 #define BEARING                     17
 #define CAL_CHANGE_TYPE             16
 #define CAL_CHANGE_INC              17
+#define CAL_TOGGLE_OUTPUT           14
 #define BODE_SAVE                   15
 #define BODE_BAND                   16
 #define BODE_REF                    17
