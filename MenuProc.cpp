@@ -58,14 +58,24 @@ int CalibrateOptions(int IQChoice) {
       if (keyPressedOn == 1 && xmtMode == CW_MODE) {
         //================  CW Transmit Mode Straight Key ===========
         if (digitalRead(KEYER_DIT_INPUT_TIP) == LOW && xmtMode == CW_MODE && keyType == 0) {  //Straight Key
+          #ifdef V12HWR
+          // Calibration power is 
+          EEPROMData.powerLevel = CAL_POWER_LEVEL_W; // adjustment is 0 for this power level, so don't calculate it
+          currentRF_OutAtten = XAttenCW[currentBand];
+          SetRF_OutAtten(currentRF_OutAtten);
+          Clk2SetFreq = centerFreq*SI5351_FREQ_MULT + (long long)(CWToneOffsetsHz[EEPROMData.CWToneIndex]*SI5351_FREQ_MULT);
+          si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
+          si5351.output_enable(SI5351_CLK2, 1);
+          digitalWrite(CW_ON_OFF, CW_ON);  // LOW = CW off, HIGH = CW on
+          digitalWrite(XMIT_MODE, XMIT_CW); // KI3P, July 28, 2024
+          #else
           powerOutCW[currentBand] = (-.0133 * transmitPowerLevel * transmitPowerLevel + .7884 * transmitPowerLevel + 4.5146) * CWPowerCalibrationFactor[currentBand];
           CW_ExciterIQData();
-          xrState = TRANSMIT_STATE;
-          ShowTransmitReceiveStatus();
           SetFreq();                 //  AFP 10-02-22
-          #if !defined(V12HWR)
           digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
           #endif
+          xrState = TRANSMIT_STATE;
+          ShowTransmitReceiveStatus();
           modeSelectInR.gain(0, 0);
           modeSelectInL.gain(0, 0);
           modeSelectInExR.gain(0, 0);
@@ -75,14 +85,27 @@ int CalibrateOptions(int IQChoice) {
           modeSelectOutExR.gain(0, 0);
         }
       }
+      #ifdef V12HWR
+      XAttenCW[currentBand] = GetEncoderValueLiveInt(0,63,XAttenCW[currentBand],1,(char *)"CW PA Att.");
+      currentRF_OutAtten = XAttenCW[currentBand];
+      if (currentRF_OutAtten > 63) currentRF_OutAtten = 63;
+      if (currentRF_OutAtten < 0) currentRF_OutAtten = 0;
+      SetRF_OutAtten(currentRF_OutAtten);
+      #else
       CWPowerCalibrationFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, CWPowerCalibrationFactor[currentBand], 0.001, (char *)"CW PA Cal: ");
       powerOutCW[currentBand] = (-.0133 * transmitPowerLevel * transmitPowerLevel + .7884 * transmitPowerLevel + 4.5146) * CWPowerCalibrationFactor[currentBand];  // AFP 10-21-22
+      #endif
       val = ReadSelectedPushButton();
       if (val != BOGUS_PIN_READ) {        // Any button press??
         val = ProcessButtonPress(val);    // Use ladder value to get menu choice
         if (val == MENU_OPTION_SELECT) {  // Yep. Make a choice??
+          digitalWrite(CW_ON_OFF, CW_OFF);
           tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
+          #ifndef V12HWR
           EEPROMData.CWPowerCalibrationFactor[currentBand] = CWPowerCalibrationFactor[currentBand];
+          #else
+          EEPROMData.XAttenCW[currentBand] = XAttenCW[currentBand];
+          #endif 
           EEPROMWrite();
           calibrateFlag = 0;
           IQChoice = 5;
@@ -99,13 +122,25 @@ int CalibrateOptions(int IQChoice) {
       IQChoice = 5;
       break;
     case 4:  // SSB PA Cal
+      #ifdef V12HWR
+      EEPROMData.powerLevel = CAL_POWER_LEVEL_W; // adjustment is 0 for this power level, so don't calculate it
+      XAttenSSB[currentBand] = GetEncoderValueLiveInt(0,63,XAttenSSB[currentBand],1,(char *)"SSB PA Att.");
+      currentRF_OutAtten = XAttenSSB[currentBand];
+      if (currentRF_OutAtten > 63) currentRF_OutAtten = 63;
+      if (currentRF_OutAtten < 0) currentRF_OutAtten = 0;
+      SetRF_OutAtten(currentRF_OutAtten);
+      #else
       SSBPowerCalibrationFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, SSBPowerCalibrationFactor[currentBand], 0.001, (char *)"SSB PA Cal: ");
       powerOutSSB[currentBand] = (-.0133 * transmitPowerLevel * transmitPowerLevel + .7884 * transmitPowerLevel + 4.5146) * SSBPowerCalibrationFactor[currentBand];  // AFP 10-21-22
+      #endif
       val = ReadSelectedPushButton();
       if (val != BOGUS_PIN_READ) {        // Any button press??
         val = ProcessButtonPress(val);    // Use ladder value to get menu choice
         if (val == MENU_OPTION_SELECT) {  // Yep. Make a choice??
           tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
+          #ifdef V12HWR
+          EEPROMData.XAttenSSB[currentBand] = XAttenSSB[currentBand];
+          #endif
           EEPROMWrite();
           calibrateFlag = 0;
           IQChoice = 5;
@@ -682,27 +717,25 @@ int RFOptions() {
       returnValue = rfGainAllBands;
       break;
 
-
+    #ifdef V12HWR
     case 2:  // AFp 04-12-24 RF IN Atten
       tft.setFontScale((enum RA8875tsize)1);
       tft.fillRect(SECONDARY_MENU_X - 50, MENUS_Y, EACH_MENU_WIDTH + 50, CHAR_HEIGHT, RA8875_MAGENTA);
       tft.setTextColor(RA8875_WHITE);
       tft.setCursor(SECONDARY_MENU_X - 48, MENUS_Y + 1);
-      tft.print("In Atten=");
+      tft.print("In Att.=");
       tft.setCursor(SECONDARY_MENU_X + 180, MENUS_Y + 1);
-      tft.print((float)(-currentRF_InAtten)/2,1);
+      tft.print((float)currentRF_InAtten/2.0,2);
 
       while (true) {
         if (filterEncoderMove != 0) {
-          currentRF_InAtten += (-filterEncoderMove);
-          if (currentRF_InAtten > 63)
-            currentRF_InAtten = 63;
-          else if (currentRF_InAtten < 0)  // 100% max
-            currentRF_InAtten = 0;
+          currentRF_InAtten = currentRF_InAtten + filterEncoderMove;
+          if (currentRF_InAtten > 63) currentRF_InAtten = 63;
+          if (currentRF_InAtten < 0)  currentRF_InAtten = 0;
           SetRF_InAtten(currentRF_InAtten);
           tft.fillRect(SECONDARY_MENU_X + 180, MENUS_Y, 80, CHAR_HEIGHT, RA8875_MAGENTA);
           tft.setCursor(SECONDARY_MENU_X + 180, MENUS_Y + 1);
-          tft.print((float)(-currentRF_InAtten)/2,1);
+          tft.print((float)currentRF_InAtten/2.0,2);
           filterEncoderMove = 0;
         }
         val = ReadSelectedPushButton();  // Read pin that controls all switches
@@ -714,8 +747,8 @@ int RFOptions() {
           break;
         }
       }
-
-
+      EEPROMData.RAtten[currentBand] = currentRF_InAtten;
+      EEPROMWrite();
       break;
    
     case 3:  // AFp 04-12-24 RF OutAtten
@@ -723,54 +756,46 @@ int RFOptions() {
       tft.fillRect(SECONDARY_MENU_X - 50, MENUS_Y, EACH_MENU_WIDTH + 50, CHAR_HEIGHT, RA8875_MAGENTA);
       tft.setTextColor(RA8875_WHITE);
       tft.setCursor(SECONDARY_MENU_X - 48, MENUS_Y + 1);
-      tft.print("Out Atten=");
+      tft.print("Out Att.=");
       tft.setCursor(SECONDARY_MENU_X + 180, MENUS_Y + 1);
-      tft.print((float)(-currentRF_OutAtten)/2,1);
-
+      int adjuster;
+      if (radioState == SSB_RECEIVE_STATE){
+        adjuster = XAttenSSB[currentBand];
+      } else {
+        adjuster = XAttenCW[currentBand];
+      }
+      tft.print((float)adjuster/2.0,DEC);
       while (true) {
         if (filterEncoderMove != 0) {
-          currentRF_OutAtten += -filterEncoderMove;         
-          if (currentRF_OutAtten > 63)
-            currentRF_OutAtten = 63;
-          else if (currentRF_OutAtten < 0)  // 100% max
-            currentRF_OutAtten = 0;
-          SetRF_OutAtten(currentRF_OutAtten);
+          adjuster = adjuster + filterEncoderMove;
+          if (adjuster > 63) adjuster = 63;
+          if (adjuster < 0) adjuster = 0;
           tft.fillRect(SECONDARY_MENU_X + 180, MENUS_Y, 80, CHAR_HEIGHT, RA8875_MAGENTA);
           tft.setCursor(SECONDARY_MENU_X + 180, MENUS_Y + 1);
-          tft.print((float)(-currentRF_OutAtten)/2,1);
+          tft.print((float)adjuster/2.0,2);
           filterEncoderMove = 0;
         }
         val = ReadSelectedPushButton();  // Read pin that controls all switches
         val = ProcessButtonPress(val);
         //MyDelay(150L);
         if (val == MENU_OPTION_SELECT) {  // Make a choice??
-                                          //EEPROMData.currentMicGain = currentMicGain;
-          //EEPROMWrite();
           break;
         }
       }
-      /*while (true) {
-        if (filterEncoderMove != 0) {
-          currentRF_OutAtten += filterEncoderMove;
-          if (currentRF_OutAtten > 31)
-            currentRF_OutAtten = 31;
-          else if (currentRF_OutAtten < 0)  // 100% max
-            currentRF_OutAtten = 0;
-          SetRF_OutAtten(currentRF_OutAtten);
-          tft.fillRect(SECONDARY_MENU_X + 180, MENUS_Y, 80, CHAR_HEIGHT, RA8875_MAGENTA);
-          tft.setCursor(SECONDARY_MENU_X + 180, MENUS_Y + 1);
-          tft.print(-currentRF_OutAtten);
-          filterEncoderMove = 0;
-        }
-        val = ReadSelectedPushButton();  // Read pin that controls all switches
-        val = ProcessButtonPress(val);
-        //MyDelay(150L);
-        if (val == MENU_OPTION_SELECT) {  // Make a choice??
-                                          //EEPROMData.currentMicGain = currentMicGain;
-          //EEPROMWrite();
-          break;
-        }*/
+      // Save the transmit attenuation of the appropriate mode. We can only get
+      // to this menu when we're in receive state.
+      if (radioState == SSB_RECEIVE_STATE){
+        XAttenSSB[currentBand] = adjuster;
+        EEPROMData.XAttenSSB[currentBand] = adjuster;
+      }
+      if (radioState == CW_RECEIVE_STATE){
+        XAttenCW[currentBand] = adjuster;
+        EEPROMData.XAttenCW[currentBand] = adjuster;
+      }
+      // These new values of attenuation will be applied in loop()
+      EEPROMWrite();
       break;
+    #endif
   }
   return returnValue;
 }

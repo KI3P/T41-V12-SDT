@@ -47,6 +47,7 @@ void CalibratePreamble(int setZoom) {
   userTxRxFreq = TxRxFreq;
   userNCOFreq = NCOFreq;
   userCenterFreq = centerFreq;
+  transmitPowerLevelTemp = transmitPowerLevel;
   TxRxFreq = centerFreq;
   currentFreq = TxRxFreq;
   NCOFreq = 0L;
@@ -177,9 +178,9 @@ void DoReceiveCalibrate() {
   digitalWrite(KEY2, HIGH);
   digitalWrite(CW_ON_OFF, CW_ON);
   digitalWrite(CAL, CAL_ON);
-  SetRF_InAtten(30);
-  int out_atten = 30;
-  int previous_atten = out_atten;
+  uint8_t out_atten = 60;
+  uint8_t previous_atten = out_atten;
+  SetRF_InAtten(out_atten);
   SetRF_OutAtten(out_atten);
   zoomIndex = 0;
   calTypeFlag = 0;  // RX cal
@@ -233,7 +234,7 @@ void DoReceiveCalibrate() {
       IQPhaseCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase");
     }
     // Adjust the value of the TX attenuator:
-    out_atten = GetFineTuneValueLive(0,31,out_atten,1,(char *)"Out Atten");
+    out_atten = GetFineTuneValueLive(0,63,out_atten,1,(char *)"Out Atten");
     // Update via I2C if the attenuation value changed
     if (out_atten != previous_atten){
         SetRF_OutAtten(out_atten);
@@ -277,9 +278,9 @@ void DoXmitCalibrate() {
   tft.setCursor(550, 350);
   tft.print("Calibrate");
   IQChoice = 3;
-  SetRF_InAtten(20);
-  int out_atten = 20;
-  int previous_atten = out_atten;
+  uint8_t out_atten = 50;
+  uint8_t previous_atten = out_atten;
+  SetRF_InAtten(out_atten);
   SetRF_OutAtten(out_atten);
 //  int userFloor = currentNoiseFloor[currentBand];  // Store the user's floor setting.
   //zoomIndex = 0;
@@ -352,7 +353,7 @@ void DoXmitCalibrate() {
       IQXPhaseCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase X");
     }
     // Adjust the value of the TX attenuator:
-    out_atten = GetFineTuneValueLive(0,31,out_atten,1,(char *)"Out Atten");
+    out_atten = GetFineTuneValueLive(0,63,out_atten,1,(char *)"Out Atten");
     // Update via I2C if the attenuation value changed
     if (out_atten != previous_atten){
         SetRF_OutAtten(out_atten);
@@ -377,9 +378,7 @@ void DoXmitCalibrate() {
       void
  *****/
 void ProcessIQData2() {
-  //Serial.println("in ProcessIQData2");
-  float bandCouplingFactor[NUMBER_OF_BANDS] = { 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 }; 
-  float bandOutputFactor;                                               // AFP 2-11-23
+  float bandOutputFactor = 2.0;
   float rfGainValue;                                                    // AFP 2-11-23
   float recBandFactor[NUMBER_OF_BANDS] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
   /**********************************************************************************  AFP 12-31-20
@@ -390,8 +389,6 @@ void ProcessIQData2() {
         N_BLOCKS = FFT_LENGTH / 2 / BUFFER_SIZE * (uint32_t)DF; // should be 16 with DF == 8 and FFT_LENGTH = 512
         BUFFER_SIZE*N_BLOCKS = 2048 samples
      **********************************************************************************/
-
-  bandOutputFactor = bandCouplingFactor[currentBand] * CWPowerCalibrationFactor[currentBand] / CWPowerCalibrationFactor[1];  //AFP 2-7-23
 
   // Generate I and Q for the transmit calibration.  
   if (IQChoice == 2 || IQChoice == 3) {                                   // 

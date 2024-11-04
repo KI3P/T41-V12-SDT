@@ -658,10 +658,13 @@ float32_t IQAmpCorrectionFactor[NUMBER_OF_BANDS] = { 1, 1, 1, 1, 1.024, 1, 1, 1,
 float32_t IQPhaseCorrectionFactor[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0.007, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 float32_t IQXAmpCorrectionFactor[NUMBER_OF_BANDS] = { 1, 1, 1, 1, 1.097, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 float32_t IQXPhaseCorrectionFactor[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0.193, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-float32_t powerOutSSB[NUMBER_OF_BANDS] = { 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03 };
-float32_t powerOutCW[NUMBER_OF_BANDS] = { 0.17, 0.17, 0.017, 0.02, 0.02, 0.025, 0.03, 0.03, 0.039, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02 }; 
+float32_t powerOutSSB[NUMBER_OF_BANDS] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+float32_t powerOutCW[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; 
 float32_t CWPowerCalibrationFactor[NUMBER_OF_BANDS] = { 0.019, 0.019, 0.019, 0.019, 0.0190, .0190, .0190, .0190, .0190, .019, .019, .019, .019, .019, .019, .019, .019, .019 };
 float32_t SSBPowerCalibrationFactor[NUMBER_OF_BANDS] = { 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008 };
+int XAttenCW[NUMBER_OF_BANDS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  
+int XAttenSSB[NUMBER_OF_BANDS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int RAtten[NUMBER_OF_BANDS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 #else
 float32_t IQAmpCorrectionFactor[NUMBER_OF_BANDS] = { 1, 1.024, 1, 1, 1, 1, 1 };
 float32_t IQPhaseCorrectionFactor[NUMBER_OF_BANDS] = { 0, 0.007, 0, 0, 0, 0, 0 };
@@ -1776,7 +1779,7 @@ long currentFreqAOld2 = 0;
 long currentFreqB = 7030000;  //Initial VFOB center freq
 long currentFreqBOld2 = 0;
 long currentWPM = 15L;
-long favoriteFrequencies[13];
+long favoriteFrequencies[MAX_FAVORITES];
 
 //long frequencyCorrection;
 long incrementValues[] = { 10, 50, 100, 250, 1000, 10000, 100000, 1000000 };
@@ -1935,12 +1938,6 @@ float32_t IIR_biquad_Zoom_FFT_I_state[IIR_biquad_Zoom_FFT_N_stages * 4];
 float32_t IIR_biquad_Zoom_FFT_Q_state[IIR_biquad_Zoom_FFT_N_stages * 4];
 float32_t inv_max_input;
 float32_t inv_out_target;
-
-
-/*float32_t IQAmpCorrectionFactorUSB[7]        = {1,1.057,1,1,1,1,1};
-  float32_t IQPhaseCorrectionFactorUSB[7]      = {0,-0.02,0,0,0,0,0};
-  float32_t IQXAmpCorrectionFactorUSB[7]       = {1,1.097,1,1,1,1,1};
-  float32_t IQXPhaseCorrectionFactor[7]     = {0,0.193,0,0,0,0,0};*/
 
 float32_t IQ_sum = 0.0;
 float32_t K_dirty = 0.868;
@@ -3175,6 +3172,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         digitalWrite(RXTX, LOW);  //xmit off
         #ifdef V12HWR
         setBPFPath(BPF_IN_RX_PATH);
+        currentRF_InAtten = RAtten[currentBand];
+        SetRF_InAtten(currentRF_InAtten);
         #endif
         T41State = SSB_RECEIVE;
         xrState = RECEIVE_STATE;
@@ -3215,12 +3214,15 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       // centerTuneFlag = 1;  Not required with revised tuning scheme.  KF5N July 22, 2023
       #if !defined(V12HWR)
       digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
-      #endif
-      digitalWrite(RXTX, HIGH);  //xmit on
-      #if defined(V12HWR)
+      #else
       digitalWrite(XMIT_MODE, XMIT_SSB); // KI3P, July 28, 2024
       setBPFPath(BPF_IN_TX_PATH);
+      currentRF_OutAtten = XAttenSSB[currentBand] + getPowerLevelAdjustmentDB();
+      if (currentRF_OutAtten > 63) currentRF_OutAtten = 63;
+      if (currentRF_OutAtten < 0) currentRF_OutAtten = 0;
+      SetRF_OutAtten(currentRF_OutAtten);
       #endif
+      digitalWrite(RXTX, HIGH);  //xmit on
       xrState = TRANSMIT_STATE;
       modeSelectInR.gain(0, 0);
       modeSelectInL.gain(0, 0);
@@ -3269,6 +3271,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         xrState = RECEIVE_STATE;
         #ifdef V12HWR
         setBPFPath(BPF_IN_RX_PATH);
+        currentRF_InAtten = RAtten[currentBand];
+        SetRF_InAtten(currentRF_InAtten);
+        digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
         #endif
         //SetFreq();   // KF5N
         modeSelectInR.gain(0, 1);
@@ -3291,23 +3296,28 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       #if !(defined(V12HWR))
       powerOutCW[currentBand] = (-.0133 * transmitPowerLevel * transmitPowerLevel + .7884 * transmitPowerLevel + 4.5146) * CWPowerCalibrationFactor[currentBand];
       CW_ExciterIQData();
+      digitalWrite(MUTE, HIGH);
       #else
       si5351.output_enable(SI5351_CLK2, 1);
       //si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_8MA);
-      Clk2SetFreq = ((centerFreq)*SI5351_FREQ_MULT);
+      if (bands[currentBand].mode == DEMOD_USB){
+        Clk2SetFreq = centerFreq*SI5351_FREQ_MULT + (long long)(CWToneOffsetsHz[EEPROMData.CWToneIndex]*SI5351_FREQ_MULT);
+      }
+      if (bands[currentBand].mode == DEMOD_LSB){
+        Clk2SetFreq = centerFreq*SI5351_FREQ_MULT - (long long)(CWToneOffsetsHz[EEPROMData.CWToneIndex]*SI5351_FREQ_MULT);
+      }
       si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
       digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
       digitalWrite(XMIT_MODE, XMIT_CW); // KI3P, July 28, 2024
+      // Adjust the power level
+      currentRF_OutAtten = XAttenCW[currentBand] + getPowerLevelAdjustmentDB();
+      if (currentRF_OutAtten > 63) currentRF_OutAtten = 63;
+      if (currentRF_OutAtten < 0) currentRF_OutAtten = 0;
+      SetRF_OutAtten(currentRF_OutAtten);
+      setBPFPath(BPF_IN_TX_PATH);
       #endif
       xrState = TRANSMIT_STATE;
       ShowTransmitReceiveStatus();
-      #if !defined(V12HWR)
-      digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
-      #endif
-
-      #ifdef V12HWR
-      setBPFPath(BPF_IN_TX_PATH);
-      #endif
       modeSelectInR.gain(0, 0);
       modeSelectInL.gain(0, 0);
       modeSelectInExR.gain(0, 0);
@@ -3315,8 +3325,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       modeSelectOutR.gain(0, 0);
       modeSelectOutExL.gain(0, 0);
       modeSelectOutExR.gain(0, 0);
-      // KI3P merge notes: AFP routes signal is routed to RX input via cal here, I suspect to
-      // ensure that the transmit power is even lower when off
+      // KI3P merge notes: AFP routes signal to RX input via cal here, I suspect to
+      // ensure that the transmit power is even lower when off.
       //digitalWrite(CAL,CAL_ON); // CW Signal Off, CAL on
       cwTimer = millis();
       while (millis() - cwTimer <= cwTransmitDelay) {  //Start CW transmit timer on
@@ -3366,18 +3376,25 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       CW_ExciterIQData();
       digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
       #else
-      si5351.output_enable(SI5351_CLK2, 1);
       //si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_8MA);
-      Clk2SetFreq = ((centerFreq)*SI5351_FREQ_MULT);
+      if (bands[currentBand].mode == DEMOD_USB){
+        Clk2SetFreq = centerFreq*SI5351_FREQ_MULT + (long long)(CWToneOffsetsHz[EEPROMData.CWToneIndex]*SI5351_FREQ_MULT);
+      }
+      if (bands[currentBand].mode == DEMOD_LSB){
+        Clk2SetFreq = centerFreq*SI5351_FREQ_MULT - (long long)(CWToneOffsetsHz[EEPROMData.CWToneIndex]*SI5351_FREQ_MULT);
+      }
       si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
+      si5351.output_enable(SI5351_CLK2, 1);
       digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
       digitalWrite(XMIT_MODE, XMIT_CW); // KI3P, July 28, 2024
+      currentRF_OutAtten = XAttenCW[currentBand] + getPowerLevelAdjustmentDB();
+      if (currentRF_OutAtten > 63) currentRF_OutAtten = 63;
+      if (currentRF_OutAtten < 0) currentRF_OutAtten = 0;
+      SetRF_OutAtten(currentRF_OutAtten);
+      setBPFPath(BPF_IN_TX_PATH);
       #endif
       xrState = TRANSMIT_STATE;
       ShowTransmitReceiveStatus();
-      #ifdef V12HWR
-      setBPFPath(BPF_IN_TX_PATH);
-      #endif
       modeSelectInR.gain(0, 0);
       modeSelectInL.gain(0, 0);
       modeSelectInExR.gain(0, 0);

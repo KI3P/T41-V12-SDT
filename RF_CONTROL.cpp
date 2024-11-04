@@ -85,13 +85,13 @@ void RFControl_Enable_Prescaler(bool status) {
 }
 
 /*****
-  Purpose: Set RF input Attenuator AFP 04-12-24
+  Purpose: Set RF input Attenuator
   Parameter list:
-    void
+    uint8_t attenInx2: 2 x desired attenuation in dB. Valid range 0 to 63 (0-31.5dB attenuation)
   Return value;
     void
 *****/
-void SetRF_InAtten(int attenIn) {
+void SetRF_InAtten(int attenInx2) {
   // GPA0: RX att 0.5
   // GPA1: RX att 1
   // GPA2: RX att 2
@@ -102,22 +102,25 @@ void SetRF_InAtten(int attenIn) {
   // GPA7: MF/HF (0 means HF)
   
   if(!failed) {
-    // we ignore the last 0.5 dB bit and never set it
-    GPA_state = (GPA_state & 0b11000000) | ((attenIn << 1) & 0xFF);
+    if (attenInx2 < 0) attenInx2 = 0;
+    if (attenInx2 > 63) attenInx2 = 63;
+    GPA_state = (GPA_state & 0b11000000) | attenInx2;
     mcp.writeGPIOA(GPA_state);
-    Serial.print("InAtt State: ");
+    Serial.print("InAtt Statex2: ");
+    Serial.print((float)attenInx2/2.0,DEC);
+    Serial.print("=");
     Serial.println(GPA_state & 0b00111111 ,BIN);
   }
 }
 
 /*****
-  Purpose: Set RF output Attenuator AFP 04-12-24
+  Purpose: Set RF output Attenuator
   Parameter list:
-    int attenOut
+    uint8_t attenOutx2: 2 x desired attenuation in dB. Valid range 0 to 63 (0-31.5dB attenuation)
   Return value;
     void
 *****/
-void SetRF_OutAtten(int attenOut) {
+void SetRF_OutAtten(int attenOutx2) {
   // GPB0: TX att 0.5
   // GPB1: TX att 1
   // GPB2: TX att 2
@@ -128,10 +131,13 @@ void SetRF_OutAtten(int attenOut) {
   // GPB7: unused
   
   if(!failed) {
-    // we ignore the last 0.5 dB bit and never set it
-    GPB_state = (GPB_state & 0b11000000) | ((attenOut << 1) & 0xFF);
+    if (attenOutx2 < 0) attenOutx2 = 0;
+    if (attenOutx2 > 63) attenOutx2 = 63;
+    GPB_state = (GPB_state & 0b11000000) | attenOutx2;
     mcp.writeGPIOB(GPB_state);
-    Serial.print("OutAtt State: ");
+    Serial.print("OutAtt Statex2: ");
+    Serial.print((float)attenOutx2/2.0,DEC);
+    Serial.print("=");
     Serial.println(GPB_state & 0b00111111 ,BIN);
   }
 }

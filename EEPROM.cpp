@@ -5,7 +5,8 @@
 //DB2OO, 29-AUG-23: Don't use the overall VERSION for the EEPROM structure version information, but use a combination of an EEPROM_VERSION with the size of the EEPROMData variable.
 // The "EEPROM_VERSION" should only be changed, if the structure config_t EEPROMData has changed!
 // For V049.1 the new version in EEPROM will be "V049_808", for V049.2 it will be "V049_812"
-#define EEPROM_VERSION  "V049"
+// For V050.2 the version will be "V050_1028"; added arrays for TX & RX attenuator values for V12 hardware
+#define EEPROM_VERSION  "V050"
 static char version_size[10];
 
 /*****
@@ -138,24 +139,9 @@ FLASHMEM void EEPROMRead() {
   currentMicGain = EEPROMData.currentMicGain;
 
   //  Note: switch values are read and written to EEPROM only
-  switchThreshholds[0] = EEPROMData.switchValues[0];
-  switchThreshholds[1] = EEPROMData.switchValues[1];
-  switchThreshholds[2] = EEPROMData.switchValues[2];
-  switchThreshholds[3] = EEPROMData.switchValues[3];
-  switchThreshholds[4] = EEPROMData.switchValues[4];
-  switchThreshholds[5] = EEPROMData.switchValues[5];
-  switchThreshholds[6] = EEPROMData.switchValues[6];
-  switchThreshholds[7] = EEPROMData.switchValues[7];
-  switchThreshholds[8] = EEPROMData.switchValues[8];
-  switchThreshholds[9] = EEPROMData.switchValues[9];
-  switchThreshholds[10] = EEPROMData.switchValues[10];
-  switchThreshholds[11] = EEPROMData.switchValues[11];
-  switchThreshholds[12] = EEPROMData.switchValues[12];
-  switchThreshholds[13] = EEPROMData.switchValues[13];
-  switchThreshholds[14] = EEPROMData.switchValues[14];
-  switchThreshholds[15] = EEPROMData.switchValues[15];
-  switchThreshholds[16] = EEPROMData.switchValues[16];
-  switchThreshholds[17] = EEPROMData.switchValues[17];
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
+    switchThreshholds[i] = EEPROMData.switchValues[i];
+  }
 
   LPFcoeff = EEPROMData.LPFcoeff;  // 4 bytes
   NR_PSI = EEPROMData.NR_PSI;      // 4 bytes
@@ -166,65 +152,26 @@ FLASHMEM void EEPROMRead() {
 
   for (int i = 0; i < NUMBER_OF_BANDS; i++) {
     powerOutCW[i] = EEPROMData.powerOutCW[i];
-  }
-  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
     powerOutSSB[i] = EEPROMData.powerOutSSB[i];
-  }
-  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
-    CWPowerCalibrationFactor[i] = EEPROMData.CWPowerCalibrationFactor[i];  // 0.019;
-  }
-  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
-    SSBPowerCalibrationFactor[i] = EEPROMData.SSBPowerCalibrationFactor[i];  // 0.008
-  }
-
-  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
+    CWPowerCalibrationFactor[i] = EEPROMData.CWPowerCalibrationFactor[i];
+    SSBPowerCalibrationFactor[i] = EEPROMData.SSBPowerCalibrationFactor[i];
     IQAmpCorrectionFactor[i] = EEPROMData.IQAmpCorrectionFactor[i];
-  }
-  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
     IQPhaseCorrectionFactor[i] = EEPROMData.IQPhaseCorrectionFactor[i];
-  }
-  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
     IQXAmpCorrectionFactor[i] = EEPROMData.IQXAmpCorrectionFactor[i];
-  }
-  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
     IQXPhaseCorrectionFactor[i] = EEPROMData.IQXPhaseCorrectionFactor[i];
+    XAttenCW[i] = EEPROMData.XAttenCW[i];
+    XAttenSSB[i] = EEPROMData.XAttenSSB[i];
+    RAtten[i] = EEPROMData.RAtten[i];
   }
-  favoriteFrequencies[0] = EEPROMData.favoriteFreqs[0];
-  favoriteFrequencies[1] = EEPROMData.favoriteFreqs[1];
-  favoriteFrequencies[2] = EEPROMData.favoriteFreqs[2];
-  favoriteFrequencies[3] = EEPROMData.favoriteFreqs[3];
-  favoriteFrequencies[4] = EEPROMData.favoriteFreqs[4];
-  favoriteFrequencies[5] = EEPROMData.favoriteFreqs[5];
-  favoriteFrequencies[6] = EEPROMData.favoriteFreqs[6];
-  favoriteFrequencies[7] = EEPROMData.favoriteFreqs[7];
-  favoriteFrequencies[8] = EEPROMData.favoriteFreqs[8];
-  favoriteFrequencies[9] = EEPROMData.favoriteFreqs[9];
-  favoriteFrequencies[10] = EEPROMData.favoriteFreqs[10];
-  favoriteFrequencies[11] = EEPROMData.favoriteFreqs[11];
-  favoriteFrequencies[12] = EEPROMData.favoriteFreqs[12];
+  for (int i = 0; i < MAX_FAVORITES; i++) {
+    favoriteFrequencies[i] = EEPROMData.favoriteFreqs[i];
+  }
 
   // G0ORX
   for (int i = 0; i < NUMBER_OF_BANDS; i++) {
     lastFrequencies[i][0] = EEPROMData.lastFrequencies[i][0];
     lastFrequencies[i][1] = EEPROMData.lastFrequencies[i][1];
   }
-/*
-  lastFrequencies[0][0] = EEPROMData.lastFrequencies[0][0];
-  lastFrequencies[1][0] = EEPROMData.lastFrequencies[1][0];
-  lastFrequencies[2][0] = EEPROMData.lastFrequencies[2][0];
-  lastFrequencies[3][0] = EEPROMData.lastFrequencies[3][0];
-  lastFrequencies[4][0] = EEPROMData.lastFrequencies[4][0];
-  lastFrequencies[5][0] = EEPROMData.lastFrequencies[5][0];
-  lastFrequencies[6][0] = EEPROMData.lastFrequencies[6][0];
-
-  lastFrequencies[0][1] = EEPROMData.lastFrequencies[0][1];
-  lastFrequencies[1][1] = EEPROMData.lastFrequencies[1][1];
-  lastFrequencies[2][1] = EEPROMData.lastFrequencies[2][1];
-  lastFrequencies[3][1] = EEPROMData.lastFrequencies[3][1];
-  lastFrequencies[4][1] = EEPROMData.lastFrequencies[4][1];
-  lastFrequencies[5][1] = EEPROMData.lastFrequencies[5][1];
-  lastFrequencies[6][1] = EEPROMData.lastFrequencies[6][1];
-*/
 
   centerFreq = EEPROMData.lastFrequencies[currentBand][activeVFO];  // 4 bytes
   TxRxFreq = centerFreq;  // Need to assign TxRxFreq here or numerous subtle frequency bugs will happen.  KF5N August 7, 2023
@@ -331,6 +278,9 @@ FLASHMEM void EEPROMWrite() {
     EEPROMData.IQPhaseCorrectionFactor[i] = IQPhaseCorrectionFactor[i];
     EEPROMData.IQXAmpCorrectionFactor[i] = IQXAmpCorrectionFactor[i];
     EEPROMData.IQXPhaseCorrectionFactor[i] = IQXPhaseCorrectionFactor[i];
+    EEPROMData.XAttenCW[i] = XAttenCW[i];
+    EEPROMData.XAttenSSB[i] = XAttenSSB[i];
+    EEPROMData.RAtten[i] = RAtten[i];
   }
   //  Note:favoriteFreqs are written as they are saved.
 
@@ -523,6 +473,27 @@ FLASHMEM void EEPROMShow()
     Serial.print(i);
     Serial.print(F("] = "));
     Serial.println(EEPROMData.SSBPowerCalibrationFactor[i], 5);
+  }
+  Serial.println(F(" "));
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
+    Serial.print(F("           XAttenCW["));
+    Serial.print(i);
+    Serial.print(F("] = "));
+    Serial.println(EEPROMData.XAttenCW[i], 5);
+  }
+  Serial.println(F(" "));
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
+    Serial.print(F("           XAttenSSB["));
+    Serial.print(i);
+    Serial.print(F("] = "));
+    Serial.println(EEPROMData.XAttenSSB[i], 5);
+  }
+  Serial.println(F(" "));
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
+    Serial.print(F("           RAtten["));
+    Serial.print(i);
+    Serial.print(F("] = "));
+    Serial.println(EEPROMData.RAtten[i], 5);
   }
   Serial.println(F(" "));
   Serial.println(F("----- I/Q Calibration Parameters -----"));
@@ -842,6 +813,7 @@ void GetFavoriteFrequency() {
   Return value;
     void
 *****/
+/*
 FLASHMEM void CopyEEPROM() {
   //  EEPROM.get(EEPROM_BASE_ADDRESS, EEPROMData);                       // Read as one large chunk
 
@@ -964,6 +936,7 @@ FLASHMEM void CopyEEPROM() {
   CWToneIndex   = EEPROMData.CWToneIndex;
 
 }
+*/
 
 /*****
   Purpose: To save the default setting for EEPROM variables
@@ -1060,24 +1033,17 @@ FLASHMEM void EEPROMSaveDefaults2() {
   EEPROMData.pll_fmax = 4000.0;  // 4 bytes
 
 #if defined(V12HWR)
-  EEPROMData.powerOutCW[0] = 0.188;  // G0ORX
-  EEPROMData.powerOutCW[1] = 0.188;  // G0ORX
-  EEPROMData.powerOutCW[2] = 0.188;  // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutCW[3] = 0.21;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutCW[4] = 0.34;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutCW[5] = 0.44;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutCW[6] = 0.31;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutCW[7] = 0.31;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutCW[8] = 0.31;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutCW[9] = 0.31;    // G0ORX 4 bytes
-  EEPROMData.powerOutCW[10] = 0.31;   // G0ORX 4 bytes
-  EEPROMData.powerOutCW[11] = 0.31;   // G0ORX 4 bytes
-  EEPROMData.powerOutCW[12] = 0.31;   // G0ORX 4 bytes
-  EEPROMData.powerOutCW[13] = 0.31;   // G0ORX 4 bytes
-  EEPROMData.powerOutCW[14] = 0.31;   // G0ORX 4 bytes
-  EEPROMData.powerOutCW[15] = 0.31;   // G0ORX 4 bytes
-  EEPROMData.powerOutCW[16] = 0.31;   // G0ORX 4 bytes
-  EEPROMData.powerOutCW[17] = 0.31;   // G0ORX 4 bytes
+  for (int i=0; i<NUMBER_OF_BANDS; i++){
+    EEPROMData.XAttenCW[i] = 0;
+    EEPROMData.XAttenSSB[i] = 0;
+    EEPROMData.RAtten[i] = 0;
+  }
+#endif
+
+#if defined(V12HWR)
+  for (int i=0; i<NUMBER_OF_BANDS; i++){
+    EEPROMData.powerOutCW[i] = 0.0;
+  }
 #else
   EEPROMData.powerOutCW[0] = 0.188;  // 4 bytes  AFP 10-21-22
   EEPROMData.powerOutCW[1] = 0.21;   // 4 bytes  AFP 10-21-22
@@ -1089,24 +1055,9 @@ FLASHMEM void EEPROMSaveDefaults2() {
 #endif // V12HWR
 
 #if defined(V12HWR)
-  EEPROMData.powerOutSSB[0] = 0.188;  // G0ORX
-  EEPROMData.powerOutSSB[1] = 0.188;  // G0ORX
-  EEPROMData.powerOutSSB[2] = 0.188;  // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutSSB[3] = 0.11;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutSSB[4] = 0.188;  // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutSSB[5] = 0.21;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutSSB[6] = 0.23;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutSSB[7] = 0.23;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutSSB[8] = 0.24;   // 4 bytes  AFP 10-21-22
-  EEPROMData.powerOutSSB[9] = 0.24;   // G0ORX 4 bytes
-  EEPROMData.powerOutSSB[10] = 0.24;   // G0ORX 4 bytes
-  EEPROMData.powerOutSSB[11] = 0.24;   // G0ORX 4 bytes
-  EEPROMData.powerOutSSB[12] = 0.24;   // G0ORX 4 bytes
-  EEPROMData.powerOutSSB[13] = 0.24;   // G0ORX 4 bytes
-  EEPROMData.powerOutSSB[14] = 0.24;   // G0ORX 4 bytesE
-  EEPROMData.powerOutSSB[15] = 0.24;   // G0ORX 4 bytes
-  EEPROMData.powerOutSSB[16] = 0.24;   // G0ORX 4 bytes
-  EEPROMData.powerOutSSB[17] = 0.24;   // G0ORX 4 bytes
+  for (int i=0; i<NUMBER_OF_BANDS; i++){
+    EEPROMData.powerOutSSB[i] = 1.0;
+  }
 #else
   EEPROMData.powerOutSSB[0] = 0.188;  // 4 bytes  AFP 10-21-22
   EEPROMData.powerOutSSB[1] = 0.11;   // 4 bytes  AFP 10-21-22
@@ -1936,7 +1887,7 @@ FLASHMEM int CopySDToEEPROM() {
   RedrawDisplayScreen();
   return 1;
 }
-#endif // USE_JSON
+#endif // !USE_JSON
 
 
 
@@ -2389,7 +2340,7 @@ int CopyEEPROMToSD() {
   RedrawDisplayScreen();
   return 1;
 }
-#endif // USE_JSON
+#endif // !USE_JSON
 
 /*****
   Purpose: See if the EEPROM has ever been set

@@ -317,7 +317,7 @@ int GetFineTuneValueLive(int minValue, int maxValue, int startValue, int increme
   tft.setCursor(257, 450);
   tft.print(prompt);
   tft.setCursor(440, 450);
-  tft.print(startValue, 10);
+  tft.print((float)startValue/2.0, 2);
   if (fineTuneEncoderMove != 0) {
     currentValue += fineTuneEncoderMove * increment;  // Bump up or down...
     if (currentValue < minValue)
@@ -326,7 +326,7 @@ int GetFineTuneValueLive(int minValue, int maxValue, int startValue, int increme
       currentValue = maxValue;
 
     tft.setCursor(440, 450);
-    tft.print(startValue, 10);
+    tft.print((float)startValue/2.0, 2);
     fineTuneEncoderMove = 0;
   }
   return currentValue;
@@ -344,8 +344,7 @@ int GetFineTuneValueLive(int minValue, int maxValue, int startValue, int increme
   Return value;
     int                         the new value
 *****/
-float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[])  //AFP 10-22-22
-{
+float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals){
   float currentValue = startValue;
   tft.setFontScale((enum RA8875tsize)1);
   tft.setTextColor(RA8875_WHITE);
@@ -353,12 +352,13 @@ float GetEncoderValueLive(float minValue, float maxValue, float startValue, floa
   tft.setCursor(257, 1);
   tft.print(prompt);
   tft.setCursor(440, 1);
-  if (abs(startValue) > 2) {
-    tft.print(startValue, 0);
-  } else {
-    tft.print(startValue, 3);
+  if (Ndecimals < 0){
+    Ndecimals = 0;
   }
-  //while (true) {
+  if (Ndecimals > 3){
+    Ndecimals = 3;
+  }
+  tft.print(startValue, Ndecimals);
   if (filterEncoderMove != 0) {
     currentValue += filterEncoderMove * increment;  // Bump up or down...
     if (currentValue < minValue)
@@ -377,6 +377,39 @@ float GetEncoderValueLive(float minValue, float maxValue, float startValue, floa
   }
   //tft.setTextColor(RA8875_WHITE);
   return currentValue;
+}
+
+int GetEncoderValueLiveInt(int minValue, int maxValue, int startValue, int increment, char prompt[]){
+  int currentValue = startValue;
+  tft.setFontScale((enum RA8875tsize)1);
+  tft.setTextColor(RA8875_WHITE);
+  tft.fillRect(250, 0, 285, CHAR_HEIGHT, RA8875_BLACK);  // Increased rectangle size to full erase value.  KF5N August 12, 2023
+  tft.setCursor(257, 1);
+  tft.print(prompt);
+  tft.setCursor(440, 1);
+  tft.print((float)startValue/2.0, 2);
+  if (filterEncoderMove != 0) {
+    currentValue += filterEncoderMove * increment;  // Bump up or down...
+    if (currentValue < minValue)
+      currentValue = minValue;
+    else if (currentValue > maxValue)
+      currentValue = maxValue;
+    tft.setCursor(440, 1);
+    tft.print((float)startValue/2.0, 2);
+    filterEncoderMove = 0;
+  }
+  return currentValue;
+}
+
+float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[])  //AFP 10-22-22
+{
+  int N = 0;
+  if (abs(startValue) > 2) {
+    N = 0;
+  } else {
+    N = 3;
+  }
+  return GetEncoderValueLive(minValue, maxValue, startValue, increment, prompt, N);
 }
 
 

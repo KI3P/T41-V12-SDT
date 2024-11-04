@@ -458,6 +458,7 @@ void ShutdownTeensy(void);
 #define CAL_ON                      1
 #define CW_OFF                      0
 #define CW_ON                       1
+#define CAL_POWER_LEVEL_W           10
 // KI3P: V12 does not have a hardware audio amp mute. It reuses the pin for calibration
 #ifdef V12HWR
 #define CAL                         38    // RX board calibration control (H=CAL,L=normal)
@@ -1401,7 +1402,10 @@ extern struct config_t {
   float IQPhaseCorrectionFactor[NUMBER_OF_BANDS];
   float IQXAmpCorrectionFactor[NUMBER_OF_BANDS];
   float IQXPhaseCorrectionFactor[NUMBER_OF_BANDS];
-  long favoriteFreqs[13];
+  int XAttenCW[NUMBER_OF_BANDS];  // transmit digital attenuation in CW mode
+  int XAttenSSB[NUMBER_OF_BANDS]; // transmit digital attenuation in SSB mode
+  int RAtten[NUMBER_OF_BANDS];    // receive digital attenuation
+  long favoriteFreqs[MAX_FAVORITES];
   long lastFrequencies[NUMBER_OF_BANDS][2];
 
   long centerFreq               = 7030000L;              // 4 bytes
@@ -1510,7 +1514,7 @@ extern Menu_D Menus[];
 //======================================== Global variables declarations ===============================================
 //========================== Some are not in alpha order because of forward references =================================
 
-
+const float CWToneOffsetsHz[] = { 562.5, 656.5, 750.0, 843.75 }; // these correspond to the definitions in CWProcessing.cpp
 extern bool save_last_frequency;
 extern bool gEEPROM_current;            //mdrhere does the data in EEPROM match the current structure contents
 extern bool NR_gain_smooth_enable;
@@ -2086,11 +2090,9 @@ extern float32_t IQAmpCorrectionFactor[];
 extern float32_t IQPhaseCorrectionFactor[];
 extern float32_t IQXAmpCorrectionFactor[];
 extern float32_t IQXPhaseCorrectionFactor[];
-
-/*extern float32_t IQAmpCorrectionFactorUSB[];
-extern float32_t IQPhaseCorrectionFactorUSB[];
-extern float32_t IQXAmpCorrectionFactorUSB[];
-extern float32_t IQXPhaseCorrectionFactor[];*/
+extern int XAttenCW[];
+extern int XAttenSSB[];
+extern int RAtten[];
 
 extern float32_t IQ_sum;
 extern float32_t K_dirty;
@@ -2406,8 +2408,11 @@ void FreqShift2();
 float goertzel_mag(int numSamples, int TARGET_FREQUENCY, int SAMPLING_RATE, float* data);
 int  GetEncoderValue(int minValue, int maxValue, int startValue, int increment, char prompt[]);
 float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[]);//AFP 10-22-22
+float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals);
+int GetEncoderValueLiveInt(int minValue, int maxValue, int startValue, int increment, char prompt[]);
 int GetFineTuneValueLive(int minValue, int maxValue, int startValue, int increment, char prompt[]);
 void GetFavoriteFrequency();
+int getPowerLevelAdjustmentDB();
 
 //double HaversineDistance(double hLat, double hLon, double dxLat, double dxLon);
 float HaversineDistance(float dxLat, float dxLon);

@@ -37,11 +37,10 @@ The V12.6 hardware features currently supported in this version include:
 * V12.6 BPF board
 * K9HZ LPF board (band select only)
 * G0ORX / K9HZ MCP23017 front panel and encoders
+* IQ and power amp calibration
 
 V12.6 hardware features that still need to be supported in software include:
 
-* Varying and saving TX & RX digital step attenuator values
-* CW power amp calibration using digital step attenuators
 * K9HZ LPF SWR meter
 * K9HZ LPF transverter selection
 * K9HZ LPF 100W amp selection

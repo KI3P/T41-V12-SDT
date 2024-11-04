@@ -22,6 +22,10 @@ void ShutdownTeensy()  // KI3P
   digitalWrite(SHUTDOWN_COMPLETE, 0);
 }
 
+int getPowerLevelAdjustmentDB(){
+  return (int)round(- 20*log10f_fast((float)EEPROMData.powerLevel / (float)CAL_POWER_LEVEL_W));
+}
+
 /*****
   Purpose: Generate Array with variable sinewave frequency tone AFP 05-17-22
   Parameter list:

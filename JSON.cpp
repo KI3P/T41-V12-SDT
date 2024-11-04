@@ -79,7 +79,10 @@ FLASHMEM void loadConfiguration(const char *filename, config_t &EEPROMData) {
   for (int i = 0; i < NUMBER_OF_BANDS; i++) EEPROMData.IQPhaseCorrectionFactor[i] = doc["IQPhaseCorrectionFactor"][i];
   for (int i = 0; i < NUMBER_OF_BANDS; i++) EEPROMData.IQXAmpCorrectionFactor[i] = doc["IQXAmpCorrectionFactor"][i];
   for (int i = 0; i < NUMBER_OF_BANDS; i++) EEPROMData.IQXPhaseCorrectionFactor[i] = doc["IQXPhaseCorrectionFactor"][i];
-  for (int i = 0; i < 13; i++) EEPROMData.favoriteFreqs[i] = doc["favoriteFreqs"][i];
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) EEPROMData.XAttenCW[i] = doc["XAttenCW"][i];
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) EEPROMData.XAttenSSB[i] = doc["XAttenSSB"][i];
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) EEPROMData.RAtten[i] = doc["RAtten"][i];
+  for (int i = 0; i < MAX_FAVORITES; i++) EEPROMData.favoriteFreqs[i] = doc["favoriteFreqs"][i];
   for (int i = 0; i < NUMBER_OF_BANDS; i++) {
     for (int j = 0; j < 2; j++) EEPROMData.lastFrequencies[i][j] = doc["lastFrequencies"][i][j];
   }
@@ -165,7 +168,10 @@ Serial.println(String(__FUNCTION__)+": "+String(filename));
   for (int i = 0; i < NUMBER_OF_BANDS; i++) doc["IQPhaseCorrectionFactor"][i] = EEPROMData.IQPhaseCorrectionFactor[i];
   for (int i = 0; i < NUMBER_OF_BANDS; i++) doc["IQXAmpCorrectionFactor"][i] = EEPROMData.IQXAmpCorrectionFactor[i];
   for (int i = 0; i < NUMBER_OF_BANDS; i++) doc["IQXPhaseCorrectionFactor"][i] = EEPROMData.IQXPhaseCorrectionFactor[i];
-  for (int i = 0; i < 13; i++) doc["favoriteFreqs"][i] = EEPROMData.favoriteFreqs[i];
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) doc["XAttenCW"][i] = EEPROMData.XAttenCW[i];
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) doc["XAttenSSB"][i] = EEPROMData.XAttenSSB[i];
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) doc["RAtten"][i] = EEPROMData.RAtten[i];
+  for (int i = 0; i < MAX_FAVORITES; i++) doc["favoriteFreqs"][i] = EEPROMData.favoriteFreqs[i];
   for (int i = 0; i < NUMBER_OF_BANDS; i++) {
     for (int j = 0; j < 2; j++) doc["lastFrequencies"][i][j] = EEPROMData.lastFrequencies[i][j];
   }
