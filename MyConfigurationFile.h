@@ -59,6 +59,9 @@
 // G0ORX_AUDIO_DISPLAY draws a Time Domain plot of the Microphone when transmitting
 #define G0ORX_AUDIO_DISPLAY
 
+// Fast tune function on fine tune knob from Harry Brash GM3RVL
+#define FAST_TUNE
+
 //====================== User Specific Preferences =============
 
 #define DEBUG 		                1                                         // Uncommented for debugging, comment out for normal use

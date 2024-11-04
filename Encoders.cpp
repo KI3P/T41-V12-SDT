@@ -2,6 +2,7 @@
 #include "SDT.h"
 #endif
 
+#ifdef FAST_TUNE
 // Fine frequency tune control with variable speed by Harry Brash GM3RVL
 bool FastTune = true;    //  HMB
 uint32_t FT_last_time;   // millis() of last fine tune step   HMB
@@ -14,6 +15,7 @@ const int FT_trig = 4;  // number of short steps to trigger fast tune,
 const int FT_step = 500;  // Hz step in Fast Tune
 unsigned long MS_temp;    // HMB
 unsigned long FT_delay;   // HMB
+#endif // FAST_TUNE
 
 /*****
   Purpose: EncoderFilter
@@ -603,6 +605,7 @@ FASTRUN  // Causes function to be allocated in RAM1 at startup for fastest perfo
   if (calOnFlag) return; 
   // if not, then continue using the fine tune encoder for its named purpose
 
+  #ifdef FAST_TUNE
   //----------------------------------------------------
   // Fine frequency tune control with variable speed by Harry Brash GM3RVL
   MS_temp = millis();   // HMB...
@@ -626,6 +629,7 @@ FASTRUN  // Causes function to be allocated in RAM1 at startup for fastest perfo
     }
   }
   //----------------------------------------------------
+  #endif // FAST_TUNE
 
   NCOFreq += EEPROMData.stepFineTune * fineTuneEncoderMove;  //AFP 11-01-22
   //freqStopBode += 1000000 * fineTuneEncoderMove;
