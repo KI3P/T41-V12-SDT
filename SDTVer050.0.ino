@@ -665,6 +665,7 @@ float32_t SSBPowerCalibrationFactor[NUMBER_OF_BANDS] = { 0.008, 0.008, 0.008, 0.
 int XAttenCW[NUMBER_OF_BANDS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  
 int XAttenSSB[NUMBER_OF_BANDS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int RAtten[NUMBER_OF_BANDS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int antennaSelection[NUMBER_OF_BANDS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 #else
 float32_t IQAmpCorrectionFactor[NUMBER_OF_BANDS] = { 1, 1.024, 1, 1, 1, 1, 1 };
 float32_t IQPhaseCorrectionFactor[NUMBER_OF_BANDS] = { 0, 0.007, 0, 0, 0, 0, 0 };
@@ -715,7 +716,11 @@ const char *labels[] = { "Select", "Menu Up", "Band Up",
 const char *secondaryChoices[][14] = {
   //=================== AFP 03-30-24 V012 Bode Plot
   { "WPM", "Straight Key", "Keyer", "CW Filter", "Paddle Flip", "Sidetone Note", "Sidetone Vol", "Xmit Delay", "Cancel" },  // CW             0
-  { "Power level", "Gain", "RF In Atten", "RF Out Atten","Cancel" },                                                                                      // RF             1
+  #ifdef V12HWR
+  { "Power level", "Gain", "RF In Atten", "RF Out Atten","Antenna","100W PA","XVTR","Cancel" },                                                        // RF             1
+  #else
+  { "Power level", "Gain","Cancel" },                                                                                      
+  #endif
   { "VFO A", "VFO B", "Split", "Cancel" },                                                                                  // VFO            2
   { "Save Current", "Set Defaults", "Get Favorite", "Set Favorite", "EEPROM-->SD", "SD-->EEPROM", "SD Dump", "Cancel" },    // EEPROM         3
   { "Off", "Long", "Slow", "Medium", "Fast", "Cancel" },                                                                    // AGC            4

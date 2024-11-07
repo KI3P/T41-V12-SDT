@@ -48,5 +48,8 @@ extern uint8_t LPF_GPA_state;
 void K9HZLPFControlInit();
 void setLPFBand(int currentBand);
 void setBPFPath(int pathSelection);
+void selectAntenna(int antennaNum);
+void select100WPA(bool selection);
+void selectXVTR(bool selection);
 
 #endif // K9HZ_LPF_CONTROL_h

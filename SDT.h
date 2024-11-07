@@ -1408,6 +1408,8 @@ extern struct config_t {
   long favoriteFreqs[MAX_FAVORITES];
   long lastFrequencies[NUMBER_OF_BANDS][2];
 
+  int antennaSelection[NUMBER_OF_BANDS];
+  
   long centerFreq               = 7030000L;              // 4 bytes
 
   // New user config data                                JJP 7-3-23
@@ -2093,6 +2095,7 @@ extern float32_t IQXPhaseCorrectionFactor[];
 extern int XAttenCW[];
 extern int XAttenSSB[];
 extern int RAtten[];
+extern int antennaSelection[];
 
 extern float32_t IQ_sum;
 extern float32_t K_dirty;

@@ -162,6 +162,7 @@ FLASHMEM void EEPROMRead() {
     XAttenCW[i] = EEPROMData.XAttenCW[i];
     XAttenSSB[i] = EEPROMData.XAttenSSB[i];
     RAtten[i] = EEPROMData.RAtten[i];
+    antennaSelection[i] = EEPROMData.antennaSelection[i];
   }
   for (int i = 0; i < MAX_FAVORITES; i++) {
     favoriteFrequencies[i] = EEPROMData.favoriteFreqs[i];
@@ -281,6 +282,7 @@ FLASHMEM void EEPROMWrite() {
     EEPROMData.XAttenCW[i] = XAttenCW[i];
     EEPROMData.XAttenSSB[i] = XAttenSSB[i];
     EEPROMData.RAtten[i] = RAtten[i];
+    EEPROMData.antennaSelection[i] = antennaSelection[i];
   }
   //  Note:favoriteFreqs are written as they are saved.
 
@@ -494,6 +496,13 @@ FLASHMEM void EEPROMShow()
     Serial.print(i);
     Serial.print(F("] = "));
     Serial.println(EEPROMData.RAtten[i], 5);
+  }
+  Serial.println(F(" "));
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
+    Serial.print(F("           antennaSelection["));
+    Serial.print(i);
+    Serial.print(F("] = "));
+    Serial.println(EEPROMData.antennaSelection[i], 5);
   }
   Serial.println(F(" "));
   Serial.println(F("----- I/Q Calibration Parameters -----"));
@@ -1037,6 +1046,7 @@ FLASHMEM void EEPROMSaveDefaults2() {
     EEPROMData.XAttenCW[i] = 0;
     EEPROMData.XAttenSSB[i] = 0;
     EEPROMData.RAtten[i] = 0;
+    EEPROMData.antennaSelection[i] = 0;
   }
 #endif
 

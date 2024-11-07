@@ -671,24 +671,17 @@ int MicOptions()  // AFP 09-22-22 All new
 }
 
 /*****
-  Purpose: Present the bands available and return the selection
+  Purpose: Present the RF options available and return the selection
 
   Parameter list:
     void
 
   Return value12
-    int           an index into the band array
+    int           varies depending on RF submenu
 *****/
 int RFOptions() {
-
   int returnValue = 0;
- 
   int val;
-  //  rfSet = SubmenuSelect(rfOptions, 3, rfSet);
-
-  //  switch (rfSet) {
-//  Serial.print("secondaryMenuChoiceMade = ");
-//  Serial.println(secondaryMenuChoiceMade);
   switch (secondaryMenuIndex) {
     case 0:  // Power Level JJP 11/17/23 JJP
       transmitPowerLevel = (float)GetEncoderValue(1, 20, transmitPowerLevel, 1, (char *)"Power: ");
@@ -749,9 +742,10 @@ int RFOptions() {
       }
       EEPROMData.RAtten[currentBand] = currentRF_InAtten;
       EEPROMWrite();
+      returnValue = currentRF_InAtten;
       break;
    
-    case 3:  // AFp 04-12-24 RF OutAtten
+    case 3:{  // AFp 04-12-24 RF OutAtten
       tft.setFontScale((enum RA8875tsize)1);
       tft.fillRect(SECONDARY_MENU_X - 50, MENUS_Y, EACH_MENU_WIDTH + 50, CHAR_HEIGHT, RA8875_MAGENTA);
       tft.setTextColor(RA8875_WHITE);
@@ -794,8 +788,31 @@ int RFOptions() {
       }
       // These new values of attenuation will be applied in loop()
       EEPROMWrite();
-      break;
+      returnValue = adjuster;
+      break;}
+    case 4:{ // Antenna
+      antennaSelection[currentBand] = GetEncoderValue(0, 3, antennaSelection[currentBand], 1, (char *)"Antenna: ");  // Argument: min, max, start, increment
+      selectAntenna(antennaSelection[currentBand]);
+      EEPROMData.antennaSelection[currentBand] = antennaSelection[currentBand];
+      EEPROMWrite();
+      returnValue = antennaSelection[currentBand];
+      break;}
+    case 5:{ // 100W PA
+      int pa = GetEncoderValue(0, 1, 0, 1, (char *)"100W PA: ");  // Argument: min, max, start, increment
+      if (pa == 0) select100WPA(false);
+      if (pa == 1) select100WPA(true);
+      returnValue = pa;
+      break;}
+    case 6:{ // XVTR
+      int xv = GetEncoderValue(0, 1, 0, 1, (char *)"XVTR: ");  // Argument: min, max, start, increment
+      if (xv == 0) selectXVTR(false);
+      if (xv == 1) selectXVTR(true);
+      returnValue = xv;
+      break;}
     #endif
+    default: // Cancel
+      returnValue = -1;
+      break;
   }
   return returnValue;
 }
