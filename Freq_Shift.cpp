@@ -85,7 +85,7 @@ void FreqShift2()
     // ); //AFP 10-04-22
     // EncoderFineTune();      //AFP 10-04-22
 
-    if (NCOFreq > 40000L) {
+    if ((NCOFreq > 40000L) & (spectrum_zoom != 0)) {
       NCOFreq = 40000L;
     }
     // centerFreq += freqIncrement;

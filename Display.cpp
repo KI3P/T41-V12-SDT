@@ -1148,6 +1148,8 @@ void UpdateIncrementField() {
     selectFTIndex = 0;
   }
   stepFineTune = selectFT[selectFTIndex];
+  EEPROMData.stepFineTune = stepFineTune;
+  EEPROMWrite();
 
   DisplayIncrementField();
 }
