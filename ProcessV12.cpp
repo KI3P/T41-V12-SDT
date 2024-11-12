@@ -12,6 +12,14 @@
 #define TX_STATE            1
 #define TX_STATE_RX_PHASE   2
 #define TX_STATE_TX_PHASE   3
+#define GAIN_COARSE_MAX       1.3
+#define GAIN_COARSE_MIN       0.7
+#define PHASE_COARSE_MAX      0.2
+#define PHASE_COARSE_MIN      -0.2
+#define GAIN_COARSE_STEP2_N   4
+#define PHASE_COARSE_STEP2_N  4
+#define GAIN_FINE_N           5
+#define PHASE_FINE_N          5
 static int stateMachine;
 static bool FFTupdated;
 static int val;
@@ -162,6 +170,40 @@ void CalibratePost() {
    Return value:
       void
  *****/
+
+void tuneCalParameter(int indexStart, int indexEnd, float increment, float *IQCorrectionFactor, char prompt[]){
+  float adjMin = 100;
+  int adjMinIndex = 0;
+  float correctionFactor = *IQCorrectionFactor;
+  for (int i = indexStart; i < indexEnd; i++){
+    *IQCorrectionFactor = correctionFactor + i*increment;
+    adjdB = ShowSpectrum2();
+    FFTupdated = false;
+    while (!FFTupdated){
+      adjdB = ShowSpectrum2();
+    }
+    adjdB = ShowSpectrum2();
+    //Serial.println(String(i)+","+String(adjdB));
+    if (adjdB < adjMin){
+      adjMin = adjdB;
+      adjMinIndex = i;
+    }
+    tft.setFontScale((enum RA8875tsize)1);
+    tft.setTextColor(RA8875_WHITE);
+    tft.fillRect(250, 0, 285, CHAR_HEIGHT, RA8875_BLACK);  // Increased rectangle size to full erase value.  KF5N August 12, 2023
+    tft.setCursor(257, 1);
+    tft.print(prompt);
+    tft.setCursor(440, 1);
+    tft.print(*IQCorrectionFactor, 3);
+  }
+  *IQCorrectionFactor = correctionFactor + adjMinIndex*increment;
+  sprintf(strBuf,"Min (%d, %4.3f) = %2.1f",
+                                  adjMinIndex,
+                                  *IQCorrectionFactor,
+                                  adjMin);
+  Serial.println(strBuf);
+}
+
 void DoReceiveCalibrate() {
   stateMachine = RX_STATE;        // what calibration step are we in 
   int task = -1;                  // captures the button presses
@@ -206,7 +248,35 @@ void DoReceiveCalibrate() {
       else task = BOGUS_PIN_READ;
     }
     switch (task) {
-      case (CAL_TOGGLE_OUTPUT):
+      case (CAL_AUTOCAL):{
+        // Run through the autocal routine
+        if (stateMachine == RX_STATE){
+          // Step 1: Gain in 0.01 steps from 0.5 to 1.5
+          int gainStepsCoarseN = (int)((GAIN_COARSE_MAX-GAIN_COARSE_MIN)/0.01/2);
+          IQAmpCorrectionFactor[currentBand] = 1.0;
+          Serial.print("Step 1: ");
+          tuneCalParameter(-gainStepsCoarseN, gainStepsCoarseN+1, 0.01, &IQAmpCorrectionFactor[currentBand],(char *)"IQ Gain");
+          // Step 2: phase changes in 0.01 steps from -0.2 to 0.2. Find the minimum.
+          int phaseStepsCoarseN = (int)((PHASE_COARSE_MAX-PHASE_COARSE_MIN)/0.01/2);
+          IQPhaseCorrectionFactor[currentBand] = 0.0;
+          Serial.print("Step 2: ");
+          tuneCalParameter(-phaseStepsCoarseN, phaseStepsCoarseN+1, 0.01, &IQPhaseCorrectionFactor[currentBand],(char *)"IQ Phase");
+          // Step 3: Gain in 0.01 steps from 4 steps below previous minimum to 4 steps above          
+          Serial.print("Step 3: ");
+          tuneCalParameter(-GAIN_COARSE_STEP2_N, GAIN_COARSE_STEP2_N+1, 0.01, &IQAmpCorrectionFactor[currentBand],(char *)"IQ Gain");
+          // Step 4: phase in 0.01 steps from 4 steps below previous minimum to 4 steps above
+          Serial.print("Step 4: ");
+          tuneCalParameter(-PHASE_COARSE_STEP2_N, PHASE_COARSE_STEP2_N+1, 0.01, &IQPhaseCorrectionFactor[currentBand],(char *)"IQ Phase");
+          // Step 5: gain in 0.001 steps 10 steps below to 10 steps above
+          Serial.print("Step 5: ");
+          tuneCalParameter(-GAIN_FINE_N, GAIN_FINE_N+1, 0.001, &IQAmpCorrectionFactor[currentBand],(char *)"IQ Gain");
+          // Step 6: phase in 0.001 steps 10 steps below to 10 steps above
+          Serial.print("Step 6: ");
+          tuneCalParameter(-PHASE_FINE_N, PHASE_FINE_N+1, 0.001, &IQPhaseCorrectionFactor[currentBand],(char *)"IQ Phase");
+        }
+        break;
+      }
+      case (CAL_TOGGLE_OUTPUT):{
         // Toggle the transmit signal between the CAL line and the RF output 
         if (calState){
           calState = false;
@@ -214,12 +284,12 @@ void DoReceiveCalibrate() {
           calState = true;
         }
         digitalWrite(CAL, calState);
-        break;
+        break;}
         // Toggle gain and phase
-      case CAL_CHANGE_TYPE:
+      case CAL_CHANGE_TYPE:{
         IQCalType = !IQCalType;
-        break;
-      case CAL_CHANGE_INC: 
+        break;}
+      case CAL_CHANGE_INC: {
         corrChange = !corrChange;
         if (corrChange == 1) {
           correctionIncrement = 0.001;  //AFP 2-7-23
@@ -230,14 +300,14 @@ void DoReceiveCalibrate() {
         tft.fillRect(400, 110, 50, tft.getFontHeight(), RA8875_BLACK);
         tft.setCursor(400, 110);
         tft.print(correctionIncrement, 3);
-        break;
+        break;}
 
-      case MENU_OPTION_SELECT:
+      case MENU_OPTION_SELECT:{
         tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
         EEPROMData.IQAmpCorrectionFactor[currentBand] = IQAmpCorrectionFactor[currentBand];
         EEPROMData.IQPhaseCorrectionFactor[currentBand] = IQPhaseCorrectionFactor[currentBand];
         IQChoice = 6;
-        break;
+        break;}
       default:
         break;
     }                                     // End switch
@@ -276,7 +346,7 @@ void DoReceiveCalibrate() {
    CAUTION: Assumes a spaces[] array is defined
  *****/
 void DoXmitCalibrate() {
-  stateMachine = TX_STATE;
+  stateMachine = TX_STATE_RX_PHASE;
   int task = -1;
   int lastUsedTask = -2;
   CalibratePreamble(0);
@@ -308,12 +378,13 @@ void DoXmitCalibrate() {
   zoomIndex = setZoom - 1;
   bool calState = true;
   T41State = SSB_XMIT;
+
   digitalWrite(CAL, CAL_ON);  // Turn on transmitter.
   digitalWrite(XMIT_MODE, XMIT_SSB);  // Turn on transmitter.
   ShowTransmitReceiveStatus();
 
   while (true) {
-    ShowSpectrum2();
+    adjdB = ShowSpectrum2();
     val = ReadSelectedPushButton();
     if (val != BOGUS_PIN_READ) {
       val = ProcessButtonPress(val);
@@ -321,7 +392,7 @@ void DoXmitCalibrate() {
       else task = BOGUS_PIN_READ;
     }
     switch (task) {
-      case (CAL_TOGGLE_OUTPUT):
+      case (CAL_TOGGLE_OUTPUT):{
         // Toggle the transmit signal between the CAL line and the RF output 
         if (calState){
           calState = false;
@@ -329,13 +400,13 @@ void DoXmitCalibrate() {
           calState = true;
         }
         digitalWrite(CAL, calState);
-        break;
+        break;}
       // Toggle gain and phase
-      case (CAL_CHANGE_TYPE):
+      case (CAL_CHANGE_TYPE):{
         IQEXChoice = !IQEXChoice;  //IQEXChoice=0, Gain  IQEXChoice=1, Phase
-        break;
+        break;}
       // Toggle increment value
-      case (CAL_CHANGE_INC):  //
+      case (CAL_CHANGE_INC):{  //
         corrChange = !corrChange;
         if (corrChange == 1) {          // Toggle increment value
           correctionIncrement = 0.001;  // AFP 2-11-23
@@ -346,14 +417,14 @@ void DoXmitCalibrate() {
         tft.fillRect(400, 110, 50, tft.getFontHeight(), RA8875_BLACK);
         tft.setCursor(400, 110);
         tft.print(correctionIncrement, 3);
-        break;
-      case (MENU_OPTION_SELECT):  // Save values and exit calibration.
+        break;}
+      case (MENU_OPTION_SELECT):{  // Save values and exit calibration.
         tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
         EEPROMData.IQXAmpCorrectionFactor[currentBand] = IQXAmpCorrectionFactor[currentBand];
         EEPROMData.IQXPhaseCorrectionFactor[currentBand] = IQXPhaseCorrectionFactor[currentBand];
         tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
         IQChoice = 6;  // AFP 2-11-23
-        break;
+        break;}
       default:
         break;
     }  // end switch

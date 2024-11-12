@@ -159,6 +159,8 @@ FLASHMEM void EEPROMRead() {
     IQPhaseCorrectionFactor[i] = EEPROMData.IQPhaseCorrectionFactor[i];
     IQXAmpCorrectionFactor[i] = EEPROMData.IQXAmpCorrectionFactor[i];
     IQXPhaseCorrectionFactor[i] = EEPROMData.IQXPhaseCorrectionFactor[i];
+    IQXRecAmpCorrectionFactor[i] = EEPROMData.IQXRecAmpCorrectionFactor[i];
+    IQXRecPhaseCorrectionFactor[i] = EEPROMData.IQXRecPhaseCorrectionFactor[i];
     XAttenCW[i] = EEPROMData.XAttenCW[i];
     XAttenSSB[i] = EEPROMData.XAttenSSB[i];
     RAtten[i] = EEPROMData.RAtten[i];
@@ -279,6 +281,8 @@ FLASHMEM void EEPROMWrite() {
     EEPROMData.IQPhaseCorrectionFactor[i] = IQPhaseCorrectionFactor[i];
     EEPROMData.IQXAmpCorrectionFactor[i] = IQXAmpCorrectionFactor[i];
     EEPROMData.IQXPhaseCorrectionFactor[i] = IQXPhaseCorrectionFactor[i];
+    EEPROMData.IQXRecAmpCorrectionFactor[i] = IQXRecAmpCorrectionFactor[i];
+    EEPROMData.IQXRecPhaseCorrectionFactor[i] = IQXRecPhaseCorrectionFactor[i];
     EEPROMData.XAttenCW[i] = XAttenCW[i];
     EEPROMData.XAttenSSB[i] = XAttenSSB[i];
     EEPROMData.RAtten[i] = RAtten[i];
@@ -532,6 +536,20 @@ FLASHMEM void EEPROMShow()
     Serial.print(i);
     Serial.print(F("] = "));
     Serial.println(EEPROMData.IQXPhaseCorrectionFactor[i], 3);
+  }
+  Serial.println(F(" "));
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
+    Serial.print(F("IQXRecAmplitudeCorrectionFactor["));
+    Serial.print(i);
+    Serial.print(F("] = "));
+    Serial.println(EEPROMData.IQXRecAmpCorrectionFactor[i], 3);
+  }
+  Serial.println(F(" "));
+  for (int i = 0; i < NUMBER_OF_BANDS; i++) {
+    Serial.print(F("    IQXRecPhaseCorrectionFactor["));
+    Serial.print(i);
+    Serial.print(F("] = "));
+    Serial.println(EEPROMData.IQXRecPhaseCorrectionFactor[i], 3);
   }
   Serial.println(F(" "));
   Serial.println(F("----- Favorite Frequencies -----"));
@@ -1134,6 +1152,8 @@ FLASHMEM void EEPROMSaveDefaults2() {
     EEPROMData.IQPhaseCorrectionFactor[i] = 0.0;
     EEPROMData.IQXAmpCorrectionFactor[i] = 1.0;
     EEPROMData.IQXPhaseCorrectionFactor[i] = 0.0;
+    EEPROMData.IQXRecAmpCorrectionFactor[i] = 1.0;
+    EEPROMData.IQXRecPhaseCorrectionFactor[i] = 0.0;
   }
 
   EEPROMData.favoriteFreqs[0] = 3560000L;  // These are CW/SSB calling frequencies for HF bands

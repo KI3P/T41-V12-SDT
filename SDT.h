@@ -213,6 +213,7 @@ extern struct maps myMapFiles[];
 #define CAL_CHANGE_TYPE             16
 #define CAL_CHANGE_INC              17
 #define CAL_TOGGLE_OUTPUT           14
+#define CAL_AUTOCAL                 13
 #define BODE_SAVE                   15
 #define BODE_BAND                   16
 #define BODE_REF                    17
@@ -1399,6 +1400,8 @@ extern struct config_t {
   float IQPhaseCorrectionFactor[NUMBER_OF_BANDS];
   float IQXAmpCorrectionFactor[NUMBER_OF_BANDS];
   float IQXPhaseCorrectionFactor[NUMBER_OF_BANDS];
+  float IQXRecAmpCorrectionFactor[NUMBER_OF_BANDS];
+  float IQXRecPhaseCorrectionFactor[NUMBER_OF_BANDS];
   int XAttenCW[NUMBER_OF_BANDS];  // transmit digital attenuation in CW mode
   int XAttenSSB[NUMBER_OF_BANDS]; // transmit digital attenuation in SSB mode
   int RAtten[NUMBER_OF_BANDS];    // receive digital attenuation
@@ -2088,6 +2091,8 @@ extern float32_t IQAmpCorrectionFactor[];
 extern float32_t IQPhaseCorrectionFactor[];
 extern float32_t IQXAmpCorrectionFactor[];
 extern float32_t IQXPhaseCorrectionFactor[];
+extern float32_t IQXRecAmpCorrectionFactor[];
+extern float32_t IQXRecPhaseCorrectionFactor[];
 extern int XAttenCW[];
 extern int XAttenSSB[];
 extern int RAtten[];

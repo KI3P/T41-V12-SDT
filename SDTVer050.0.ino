@@ -654,10 +654,12 @@ struct band bands[NUMBER_OF_BANDS] = {  //AFP Changed 1-30-21 // G0ORX Changed A
 
 // G0ORX - moved the following to make easier when adding/removing bands
 #if defined(V12HWR)
-float32_t IQAmpCorrectionFactor[NUMBER_OF_BANDS] = { 1, 1, 1, 1, 1.024, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-float32_t IQPhaseCorrectionFactor[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0.007, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-float32_t IQXAmpCorrectionFactor[NUMBER_OF_BANDS] = { 1, 1, 1, 1, 1.097, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-float32_t IQXPhaseCorrectionFactor[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0.193, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+float32_t IQAmpCorrectionFactor[NUMBER_OF_BANDS] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+float32_t IQPhaseCorrectionFactor[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+float32_t IQXAmpCorrectionFactor[NUMBER_OF_BANDS] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+float32_t IQXPhaseCorrectionFactor[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+float32_t IQXRecAmpCorrectionFactor[NUMBER_OF_BANDS] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+float32_t IQXRecPhaseCorrectionFactor[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 float32_t powerOutSSB[NUMBER_OF_BANDS] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 float32_t powerOutCW[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; 
 float32_t CWPowerCalibrationFactor[NUMBER_OF_BANDS] = { 0.019, 0.019, 0.019, 0.019, 0.0190, .0190, .0190, .0190, .0190, .019, .019, .019, .019, .019, .019, .019, .019, .019 };
