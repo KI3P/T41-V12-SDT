@@ -1109,9 +1109,6 @@ float32_t DMAMEM float_buffer_L_EX[2048];
 float32_t DMAMEM float_buffer_R_EX[2048];
 float32_t DMAMEM float_buffer_LTemp[2048];
 float32_t DMAMEM float_buffer_RTemp[2048];
-#ifdef TX48
-float32_t DMAMEM temp_buffer[2048];
-#endif
 
 //==================== End Excite Variables================================
 
@@ -1239,13 +1236,6 @@ float32_t cosBuffer3[256];
 float32_t sinBuffer[256];
 float32_t sinBuffer2[256];
 float32_t sinBuffer3[256];
-#ifndef TX48
-float32_t cosBuffer4[512];
-float32_t sinBuffer4[512];
-#else
-float32_t cosBuffer4[2048];
-float32_t sinBuffer4[2048];
-#endif
 float32_t aveCorrResult;
 float32_t aveCorrResultR;
 float32_t aveCorrResultL;

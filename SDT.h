@@ -2,7 +2,6 @@
 #define BEENHERE
 
 #define USE_JSON
-//#define TX48
 //======================================== User section that might need to be changed ===================================
 #include "MyConfigurationFile.h"                                          // This file name should remain unchanged
 #define VERSION                     "V050.2"                              // Change this for updates. If you make this longer than 9 characters, brace yourself for surprises
@@ -881,7 +880,6 @@ extern uint32_t corrResultIndex;  //AFP 02-02-22
 extern float32_t sinBuffer[];    //AFP 02-02-22
 extern float32_t sinBuffer2[];
 extern float32_t sinBuffer3[];
-extern float32_t sinBuffer4[];
 extern float32_t float_Corr_Buffer[];   //AFP 02-02-22
 extern float32_t aveCorrResult;   //AFP 02-02-22
 extern float32_t magFFTResults[];
@@ -1233,9 +1231,6 @@ extern float32_t  float_buffer_L_EX[];
 extern float32_t  float_buffer_R_EX[];
 extern float32_t  float_buffer_LTemp[];
 extern float32_t  float_buffer_RTemp[];
-#ifdef TX48
-extern float32_t temp_buffer[];
-#endif
 void ExciterIQData();
 
 //==================== End Excite Variables ================================
@@ -2014,7 +2009,6 @@ extern float32_t corr[];
 extern float32_t Cos;
 extern float32_t cosBuffer2[];  //AFP 08-18-22
 extern float32_t cosBuffer3[];  //AFP 10-31-2
-extern float32_t cosBuffer4[];  //AFP 2-7-23
 extern float32_t CPU_temperature ;
 extern float32_t cursorIncrementFraction;
 extern float32_t CWPowerCalibrationFactor[]; //AFP 10-21-22
@@ -2461,7 +2455,6 @@ int  NROptions();
 
 //int  PostProcessorAudio();
 float PlotCalSpectrum(int x1, int cal_bins[2], int capture_bins);
-float PlotCalSpectrumEx(int x1, int cal_bins[2], int capture_bins); //  AFP 10/17/2024
 int  ProcessButtonPress(int valPin);
 void ProcessEqualizerChoices(int EQType, char *title);
 void ProcessIQData();
@@ -2537,7 +2530,7 @@ void ShowMessageOnWaterfall(String message);  // G0ORX
 void ShowName();
 void ShowNotch();
 void ShowSpectrum();
-void ShowSpectrum2();
+float ShowSpectrum2();
 void ShowSpectrumdBScale();
 void ShowTempAndLoad();
 void ShowTransmitReceiveStatus();
