@@ -143,15 +143,15 @@ void ProcessIQData()
 
     // Manual IQ amplitude and phase correction
     // to be honest: we only correct the amplitude of the I channel ;-)
-    if (bands[currentBand].mode == DEMOD_LSB || bands[currentBand].mode == DEMOD_AM || bands[currentBand].mode == DEMOD_SAM) {
+    //if (bands[currentBand].mode == DEMOD_LSB || bands[currentBand].mode == DEMOD_AM || bands[currentBand].mode == DEMOD_SAM) {
       arm_scale_f32 (float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS); //AFP 04-14-22
       IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
-    } else {
-      if (bands[currentBand].mode == DEMOD_USB || bands[currentBand].mode == DEMOD_AM || bands[currentBand].mode == DEMOD_SAM) {
-        arm_scale_f32 (float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS); //AFP 04-14-22
-        IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
-      }
-    }
+    //} else {
+    //  if (bands[currentBand].mode == DEMOD_USB || bands[currentBand].mode == DEMOD_AM || bands[currentBand].mode == DEMOD_SAM) {
+    //    arm_scale_f32 (float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS); //AFP 04-14-22
+    //    IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
+    //  }
+    //}
 
     /**********************************************************************************  AFP 12-31-20
         Perform a 256 point FFT for the spectrum display on the basis of the first 256 complex values

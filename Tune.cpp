@@ -266,6 +266,7 @@ void SetFreq() {  //AFP
 // Note CW specific code is not yet implimented in this version.
  // long freqCal;
   Clk1SetFreq = ((f * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT);
+  Serial.println("Clk1="+String(Clk1SetFreq));
   multiple = EvenDivisor(Clk1SetFreq / SI5351_FREQ_MULT);
 
   pll_freq = Clk1SetFreq * multiple;

@@ -1109,6 +1109,10 @@ float32_t DMAMEM float_buffer_L_EX[2048];
 float32_t DMAMEM float_buffer_R_EX[2048];
 float32_t DMAMEM float_buffer_LTemp[2048];
 float32_t DMAMEM float_buffer_RTemp[2048];
+#ifdef TX48
+float32_t DMAMEM temp_buffer[2048];
+#endif
+
 //==================== End Excite Variables================================
 
 //======================================== Global structure declarations ===============================================
@@ -1232,11 +1236,16 @@ float32_t corrResult;
 uint32_t corrResultIndex;
 float32_t cosBuffer2[256];
 float32_t cosBuffer3[256];
-float32_t cosBuffer4[256];
 float32_t sinBuffer[256];
 float32_t sinBuffer2[256];
 float32_t sinBuffer3[256];
-float32_t sinBuffer4[256];
+#ifndef TX48
+float32_t cosBuffer4[512];
+float32_t sinBuffer4[512];
+#else
+float32_t cosBuffer4[2048];
+float32_t sinBuffer4[2048];
+#endif
 float32_t aveCorrResult;
 float32_t aveCorrResultR;
 float32_t aveCorrResultL;
@@ -3167,7 +3176,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
   //  Begin SSB Mode state machine
 
   switch (radioState) {
-    case (SSB_RECEIVE_STATE):
+    case (SSB_RECEIVE_STATE):{
       if (lastState != radioState) {  // G0ORX 01092023
         #if !defined(V12HWR)
         digitalWrite(MUTE, LOW);      // KI3P, no MUTE function in V12
@@ -3200,8 +3209,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         ShowTransmitReceiveStatus();
       }
       ShowSpectrum();
-      break;
-    case SSB_TRANSMIT_STATE:
+      break;}
+    case SSB_TRANSMIT_STATE:{
       Q_in_L.end();  //Set up input Queues for transmit
       Q_in_R.end();
       Q_in_L_Ex.begin();
@@ -3257,10 +3266,10 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       Q_in_L.begin();  // Start Receive Queue
       Q_in_R.begin();
       xrState = RECEIVE_STATE;
-      break;
+      break;} // closes line 3204, case SSB_TRANSMIT_STATE
     default:
       break;
-  }
+  } // closes switch (radioState), line 3169
   //======================  End SSB Mode =================
 
   // Begin CW Mode state machine

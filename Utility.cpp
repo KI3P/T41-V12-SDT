@@ -37,7 +37,6 @@ void sineTone(int numCycles) {
   float theta;
   float freqSideTone2;
   float freqSideTone3 = 3000;  // Refactored 32 * 24000 / 256; //AFP 2-7-23
-  float freqSideTone4 = 375;
   freqSideTone2 = numCycles * 24000 / 256;
   for (int kf = 0; kf < 256; kf++) {  //Calc: numCycles=8, 750 hz sine wave.
     theta = kf * 2 * PI * freqSideTone2 / 24000;
@@ -46,10 +45,30 @@ void sineTone(int numCycles) {
     theta = kf * 2.0 * PI * freqSideTone3 / 24000;
     sinBuffer3[kf] = sin(theta);
     cosBuffer3[kf] = cos(theta);
-    theta = kf * 2.0 * PI * freqSideTone4 / 24000;
+  }
+  #ifndef TX48
+  float freqSideTone4 = 24000; // used for transmit calibration
+  // sinBuffer4 is at 48 kHz sample rate, 512 bins long
+  for (int kf = 0; kf < 512; kf++) {
+    theta = kf * 2.0 * PI * freqSideTone4 / 48000;
     sinBuffer4[kf] = sin(theta);
     cosBuffer4[kf] = cos(theta);
   }
+  #else
+  float freqSideTone4 = 48000; // used for transmit calibration
+  // sinBuffer4 is at 192 kHz sample rate, 2048 bins long
+  // Time per sample: 1/192000.
+  // Total period: 2048/192000 seconds.
+  // Tone period: 1/48000
+  // Number of tone cycles: Total period / tone period
+  //              = 48000*2048/192000
+  //              = 512
+  for (int kf = 0; kf < 2048; kf++) {
+    theta = kf * 2.0 * PI * freqSideTone4 / 192000;
+    sinBuffer4[kf] = sin(theta);
+    cosBuffer4[kf] = cos(theta);
+  }
+  #endif
 }
 
 
@@ -146,7 +165,9 @@ const float32_t atanTable[68] = {
     void
 *****/
 void IQXPhaseCorrection(float32_t *I_buffer, float32_t *Q_buffer, float32_t factor, uint32_t blocksize) {
+  #ifndef TX48                                 
   float32_t temp_buffer[blocksize];
+  #endif
   if (factor < 0.0) {  // mix a bit of I into Q
     arm_scale_f32(I_buffer, factor, temp_buffer, blocksize);
     arm_add_f32(Q_buffer, temp_buffer, Q_buffer, blocksize);

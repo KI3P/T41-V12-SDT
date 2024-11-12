@@ -2,7 +2,7 @@
 #define BEENHERE
 
 #define USE_JSON
-
+//#define TX48
 //======================================== User section that might need to be changed ===================================
 #include "MyConfigurationFile.h"                                          // This file name should remain unchanged
 #define VERSION                     "V050.2"                              // Change this for updates. If you make this longer than 9 characters, brace yourself for surprises
@@ -1233,7 +1233,9 @@ extern float32_t  float_buffer_L_EX[];
 extern float32_t  float_buffer_R_EX[];
 extern float32_t  float_buffer_LTemp[];
 extern float32_t  float_buffer_RTemp[];
-
+#ifdef TX48
+extern float32_t temp_buffer[];
+#endif
 void ExciterIQData();
 
 //==================== End Excite Variables ================================

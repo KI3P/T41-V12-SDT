@@ -54,7 +54,7 @@
 //#define EXCLUDE_BODE
 
 // Uncomment if using G0ORX Kenwood TS-2000 CAT interface
-#define G0ORX_CAT
+//#define G0ORX_CAT
 
 // G0ORX_AUDIO_DISPLAY draws a Time Domain plot of the Microphone when transmitting
 #define G0ORX_AUDIO_DISPLAY
