@@ -33,6 +33,8 @@ static long userCenterFreq;
 static long userTxRxFreq;
 static long userNCOFreq;
 static float adjdB;
+static uint32_t XBin; // used for the bin identification in the LSB in XMit cal state
+static bool XBinFound;
 
 /*****
   Purpose: Set up prior to IQ calibrations.  Revised function. AFP 07-13-24
@@ -197,11 +199,52 @@ void tuneCalParameter(int indexStart, int indexEnd, float increment, float *IQCo
     tft.print(*IQCorrectionFactor, 3);
   }
   *IQCorrectionFactor = correctionFactor + adjMinIndex*increment;
-  sprintf(strBuf,"Min (%d, %4.3f) = %2.1f",
+  /*sprintf(strBuf,"Min (%d, %4.3f) = %2.1f",
                                   adjMinIndex,
                                   *IQCorrectionFactor,
                                   adjMin);
-  Serial.println(strBuf);
+  Serial.println(strBuf);*/
+}
+
+void autotune(float *amp, float *phase, float gain_coarse_max, float gain_coarse_min,
+                                        float phase_coarse_max, float phase_coarse_min,
+                                        int gain_coarse_step2_N, int phase_coarse_step2_N,
+                                        int gain_fine_N, int phase_fine_N, bool phase_first){
+  if (phase_first){
+    // Step 2: phase changes in 0.01 steps from -0.2 to 0.2. Find the minimum.
+    int phaseStepsCoarseN = (int)((phase_coarse_max-phase_coarse_min)/0.01/2);
+    *phase = 0.0;
+    //Serial.print("Step 2: ");
+    tuneCalParameter(-phaseStepsCoarseN, phaseStepsCoarseN+1, 0.01, phase,(char *)"IQ Phase");
+    // Step 1: Gain in 0.01 steps from 0.5 to 1.5
+    int gainStepsCoarseN = (int)((gain_coarse_max-gain_coarse_min)/0.01/2);
+    *amp = 1.0;
+    //Serial.print("Step 1: ");
+    tuneCalParameter(-gainStepsCoarseN, gainStepsCoarseN+1, 0.01, amp,(char *)"IQ Gain");
+  } else {
+    // Step 1: Gain in 0.01 steps from 0.5 to 1.5
+    int gainStepsCoarseN = (int)((gain_coarse_max-gain_coarse_min)/0.01/2);
+    *amp = 1.0;
+    //Serial.print("Step 1: ");
+    tuneCalParameter(-gainStepsCoarseN, gainStepsCoarseN+1, 0.01, amp,(char *)"IQ Gain");
+    // Step 2: phase changes in 0.01 steps from -0.2 to 0.2. Find the minimum.
+    int phaseStepsCoarseN = (int)((phase_coarse_max-phase_coarse_min)/0.01/2);
+    *phase = 0.0;
+    //Serial.print("Step 2: ");
+    tuneCalParameter(-phaseStepsCoarseN, phaseStepsCoarseN+1, 0.01, phase,(char *)"IQ Phase");
+  }
+  // Step 3: Gain in 0.01 steps from 4 steps below previous minimum to 4 steps above          
+  //Serial.print("Step 3: ");
+  tuneCalParameter(-gain_coarse_step2_N, gain_coarse_step2_N+1, 0.01, amp,(char *)"IQ Gain");
+  // Step 4: phase in 0.01 steps from 4 steps below previous minimum to 4 steps above
+  //Serial.print("Step 4: ");
+  tuneCalParameter(-phase_coarse_step2_N, phase_coarse_step2_N+1, 0.01, phase,(char *)"IQ Phase");
+  // Step 5: gain in 0.001 steps 10 steps below to 10 steps above
+  //Serial.print("Step 5: ");
+  tuneCalParameter(-gain_fine_N, gain_fine_N+1, 0.001, amp,(char *)"IQ Gain");
+  // Step 6: phase in 0.001 steps 10 steps below to 10 steps above
+  //Serial.print("Step 6: ");
+  tuneCalParameter(-phase_fine_N, phase_fine_N+1, 0.001, phase,(char *)"IQ Phase");
 }
 
 void DoReceiveCalibrate() {
@@ -222,7 +265,6 @@ void DoReceiveCalibrate() {
   si5351.output_enable(SI5351_CLK2, 1);
   si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
   digitalWrite(XMIT_MODE, XMIT_CW);
-  digitalWrite(KEY2, HIGH);
   digitalWrite(CW_ON_OFF, CW_ON);
   digitalWrite(CAL, CAL_ON);
   uint8_t out_atten = 60;
@@ -251,28 +293,11 @@ void DoReceiveCalibrate() {
       case (CAL_AUTOCAL):{
         // Run through the autocal routine
         if (stateMachine == RX_STATE){
-          // Step 1: Gain in 0.01 steps from 0.5 to 1.5
-          int gainStepsCoarseN = (int)((GAIN_COARSE_MAX-GAIN_COARSE_MIN)/0.01/2);
-          IQAmpCorrectionFactor[currentBand] = 1.0;
-          Serial.print("Step 1: ");
-          tuneCalParameter(-gainStepsCoarseN, gainStepsCoarseN+1, 0.01, &IQAmpCorrectionFactor[currentBand],(char *)"IQ Gain");
-          // Step 2: phase changes in 0.01 steps from -0.2 to 0.2. Find the minimum.
-          int phaseStepsCoarseN = (int)((PHASE_COARSE_MAX-PHASE_COARSE_MIN)/0.01/2);
-          IQPhaseCorrectionFactor[currentBand] = 0.0;
-          Serial.print("Step 2: ");
-          tuneCalParameter(-phaseStepsCoarseN, phaseStepsCoarseN+1, 0.01, &IQPhaseCorrectionFactor[currentBand],(char *)"IQ Phase");
-          // Step 3: Gain in 0.01 steps from 4 steps below previous minimum to 4 steps above          
-          Serial.print("Step 3: ");
-          tuneCalParameter(-GAIN_COARSE_STEP2_N, GAIN_COARSE_STEP2_N+1, 0.01, &IQAmpCorrectionFactor[currentBand],(char *)"IQ Gain");
-          // Step 4: phase in 0.01 steps from 4 steps below previous minimum to 4 steps above
-          Serial.print("Step 4: ");
-          tuneCalParameter(-PHASE_COARSE_STEP2_N, PHASE_COARSE_STEP2_N+1, 0.01, &IQPhaseCorrectionFactor[currentBand],(char *)"IQ Phase");
-          // Step 5: gain in 0.001 steps 10 steps below to 10 steps above
-          Serial.print("Step 5: ");
-          tuneCalParameter(-GAIN_FINE_N, GAIN_FINE_N+1, 0.001, &IQAmpCorrectionFactor[currentBand],(char *)"IQ Gain");
-          // Step 6: phase in 0.001 steps 10 steps below to 10 steps above
-          Serial.print("Step 6: ");
-          tuneCalParameter(-PHASE_FINE_N, PHASE_FINE_N+1, 0.001, &IQPhaseCorrectionFactor[currentBand],(char *)"IQ Phase");
+          autotune(&IQAmpCorrectionFactor[currentBand], &IQPhaseCorrectionFactor[currentBand],
+                  GAIN_COARSE_MAX, GAIN_COARSE_MIN,
+                  PHASE_COARSE_MAX, PHASE_COARSE_MIN,
+                  GAIN_COARSE_STEP2_N, PHASE_COARSE_STEP2_N,
+                  GAIN_FINE_N, PHASE_FINE_N, false);
         }
         break;
       }
@@ -360,11 +385,11 @@ void DoXmitCalibrate() {
   tft.setCursor(550, 300);
   tft.print("Transmit I/Q ");
   tft.setCursor(550, 350);
-  tft.print("Calibrate");
+  tft.print("Calibrate RX");
   IQChoice = 3;
-  uint8_t out_atten = 20;
+  uint8_t out_atten = 60;
   uint8_t previous_atten = out_atten;
-  SetRF_InAtten(30);
+  SetRF_InAtten(out_atten);
   SetRF_OutAtten(out_atten);
 //  int userFloor = currentNoiseFloor[currentBand];  // Store the user's floor setting.
   //zoomIndex = 0;
@@ -377,10 +402,24 @@ void DoXmitCalibrate() {
   userZoomIndex = spectrum_zoom;  // Save the zoom index so it can be reset at the conclusion.   August 12, 2023
   zoomIndex = setZoom - 1;
   bool calState = true;
-  T41State = SSB_XMIT;
 
-  digitalWrite(CAL, CAL_ON);  // Turn on transmitter.
-  digitalWrite(XMIT_MODE, XMIT_SSB);  // Turn on transmitter.
+  //digitalWrite(CAL, CAL_ON);  // Turn on transmitter.
+  //digitalWrite(XMIT_MODE, XMIT_SSB);  // Turn on transmitter.
+
+  // For the receive chain calibration portion of transmit cal use CLK2
+  // CLK0/1 will be set to centerFreq + IFFreq
+  SetFreq();
+  if (bands[currentBand].mode == DEMOD_LSB) {
+    Clk2SetFreq = (centerFreq + IFFreq - 750)* SI5351_FREQ_MULT;
+  } else {
+    Clk2SetFreq = (centerFreq + IFFreq + 750)* SI5351_FREQ_MULT;
+  }
+  si5351.output_enable(SI5351_CLK2, 1);
+  si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
+  digitalWrite(XMIT_MODE, XMIT_CW);
+  digitalWrite(CW_ON_OFF, CW_ON);
+  digitalWrite(CAL, CAL_ON);
+
   ShowTransmitReceiveStatus();
 
   while (true) {
@@ -392,6 +431,62 @@ void DoXmitCalibrate() {
       else task = BOGUS_PIN_READ;
     }
     switch (task) {
+      case (CAL_TOGGLE_TX_STATE):{
+        switch (stateMachine){ 
+          case (TX_STATE_RX_PHASE):{
+            stateMachine = TX_STATE_TX_PHASE;
+            tft.setFontScale((enum RA8875tsize)1);
+            tft.setTextColor(RA8875_WHITE);
+            tft.fillRect(550-7, 350-1, 800-550, CHAR_HEIGHT, RA8875_BLACK);
+            tft.setCursor(550, 350);
+            tft.print("Calibrate TX");
+            out_atten = 40;
+            SetRF_InAtten(30);
+            SetRF_OutAtten(out_atten);
+            digitalWrite(XMIT_MODE, XMIT_SSB);
+            digitalWrite(CW_ON_OFF, CW_OFF);
+            si5351.output_enable(SI5351_CLK2, 0);
+            break;
+          }
+          case (TX_STATE_TX_PHASE):{
+            stateMachine = TX_STATE_RX_PHASE;
+            tft.setFontScale((enum RA8875tsize)1);
+            tft.setTextColor(RA8875_WHITE);
+            tft.fillRect(550-7, 350-1, 800-550, CHAR_HEIGHT, RA8875_BLACK);
+            tft.setCursor(550, 350);
+            tft.print("Calibrate RX");
+            out_atten = 60;
+            SetRF_InAtten(out_atten);
+            SetRF_OutAtten(out_atten);
+            digitalWrite(XMIT_MODE, XMIT_CW);
+            digitalWrite(CW_ON_OFF, CW_ON);
+            si5351.output_enable(SI5351_CLK2, 1);
+            break;
+          }
+        }
+        break;
+      }
+      case (CAL_AUTOCAL):{
+        if (stateMachine == TX_STATE_RX_PHASE){
+          XBinFound = false;
+          autotune(&IQXRecAmpCorrectionFactor[currentBand], &IQXRecPhaseCorrectionFactor[currentBand],
+                  GAIN_COARSE_MAX, GAIN_COARSE_MIN,
+                  1.0, -1.0,
+                  8, 8,
+                  GAIN_FINE_N, PHASE_FINE_N, true);
+          XBinFound = false;
+        }
+        if (stateMachine == TX_STATE_TX_PHASE){
+          XBinFound = false;
+          autotune(&IQXAmpCorrectionFactor[currentBand], &IQXPhaseCorrectionFactor[currentBand],
+                  GAIN_COARSE_MAX, GAIN_COARSE_MIN,
+                  PHASE_COARSE_MAX, PHASE_COARSE_MIN,
+                  GAIN_COARSE_STEP2_N, PHASE_COARSE_STEP2_N,
+                  GAIN_FINE_N, PHASE_FINE_N, false);
+          XBinFound = false;
+        }
+        break;
+      }
       case (CAL_TOGGLE_OUTPUT):{
         // Toggle the transmit signal between the CAL line and the RF output 
         if (calState){
@@ -420,6 +515,8 @@ void DoXmitCalibrate() {
         break;}
       case (MENU_OPTION_SELECT):{  // Save values and exit calibration.
         tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
+        EEPROMData.IQXRecAmpCorrectionFactor[currentBand] = IQXRecAmpCorrectionFactor[currentBand];
+        EEPROMData.IQXRecPhaseCorrectionFactor[currentBand] = IQXRecPhaseCorrectionFactor[currentBand];
         EEPROMData.IQXAmpCorrectionFactor[currentBand] = IQXAmpCorrectionFactor[currentBand];
         EEPROMData.IQXPhaseCorrectionFactor[currentBand] = IQXPhaseCorrectionFactor[currentBand];
         tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
@@ -433,9 +530,27 @@ void DoXmitCalibrate() {
     task = -100;                          // Reset task after it is used.
     //  Read encoder and update values.
     if (IQEXChoice == 0) {
-      IQXAmpCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain X");
+      switch (stateMachine){
+        case TX_STATE_TX_PHASE:{
+          IQXAmpCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain X");
+          break;
+        }
+        case TX_STATE_RX_PHASE:{
+          IQXRecAmpCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXRecAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain R");
+          break;
+        }
+      }
     } else {
-      IQXPhaseCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase X");
+      switch (stateMachine){
+        case TX_STATE_TX_PHASE:{
+          IQXPhaseCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase X");
+          break;
+        }
+        case TX_STATE_RX_PHASE:{
+          IQXRecPhaseCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXRecPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase R");
+          break;
+        }
+      }
     }
     // Adjust the value of the TX attenuator:
     out_atten = GetFineTuneValueLive(0,63,out_atten,1,(char *)"Out Atten");
@@ -546,14 +661,16 @@ void ProcessIQData2() {
     arm_scale_f32(float_buffer_R, recBandFactor[currentBand], float_buffer_R, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
 
     // Receive amplitude correction
-    arm_scale_f32(float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 04-14-22
-    IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
-    
+    if ((stateMachine == TX_STATE_TX_PHASE) | (stateMachine == TX_STATE_RX_PHASE)){
+      // Apply the special calibration parameters that apply only here
+      arm_scale_f32(float_buffer_L, -IQXRecAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS);
+      IQPhaseCorrection(float_buffer_L, float_buffer_R, IQXRecPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
+    } else {
+      arm_scale_f32(float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 04-14-22
+      IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
+    }    
     CalcZoom1Magn();
     FFTupdated = true;
-    //if (auto_codec_gain == 1) {
-    //  Codec_gain();
-    //}
   }
 }
 
@@ -572,12 +689,6 @@ float ShowSpectrum2()
 {
   int x1 = 0;
   float adjdB = 0.0;
-  int capture_bins; // Sets the number of bins to scan for signal peak.
-  if (calTypeFlag == 0) {
-    capture_bins = 10;
-  } else {
-    capture_bins = 2; // scans 2*capture_bins
-  }
 
   pixelnew[0] = 0;
   pixelnew[1] = 0;
@@ -619,7 +730,9 @@ float ShowSpectrum2()
   *********************************************/
 
   int cal_bins[2] = { 0, 0 };
+  int capture_bins; // Sets the number of bins to scan for signal peak.
   if (calTypeFlag == 0) {
+    capture_bins = 10;
     cal_bins[0] = 384;
     cal_bins[1] = 128;
   }  // Receive calibration
@@ -631,12 +744,14 @@ float ShowSpectrum2()
    * sineTone() in Utility.cpp), which is 750/375 = 2 bins offset from bin 256.
    ******************************/
   if (calTypeFlag == 1 && bands[currentBand].mode == DEMOD_LSB) {
-    cal_bins[0] = 256-2;
-    cal_bins[1] = 256+2;
+    capture_bins = 2; // scans 2*capture_bins
+    cal_bins[0] = 257 - capture_bins;
+    cal_bins[1] = 257 + capture_bins;
   }  // Transmit calibration, LSB.  
   if (calTypeFlag == 1 && bands[currentBand].mode == DEMOD_USB) {
-    cal_bins[0] = 256+2;
-    cal_bins[1] = 256-2;
+    capture_bins = 2; // scans 2*capture_bins
+    cal_bins[0] = 257 + capture_bins;
+    cal_bins[1] = 257 - capture_bins;
   }  // Transmit calibration, USB.  
 
   //  There are 2 for-loops, one for the reference signal and another for the undesired sideband.  
@@ -688,7 +803,19 @@ float PlotCalSpectrum(int x1, int cal_bins[2], int capture_bins) {
   ProcessIQData2();  // Call the Audio process from within the display routine to eliminate conflicts with drawing the spectrum and waterfall displays
   // Find the maximums of the desired and undesired signals.
   arm_max_q15(&pixelnew[(cal_bins[0] - capture_bins)], capture_bins * 2, &refAmplitude, &index_of_max);
-  arm_max_q15(&pixelnew[(cal_bins[1] - capture_bins)], capture_bins * 2, &adjAmplitude, &index_of_max);
+  if (stateMachine == RX_STATE){
+    arm_max_q15(&pixelnew[(cal_bins[1] - capture_bins)], capture_bins * 2, &adjAmplitude, &index_of_max);
+  } else {
+    // For the transmit calibration states we need to find the bin number corresponding to 
+    // the image product and use that value for the amplitude. We find the bin number by
+    // getting the max the first time we run this.
+    if (XBinFound){
+      adjAmplitude = pixelnew[(cal_bins[1] - capture_bins + XBin)];
+    } else {
+      arm_max_q15(&pixelnew[(cal_bins[1] - capture_bins)], capture_bins * 2, &adjAmplitude, &XBin);
+      XBinFound = true;
+    } 
+  }
 
   y_new = pixelnew[x1];
   y1_new = pixelnew[x1 - 1];
