@@ -33,8 +33,6 @@ static long userCenterFreq;
 static long userTxRxFreq;
 static long userNCOFreq;
 static float adjdB;
-static uint32_t XBin; // used for the bin identification in the LSB in XMit cal state
-static bool XBinFound;
 
 /*****
   Purpose: Set up prior to IQ calibrations.  Revised function. AFP 07-13-24
@@ -56,9 +54,8 @@ void CalibratePreamble(int setZoom) {
   radioState = CW_TRANSMIT_STRAIGHT_STATE;  // 
   userXmtMode = xmtMode;          // Store the user's mode setting.   July 22, 2023
   userZoomIndex = spectrum_zoom;  // Save the zoom index so it can be reset at the conclusion.   August 12, 2023
-  zoomIndex = 1;
-  zoom_display = 1;
   spectrum_zoom = setZoom; // spectrum_zoom is used in Process.cpp. zoom_display has no effect
+  zoomIndex = setZoom - 1; 
   userCurrentFreq = currentFreq;
   userTxRxFreq = TxRxFreq;
   userNCOFreq = NCOFreq;
@@ -68,7 +65,7 @@ void CalibratePreamble(int setZoom) {
   currentFreq = TxRxFreq;
   NCOFreq = 0L;
   tft.clearScreen(RA8875_BLACK);  //AFP07-13-24
-  //ButtonZoom();
+  ButtonZoom(); // must call ButtonZoom because it configures the FFT!
   ResetTuning(); 
   tft.writeTo(L1);  // Always exit function in L1.   August 15, 2023
   DrawBandWidthIndicatorBar();
@@ -374,12 +371,8 @@ void DoXmitCalibrate() {
   stateMachine = TX_STATE_RX_PHASE;
   int task = -1;
   int lastUsedTask = -2;
-  CalibratePreamble(0);
-
-  calibrateFlag = 0;
-  int setZoom = 1;
-  int corrChange = 0;
-  int val;
+  CalibratePreamble(4); //16x zoom
+  corrChange = 0;
   tft.setFontScale((enum RA8875tsize)1);
   tft.setTextColor(RA8875_CYAN);
   tft.setCursor(550, 300);
@@ -391,21 +384,9 @@ void DoXmitCalibrate() {
   uint8_t previous_atten = out_atten;
   SetRF_InAtten(out_atten);
   SetRF_OutAtten(out_atten);
-//  int userFloor = currentNoiseFloor[currentBand];  // Store the user's floor setting.
-  //zoomIndex = 0;
   calTypeFlag = 1;
-  calOnFlag = 1;  //10-20-24
   IQEXChoice = 0;
-  corrChange = 0;                 //10-20-24
-  IQCalType = 0;                  //10-20-24
-  userXmtMode = xmtMode;          // Store the user's mode setting.   July 22, 2023
-  userZoomIndex = spectrum_zoom;  // Save the zoom index so it can be reset at the conclusion.   August 12, 2023
-  zoomIndex = setZoom - 1;
   bool calState = true;
-
-  //digitalWrite(CAL, CAL_ON);  // Turn on transmitter.
-  //digitalWrite(XMIT_MODE, XMIT_SSB);  // Turn on transmitter.
-
   // For the receive chain calibration portion of transmit cal use CLK2
   // CLK0/1 will be set to centerFreq + IFFreq
   SetFreq();
@@ -421,7 +402,6 @@ void DoXmitCalibrate() {
   digitalWrite(CAL, CAL_ON);
 
   ShowTransmitReceiveStatus();
-
   while (true) {
     adjdB = ShowSpectrum2();
     val = ReadSelectedPushButton();
@@ -468,22 +448,18 @@ void DoXmitCalibrate() {
       }
       case (CAL_AUTOCAL):{
         if (stateMachine == TX_STATE_RX_PHASE){
-          XBinFound = false;
           autotune(&IQXRecAmpCorrectionFactor[currentBand], &IQXRecPhaseCorrectionFactor[currentBand],
                   GAIN_COARSE_MAX, GAIN_COARSE_MIN,
                   1.0, -1.0,
                   8, 8,
                   GAIN_FINE_N, PHASE_FINE_N, true);
-          XBinFound = false;
         }
         if (stateMachine == TX_STATE_TX_PHASE){
-          XBinFound = false;
           autotune(&IQXAmpCorrectionFactor[currentBand], &IQXPhaseCorrectionFactor[currentBand],
                   GAIN_COARSE_MAX, GAIN_COARSE_MIN,
                   PHASE_COARSE_MAX, PHASE_COARSE_MIN,
                   GAIN_COARSE_STEP2_N, PHASE_COARSE_STEP2_N,
                   GAIN_FINE_N, PHASE_FINE_N, false);
-          XBinFound = false;
         }
         break;
       }
@@ -668,8 +644,15 @@ void ProcessIQData2() {
     } else {
       arm_scale_f32(float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 04-14-22
       IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
-    }    
-    CalcZoom1Magn();
+    }
+    
+    if (spectrum_zoom == SPECTRUM_ZOOM_1) {
+      // This is executed during receive cal
+      CalcZoom1Magn();
+    } else {
+      // This is used during transmit cal
+      ZoomFFTExe(BUFFER_SIZE * N_BLOCKS);
+    }
     FFTupdated = true;
   }
 }
@@ -738,20 +721,20 @@ float ShowSpectrum2()
   }  // Receive calibration
   
   /******************************
-   * The bin calculation is a lot simpler for the transmit scenario. The same
-   * LO clock is used for transmit and receive, so the bin tone and image are
-   * found symmetric around the center of the FFT. This offset is 750 Hz (see 
-   * sineTone() in Utility.cpp), which is 750/375 = 2 bins offset from bin 256.
+   * The same LO clock is used for transmit and receive, so the bin tone and image are
+   * found symmetric around the center of the FFT. This offset is 750 Hz (see sineTone() 
+   * in Utility.cpp). We have zoom of x16, so the bin size is 375/16 = 23.4 Hz. So the 
+   * bin numbers are 256 + 750/(375/16) = 256+32 = 288 and 256-32 = 224
    ******************************/
   if (calTypeFlag == 1 && bands[currentBand].mode == DEMOD_LSB) {
-    capture_bins = 2; // scans 2*capture_bins
-    cal_bins[0] = 257 - capture_bins;
-    cal_bins[1] = 257 + capture_bins;
+    capture_bins = 10; // scans 2*capture_bins
+    cal_bins[0] = 257 - 32;
+    cal_bins[1] = 257 + 32;
   }  // Transmit calibration, LSB.  
   if (calTypeFlag == 1 && bands[currentBand].mode == DEMOD_USB) {
-    capture_bins = 2; // scans 2*capture_bins
-    cal_bins[0] = 257 + capture_bins;
-    cal_bins[1] = 257 - capture_bins;
+    capture_bins = 10; // scans 2*capture_bins
+    cal_bins[0] = 257 + 32;
+    cal_bins[1] = 257 - 32;
   }  // Transmit calibration, USB.  
 
   //  There are 2 for-loops, one for the reference signal and another for the undesired sideband.  
@@ -803,19 +786,7 @@ float PlotCalSpectrum(int x1, int cal_bins[2], int capture_bins) {
   ProcessIQData2();  // Call the Audio process from within the display routine to eliminate conflicts with drawing the spectrum and waterfall displays
   // Find the maximums of the desired and undesired signals.
   arm_max_q15(&pixelnew[(cal_bins[0] - capture_bins)], capture_bins * 2, &refAmplitude, &index_of_max);
-  if (stateMachine == RX_STATE){
-    arm_max_q15(&pixelnew[(cal_bins[1] - capture_bins)], capture_bins * 2, &adjAmplitude, &index_of_max);
-  } else {
-    // For the transmit calibration states we need to find the bin number corresponding to 
-    // the image product and use that value for the amplitude. We find the bin number by
-    // getting the max the first time we run this.
-    if (XBinFound){
-      adjAmplitude = pixelnew[(cal_bins[1] - capture_bins + XBin)];
-    } else {
-      arm_max_q15(&pixelnew[(cal_bins[1] - capture_bins)], capture_bins * 2, &adjAmplitude, &XBin);
-      XBinFound = true;
-    } 
-  }
+  arm_max_q15(&pixelnew[(cal_bins[1] - capture_bins)], capture_bins * 2, &adjAmplitude, &index_of_max);
 
   y_new = pixelnew[x1];
   y1_new = pixelnew[x1 - 1];
