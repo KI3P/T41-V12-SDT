@@ -731,8 +731,12 @@ const char *secondaryChoices[][14] = {
   { "Set Mic Gain", "Cancel" },                                                                                             // Mic gain       7
   { "On", "Off", "Set Threshold", "Set Ratio", "Set Attack", "Set Decay", "Cancel" },                                       // Mic options    8
   { "On", "Off", "EQRcSet", "Cancel" },                                                                                     // index = 9                                                                                // EQ Rec         9
-  { "On", "Off", "EQTxSet", "Cancel" },                                                                                     // EQ Trx         10
+  { "On", "Off", "EQTxSet", "Cancel" },                                                           // EQ Trx         10
+  #ifdef QUADFFT
+  { "Freq Cal", "CW PA Cal", "Rec Cal", "Xmit Cal", "SSB PA Cal", "IQ Balance", "Cancel" },                                               // Calibrate      11
+  #else
   { "Freq Cal", "CW PA Cal", "Rec Cal", "Xmit Cal", "SSB PA Cal", "Cancel" },                                               // Calibrate      11
+  #endif
 #if !defined(EXCLUDE_BEARING)  
   { "Set Prefix", "Cancel" },
 #endif // EXCLUDE_BEARING
@@ -1155,6 +1159,13 @@ const struct SR_Descriptor SR[18] = {
   { SAMPLE_RATE_281K, 281000, "281k", "40", "40", "80", "120", 53.33, 12 },  // NOT OK
   { SAMPLE_RATE_353K, 352800, "353k", "40", "40", "80", "120", 53.33, 12 }   // NOT OK
 };
+
+#ifdef QUADFFT
+arm_rfft_fast_instance_f32 Sreal;
+DMAMEM float Imag[1024];
+DMAMEM float Qmag[1024];
+DMAMEM float IQphase[1024];
+#endif
 
 const arm_cfft_instance_f32 *S;
 const arm_cfft_instance_f32 *iS;
@@ -2483,6 +2494,11 @@ void InitializeDataArrays() {
   NR_FFT = &arm_cfft_sR_f32_len256;
   NR_iFFT = &arm_cfft_sR_f32_len256;
 
+  #ifdef QUADFFT
+  // FFT bin width is 192000 / FFT_LEN, so 192000/2048 = 93.75 Hz
+  arm_rfft_fast_init_f32(&Sreal, 2048 );
+  #endif
+
   /****************************************************************************************
      Calculate the FFT of the FIR filter coefficients once to produce the FIR filter mask
   ****************************************************************************************/
@@ -2814,7 +2830,7 @@ void BIT_display() {
     void
 *****/
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   if (CrashReport) {
     Serial1.println(CrashReport);

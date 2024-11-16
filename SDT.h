@@ -1447,6 +1447,15 @@ typedef struct SR_Descriptor
 } SR_Desc;
 extern const struct SR_Descriptor SR[];
 
+#ifdef QUADFFT
+void MeasureIandQFFT();
+void DoIQCalibrate();
+extern arm_rfft_fast_instance_f32 Sreal;
+extern float Imag[];
+extern float Qmag[];
+extern float IQphase[];
+#endif
+
 extern const arm_cfft_instance_f32 *S;
 extern const arm_cfft_instance_f32 *iS;
 extern const arm_cfft_instance_f32 *maskS;

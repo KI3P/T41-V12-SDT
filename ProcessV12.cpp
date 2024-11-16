@@ -34,6 +34,95 @@ static long userTxRxFreq;
 static long userNCOFreq;
 static float adjdB;
 
+#ifdef QUADFFT
+/*****
+  Purpose: DrawIQBalancePlotContainer
+
+  Parameter list:
+    float IQfreqStart, IQfreqStop, long numIQPoints
+
+  Return value;
+    void
+
+ 
+*****/
+static int IQfreqStart,IQfreqStop,numIQPoints;
+static float frmax;
+static uint32_t index_of_max;
+#define FREQ_OFFSET 9375 // 100*( FFT RBW ) = 100 * (96000/1024)
+
+void DrawIQBalancePlotContainer() {
+  tft.writeTo(L1);
+  tft.fillRect(0, 0, 799, 479, RA8875_BLACK);
+  tft.writeTo(L2);
+  tft.fillRect(0, 0, 799, 479, RA8875_BLACK);
+
+  #define xstart   50
+  #define ystart   50
+  #define xend     750
+  #define yend     400
+  #define Nxticks  10
+  #define Nyticks  10
+  #define xpixels_per_tick  ((float)(xend-xstart))/Nxticks
+  #define ypixels_per_tick  ((float)(yend-ystart))/Nyticks
+  #define xpixels_per_kHz   ((xend-xstart)/(100.0-(-100.0))) // -100 kHz to +100 kHz
+  #define ypixels_per_deg   ((yend-ystart)/(100.0-(-100.0))) // -100 deg to +100 deg
+  #define ypixels_per_unit  ((yend-ystart)/(1.5-(0.5)))      // 1.5 to 0.5
+  #define kHz_per_tick      (((float) xpixels_per_tick) / (xpixels_per_kHz))   
+  #define deg_per_tick      (((float) ypixels_per_tick) / (ypixels_per_deg))   
+  #define unit_per_tick      (((float) ypixels_per_tick) / (ypixels_per_unit))   
+  
+  //============== Draw lines on Layer 2
+  // Top-most horizontal, includes tick
+  tft.drawFastHLine(xstart-10, ystart, xend-xstart+10, RA8875_GREEN);
+  // Bottom-most horizontal, includes tick
+  tft.drawFastHLine(xstart-10, yend, xend-xstart+10, RA8875_GREEN);
+  // Major horizontal gridlines
+  tft.setFontScale((enum RA8875tsize)0);
+  for (int i=1; i<10; i++){
+    // Left ticks
+    tft.drawFastHLine(xstart-10, ystart+i*ypixels_per_tick, 10, RA8875_GREEN);
+    tft.setCursor(10, ystart+ypixels_per_tick * i - CHAR_HEIGHT/2);
+    tft.setTextColor(RA8875_WHITE);
+    tft.print(100 - i*deg_per_tick,0);
+    // Right ticks
+    tft.drawFastHLine(xend, ystart+i*ypixels_per_tick, 10, RA8875_GREEN);
+    tft.setCursor(xend + 15, ystart+ypixels_per_tick * i - CHAR_HEIGHT/2);
+    tft.setTextColor(RA8875_YELLOW);
+    tft.print(1.5 - i*unit_per_tick,1);
+    // grid line
+    tft.drawFastHLine(xstart, ystart+i*ypixels_per_tick, xend-xstart, tft.Color565(50, 50, 50));
+  }
+  // Left-most vertical, includes tick
+  tft.drawFastVLine(xstart, ystart, yend-ystart+10, RA8875_GREEN); 
+  // Right-most vertical, includes tick
+  tft.drawFastVLine(xend, ystart, yend-ystart+10, RA8875_GREEN);
+  tft.setTextColor(RA8875_WHITE);
+  tft.setFontScale((enum RA8875tsize)0);
+  for (int k = 1; k < 10; k++) {  // Draw Freq axis tick marks and numbers
+    tft.drawFastVLine(xstart + xpixels_per_tick * k, yend, 10, RA8875_GREEN);
+    tft.setCursor(xstart-13 + xpixels_per_tick * k, yend+15);
+    tft.print(-100 + k * kHz_per_tick, 0);
+    tft.drawFastVLine(xstart + xpixels_per_tick * k, ystart, yend-ystart, tft.Color565(50, 50, 50));
+  }
+  tft.setFontScale((enum RA8875tsize)0);
+  tft.setCursor(350, 440);
+  tft.print("kHz");
+  tft.setTextColor(RA8875_YELLOW);
+  tft.setCursor(16, 20);
+  tft.print("Deg");
+  tft.setTextColor(RA8875_YELLOW);
+  tft.setCursor(xend+5, 20);
+  tft.print("|I/Q|");
+  tft.setFontScale((enum RA8875tsize)1);
+  tft.setTextColor(RA8875_YELLOW);
+  tft.setCursor(270, 15);
+  tft.print("T41 IQ Balance");
+  tft.writeTo(L1);
+}
+
+#endif
+
 /*****
   Purpose: Set up prior to IQ calibrations.  Revised function. AFP 07-13-24
   These things need to be saved here and restored in the prologue function:
@@ -543,6 +632,81 @@ void DoXmitCalibrate() {
   // Clean up and exit to normal operation.
 }
 
+#ifdef QUADFFT
+void DoIQCalibrate() {
+  CalibratePreamble(0);
+  uint8_t out_atten = 60;
+  uint8_t previous_atten = out_atten;
+  SetRF_InAtten(out_atten);
+  SetRF_OutAtten(out_atten);
+  SetFreq();
+
+  IQfreqStart = (int)((float)(centerFreq + IFFreq - 192000/2) / 1000.0); // kHz
+  IQfreqStop = (int)((float)(centerFreq + IFFreq + 192000/2) / 1000.0); // kHz
+
+  digitalWrite(XMIT_MODE, XMIT_CW);
+  digitalWrite(CW_ON_OFF, CW_ON);
+  digitalWrite(CAL, CAL_ON);
+
+  // Now, step through frequency
+  Serial.println("-----------------------");
+  si5351.output_enable(SI5351_CLK2, 1);
+
+  while (true){
+    val = ReadSelectedPushButton();
+    if (val != BOGUS_PIN_READ) {        // Any button press??
+      val = ProcessButtonPress(val);    // Use ladder value to get menu choice
+      if (val == MENU_OPTION_SELECT) {  // Yep. Make a choice??
+        tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
+        tft.fillRect(250-250, 0, 285+250, CHAR_HEIGHT+1, RA8875_BLACK);
+        calibrateFlag = 0;
+        IQChoice = 6;
+        break;
+      }        
+    }
+    DrawIQBalancePlotContainer();
+
+    for (int i=0; i<(512+1); i++){
+      Clk2SetFreq = FREQ_OFFSET + (centerFreq + IFFreq - 192000/2 + i*(192000/512))* SI5351_FREQ_MULT;
+      si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
+      MyDelay(20);
+      // Let's get into the correct configuration
+      Q_in_L.clear();
+      Q_in_R.clear();
+      MeasureIandQFFT();
+      arm_max_f32(Imag,1024,&frmax,&index_of_max);
+      sprintf(strBuf,"%d,%2.1f\n",centerFreq + IFFreq - 192000/2 + i*192000/512,IQphase[index_of_max]*180.0/PI);
+      Serial.print(strBuf);
+
+      if ((IQphase[index_of_max]*180.0/PI > -100) & (IQphase[index_of_max]*180.0/PI < 100)){
+        tft.fillCircle(xstart + (int16_t)(xpixels_per_kHz*(100.0 + ((float)(-192000/2 + i*192000/512) )/1000.0 )), 
+                      ystart + (int16_t)(ypixels_per_deg*(100.0 - IQphase[index_of_max]*180.0/PI )),
+                      2, RA8875_LIGHT_GREY);
+      }
+      tft.fillCircle(xstart + (int16_t)(xpixels_per_kHz*(100.0 + ((float)(-192000/2 + i*192000/512) )/1000.0 )), 
+                     ystart + (int16_t)(ypixels_per_unit*(1.5 - Imag[index_of_max]/Qmag[index_of_max] )),
+                      2, RA8875_YELLOW);
+      /*
+      tft.setFontScale((enum RA8875tsize)1);
+      tft.setTextColor(RA8875_WHITE);
+      tft.fillRect(250-250, 0, 285+250, CHAR_HEIGHT, RA8875_BLACK);  // Increased rectangle size to full erase value.  KF5N August 12, 2023
+      tft.setCursor(257-250, 1);
+      tft.print("|I|/|Q|:");
+      tft.setCursor(420-250, 1);
+      tft.print(Imag[index_of_max]/Qmag[index_of_max], 2);
+
+      tft.setCursor(257, 1);
+      tft.print("phi(I-Q):");
+      tft.setCursor(440, 1);
+      tft.print(IQphase[index_of_max]*180.0/PI, 2);
+      */
+    }
+  }
+  si5351.output_enable(SI5351_CLK2, 0);
+  CalibratePost();
+}
+#endif
+
 
 /*****
   Purpose: Signal processing for the purpose of calibrating the transmit IQ
@@ -816,5 +980,73 @@ float PlotCalSpectrum(int x1, int cal_bins[2], int capture_bins) {
   tft.writeTo(L1);
   return adjdB;
 }
+
+#ifdef QUADFFT
+/*****
+  Purpose: Acquire samples from the I and Q channels, calculate FFTs on each channel
+           independently, and calculate the PSD of the bins in each channel and the 
+           phase angle between them. This is a blocking function -- it waits until the
+           necessary data is available before proceeding.
+
+  Parameter list:
+    void
+
+  Return value;
+    void
+*****/
+void MeasureIandQFFT(){
+  /******************************************************
+   * Teensy Audio Library stores ADC data in two buffers size=128, Q_in_L and Q_in_R.
+   * Read into two arrays sp_L and sp_R in blocks of 128 up to N_BLOCKS.  
+   * The arrays are of size BUFFER_SIZE * N_BLOCKS.  BUFFER_SIZE is 128.
+   * N_BLOCKS = FFT_LENGTH / 2 / BUFFER_SIZE * (uint32_t)DF = 16 with DF = 8 and FFT_LENGTH = 512
+   * BUFFER_SIZE*N_BLOCKS = 2048 samples
+   ******************************************************/
+  // Wait until there at least N_BLOCKS buffers in each channel available
+  while (!((uint32_t)Q_in_L.available() > N_BLOCKS + 0 && 
+          (uint32_t)Q_in_R.available() > N_BLOCKS + 0)) {;}
+  
+  for (unsigned i = 0; i < N_BLOCKS; i++) {
+    sp_L1 = Q_in_R.readBuffer(); // I
+    sp_R1 = Q_in_L.readBuffer(); // Q
+    // Convert to float one buffer_size, standardized from > -1.0 to < 1.0 
+    arm_q15_to_float(sp_L1, &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);
+    arm_q15_to_float(sp_R1, &float_buffer_R[BUFFER_SIZE * i], BUFFER_SIZE);
+    Q_in_L.freeBuffer();
+    Q_in_R.freeBuffer();
+  }
+
+  // perform windowing on 2048 real samples in the buffers
+  for (int idx = 0; idx < 2048; idx++)  {  // Hann window
+    float32_t temp_sample = 0.5 * (float32_t)(1.0 - (cosf(PI * 2.0 * (float32_t)idx / (float32_t)(2048 - 1))));
+    float_buffer_L[idx] *= temp_sample;
+    float_buffer_R[idx] *= temp_sample;
+  }
+  // Perform real FFT on L and R (I and Q)
+  arm_rfft_fast_f32( &Sreal, float_buffer_L, float_buffer_LTemp, 0); 	// I
+  arm_rfft_fast_f32( &Sreal, float_buffer_R, float_buffer_RTemp, 0); 	// Q
+  // Bin 0,1 is Real{DC},Real{alias}. Thereafter complex samples 
+
+  // calculate magnitudes of L and R and phase angle between them
+  for (int i = 0; i < 1024; i++) {
+    Imag[i] = sqrt(float_buffer_LTemp[2*i]*float_buffer_LTemp[2*i] + 
+              float_buffer_LTemp[2*i+1]*float_buffer_LTemp[2*i+1] );
+    Qmag[i] = sqrt(float_buffer_RTemp[2*i]*float_buffer_RTemp[2*i] + 
+              float_buffer_RTemp[2*i+1]*float_buffer_RTemp[2*i+1] );
+    // What is the phase angle?
+    float phiI = atan2f(float_buffer_LTemp[2*i+1],float_buffer_LTemp[2*i]);
+    float phiQ = atan2f(float_buffer_RTemp[2*i+1],float_buffer_RTemp[2*i]);
+    IQphase[i] = phiI - phiQ;
+    if (IQphase[i] > PI){
+      IQphase[i] -= PI*2.0;
+    } else {
+      if (IQphase[i] < (-1*PI)){
+        IQphase[i] += PI*2.0;
+      }
+    }
+  }
+}
+
+#endif
 
 #endif // V12HWR

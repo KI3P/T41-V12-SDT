@@ -50,8 +50,8 @@
 //====================== Software selections ===================
 
 // Uncomment to exclude BEARING and/or BODE code
-//#define EXCLUDE_BEARING
-//#define EXCLUDE_BODE
+#define EXCLUDE_BEARING
+#define EXCLUDE_BODE
 
 // Uncomment if using G0ORX Kenwood TS-2000 CAT interface
 //#define G0ORX_CAT
@@ -61,6 +61,8 @@
 
 // Fast tune function on fine tune knob from Harry Brash GM3RVL
 #define FAST_TUNE
+
+#define QUADFFT
 
 //====================== User Specific Preferences =============
 

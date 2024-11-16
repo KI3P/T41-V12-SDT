@@ -48,7 +48,11 @@ int CalibrateOptions(int IQChoice) {
           tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
           EEPROMWrite();
           calibrateFlag = 0;
+          #ifdef QUADFFT
+          IQChoice = 6;
+          #else
           IQChoice = 5;
+          #endif
           return IQChoice;
         }
       }
@@ -108,18 +112,30 @@ int CalibrateOptions(int IQChoice) {
           #endif 
           EEPROMWrite();
           calibrateFlag = 0;
+          #ifdef QUADFFT
+          IQChoice = 6;
+          #else
           IQChoice = 5;
+          #endif
           return IQChoice;
         }
       }
       break;
     case 2:                  // IQ Receive Cal - Gain and Phase
       DoReceiveCalibrate();  // This function was significantly revised.  KF5N August 16, 2023
+      #ifdef QUADFFT
+      IQChoice = 6;
+      #else
       IQChoice = 5;
+      #endif
       break;
     case 3:               // IQ Transmit Cal - Gain and Phase  //AFP 2-21-23
       DoXmitCalibrate();  // This function was significantly revised.  KF5N August 16, 2023
+      #ifdef QUADFFT
+      IQChoice = 6;
+      #else
       IQChoice = 5;
+      #endif
       break;
     case 4:  // SSB PA Cal
       #ifdef V12HWR
@@ -143,13 +159,26 @@ int CalibrateOptions(int IQChoice) {
           #endif
           EEPROMWrite();
           calibrateFlag = 0;
+          #ifdef QUADFFT
+          IQChoice = 6;
+          #else
           IQChoice = 5;
+          #endif
           return IQChoice;
         }
       }
       break;  // Missing break.  KF5N August 12, 2023
 
+    #ifdef QUADFFT
+    case 5:{
+      DoIQCalibrate();
+      IQChoice = 6;
+      break;
+    }
+    case 6:
+    #else
     case 5:
+    #endif
       //EraseMenus();
       RedrawDisplayScreen();
       currentFreq = TxRxFreq = centerFreq + NCOFreq;
