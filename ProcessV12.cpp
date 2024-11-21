@@ -46,10 +46,77 @@ static float adjdB;
 
  
 *****/
-static int IQfreqStart,IQfreqStop,numIQPoints;
+static int IQfreqStart_kHz,IQfreqStop_kHz,numIQPoints;
 static float frmax;
 static uint32_t index_of_max;
-#define FREQ_OFFSET 4688 // 100*( FFT RBW / 2 ) = 100 * (96000/1024 / 2)
+static bool corrections_calculated = false;
+//float DMAMEM FFTbuf[4096];
+float r,i;
+
+/*void applyIQcorrections(){
+  // Apply gain correction to the L (I) channel
+  // Print the first 10 samples before and after
+
+  Serial.print("before\nL: ");
+  for (int idx = 0; idx < 10; idx++) {
+    Serial.print(String(float_buffer_L[idx]) + " ");
+  }
+  Serial.print("\nR: ");
+  for (int idx = 0; idx < 10; idx++) {
+    Serial.print(String(float_buffer_R[idx]) + " ");
+  }
+  Serial.println("");
+  
+
+  for (int idx = 0; idx < 2048; idx++)  {
+    //float32_t temp_sample = 0.5 * (float32_t)(1.0 - (cosf(PI * 2.0 * (float32_t)idx / (float32_t)(2048 - 1))));
+    //float_buffer_L[idx] *= temp_sample;
+    FFTbuf[2*idx] = float_buffer_L[idx];
+    FFTbuf[2*idx+1] = 0.0;
+  }
+  arm_cfft_f32(&arm_cfft_sR_f32_len4096, FFTbuf, 0, 1);
+  for (int idx = 0; idx < 2048; idx++)  {
+    FFTbuf[2*idx] *= gCorrIQ[idx];
+    FFTbuf[2*idx+1] *= gCorrIQ[idx];
+  }
+  arm_cfft_f32(&arm_cfft_sR_f32_len4096, FFTbuf, 1, 1);
+  // Put real part in LTemp temporarily & imag part in RTemp temporarily
+  for (int idx = 0; idx < 2048; idx++)  {
+    float_buffer_LTemp[idx] = FFTbuf[2*idx];
+    float_buffer_RTemp[idx] = FFTbuf[2*idx+1];
+  }
+
+  // Apply phase correction to the R (Q) channel
+  for (int idx = 0; idx < 2048; idx++)  {
+    //float32_t temp_sample = 0.5 * (float32_t)(1.0 - (cosf(PI * 2.0 * (float32_t)idx / (float32_t)(2048 - 1))));
+    //float_buffer_L[idx] *= temp_sample;
+    FFTbuf[2*idx] = float_buffer_R[idx];
+    FFTbuf[2*idx+1] = 0.0;
+  }
+  arm_cfft_f32(&arm_cfft_sR_f32_len4096, FFTbuf, 0, 1);
+  for (int idx = 0; idx < 2048; idx++)  {
+    r = FFTbuf[2*idx]*pCorrIQr[idx] - FFTbuf[2*idx+1]*pCorrIQi[idx];
+    i = FFTbuf[2*idx+1]*pCorrIQr[idx] + FFTbuf[2*idx]*pCorrIQi[idx];
+    FFTbuf[2*idx] = r;
+    FFTbuf[2*idx+1] = i;
+  }
+  arm_cfft_f32(&arm_cfft_sR_f32_len4096, FFTbuf, 1, 1);
+  // Now combine the I and Q inverse FFT results
+  for (int idx = 0; idx < 2048; idx++)  {
+    float_buffer_L[idx] = float_buffer_LTemp[idx] - FFTbuf[2*idx+1]; // Re(I) - Im(Q)
+    float_buffer_R[idx] = float_buffer_RTemp[idx] + FFTbuf[2*idx]; // Im(I) + Re(Q)
+  }
+  Serial.print("after\nL: ");
+  for (int idx = 0; idx < 10; idx++) {
+    Serial.print(String(float_buffer_L[idx]) + " ");
+  }
+  Serial.print("\nR: ");
+  for (int idx = 0; idx < 10; idx++) {
+    Serial.print(String(float_buffer_R[idx]) + " ");
+  }
+  Serial.println("");
+  
+}*/
 
 void DrawIQBalancePlotContainer() {
   tft.writeTo(L1);
@@ -65,13 +132,13 @@ void DrawIQBalancePlotContainer() {
   #define Nyticks  10
   #define xpixels_per_tick  ((float)(xend-xstart))/Nxticks
   #define ypixels_per_tick  ((float)(yend-ystart))/Nyticks
-  #define xpixels_per_kHz   ((xend-xstart)/(100.0-(-100.0))) // -100 kHz to +100 kHz
+  #define xpixels_per_kHz   ((xend-xstart)/((float)(IQfreqStop_kHz-IQfreqStart_kHz))) // -100 kHz to +100 kHz
   #define ypixels_per_deg   ((yend-ystart)/(100.0-(-100.0))) // -100 deg to +100 deg
   #define ypixels_per_unit  ((yend-ystart)/(1.5-(0.5)))      // 1.5 to 0.5
   #define kHz_per_tick      (((float) xpixels_per_tick) / (xpixels_per_kHz))   
   #define deg_per_tick      (((float) ypixels_per_tick) / (ypixels_per_deg))   
-  #define unit_per_tick      (((float) ypixels_per_tick) / (ypixels_per_unit))   
-  
+  #define unit_per_tick     (((float) ypixels_per_tick) / (ypixels_per_unit))   
+
   //============== Draw lines on Layer 2
   // Top-most horizontal, includes tick
   tft.drawFastHLine(xstart-10, ystart, xend-xstart+10, RA8875_GREEN);
@@ -102,7 +169,7 @@ void DrawIQBalancePlotContainer() {
   for (int k = 1; k < 10; k++) {  // Draw Freq axis tick marks and numbers
     tft.drawFastVLine(xstart + xpixels_per_tick * k, yend, 10, RA8875_GREEN);
     tft.setCursor(xstart-13 + xpixels_per_tick * k, yend+15);
-    tft.print(-100 + k * kHz_per_tick, 0);
+    tft.print(IQfreqStart_kHz + k * kHz_per_tick, 1);
     tft.drawFastVLine(xstart + xpixels_per_tick * k, ystart, yend-ystart, tft.Color565(50, 50, 50));
   }
   tft.setFontScale((enum RA8875tsize)0);
@@ -121,6 +188,22 @@ void DrawIQBalancePlotContainer() {
   tft.writeTo(L1);
 }
 
+void CalculateIQCorrectionValues(){
+  for (int i=0; i<numIQPoints; i++){
+    // The image frequency is in the bin mirrored around the center:
+    // Bin 0's image is in bin 2047
+    // Bin 1's image is in bin 2046
+    // image = 2047 - i
+    gCorrIQ[i] = 1.0 / gErrorIQ[numIQPoints-1-i];
+    float pcorrect = PI/2;
+    if (i >= numIQPoints/2){
+      pcorrect = -PI/2;
+    }
+    float pcorrection = -1*(pcorrect-pErrorIQ[numIQPoints-1-i]);
+    pCorrIQr[i] = cos(pcorrection);
+    pCorrIQi[i] = sin(pcorrection);
+  }
+}
 #endif
 
 /*****
@@ -143,7 +226,7 @@ void CalibratePreamble(int setZoom) {
   radioState = CW_TRANSMIT_STRAIGHT_STATE;  // 
   userXmtMode = xmtMode;          // Store the user's mode setting.   July 22, 2023
   userZoomIndex = spectrum_zoom;  // Save the zoom index so it can be reset at the conclusion.   August 12, 2023
-  spectrum_zoom = setZoom; // spectrum_zoom is used in Process.cpp. zoom_display has no effect
+  spectrum_zoom = setZoom; // spectrum_zoom is used in Process.cpp
   zoomIndex = setZoom - 1; 
   userCurrentFreq = currentFreq;
   userTxRxFreq = TxRxFreq;
@@ -641,8 +724,11 @@ void DoIQCalibrate() {
   SetRF_OutAtten(out_atten);
   SetFreq();
 
-  IQfreqStart = (int)((float)(centerFreq + IFFreq - 192000/2) / 1000.0); // kHz
-  IQfreqStop = (int)((float)(centerFreq + IFFreq + 192000/2) / 1000.0); // kHz
+  //IQfreqStart = (int)((float)(centerFreq + IFFreq - 192000/2) / 1000.0); // kHz
+  //IQfreqStop = (int)((float)(centerFreq + IFFreq + 192000/2) / 1000.0); // kHz
+  IQfreqStart_kHz = -2; // Hz
+  IQfreqStop_kHz = +2; // Hz
+  numIQPoints = 512;
 
   digitalWrite(XMIT_MODE, XMIT_CW);
   digitalWrite(CW_ON_OFF, CW_ON);
@@ -650,14 +736,14 @@ void DoIQCalibrate() {
 
   // Now, step through frequency
   si5351.output_enable(SI5351_CLK2, 1);
+  int FREQ_OFFSET = 4688; // 100*( FFT RBW / 2 ) = 100 * (96000/1024 / 2)
 
   while (true){
-
     DrawIQBalancePlotContainer();
     Serial.println("-----------------------");
-    Serial.println("Clk2SetFreq,I-Q phase,I/Q amp");
-    for (int i=0; i<2048; i++){
-      Clk2SetFreq = FREQ_OFFSET + i*(19200000/2048) + (centerFreq + IFFreq - 192000/2)*SI5351_FREQ_MULT;
+    Serial.println("i,Clk2SetFreq,I-Q phase,I/Q amp");
+    for (int i=0; i<numIQPoints; i++){
+      Clk2SetFreq = i*(((IQfreqStop_kHz-IQfreqStart_kHz)*1000*SI5351_FREQ_MULT)/numIQPoints) + (centerFreq + IFFreq + IQfreqStart_kHz*1000)*SI5351_FREQ_MULT; //+ FREQ_OFFSET; 
       si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
       MyDelay(10);
       // Let's get into the correct configuration
@@ -665,21 +751,64 @@ void DoIQCalibrate() {
       Q_in_R.clear();
       MeasureIandQFFT();
       arm_max_f32(Imag,1024,&frmax,&index_of_max);
+      gErrorIQ[i] = Imag[index_of_max]/Qmag[index_of_max];
+      pErrorIQ[i] = IQphase[index_of_max];
       float xx_kHz = ((float)Clk2SetFreq-(float)((centerFreq + IFFreq)*SI5351_FREQ_MULT))/(100.0*1000.0) ;
-      sprintf(strBuf,"%lld,%3.2f,%4.3f\n",
+      sprintf(strBuf,"%d,%lld,%3.2f,%4.3f\n",
+              i,
               Clk2SetFreq,
-              IQphase[index_of_max]*180.0/PI,
-              Imag[index_of_max]/Qmag[index_of_max]);
+              pErrorIQ[i]*180.0/PI,
+              gErrorIQ[i]);
       Serial.print(strBuf);
       if ((IQphase[index_of_max]*180.0/PI > -100) & (IQphase[index_of_max]*180.0/PI < 100)){
-        tft.fillCircle(xstart + (int16_t)(xpixels_per_kHz*(100.0 + xx_kHz )), 
+        tft.fillCircle(xstart + (int16_t)(xpixels_per_kHz*(-1*IQfreqStart_kHz + xx_kHz )), 
                       ystart + (int16_t)(ypixels_per_deg*(100.0 - IQphase[index_of_max]*180.0/PI )),
                       1, RA8875_LIGHT_GREY);
       }
-      tft.fillCircle(xstart + (int16_t)(xpixels_per_kHz*(100.0 + xx_kHz )), 
+      tft.fillCircle(xstart + (int16_t)(xpixels_per_kHz*(-1*IQfreqStart_kHz + xx_kHz )), 
                      ystart + (int16_t)(ypixels_per_unit*(1.5 - Imag[index_of_max]/Qmag[index_of_max] )),
                       1, RA8875_YELLOW);
     }
+    CalculateIQCorrectionValues();
+    corrections_calculated = true;
+    Serial.println("-----------------------");
+    Serial.println("i,gCorr,Re{pCorr},Im{pCorr}");
+    for (int i=0; i<2048; i++){
+      sprintf(strBuf,"%d,%4.3f,%4.3f,%4.3f\n",
+              i,
+              gCorrIQ[i],
+              pCorrIQr[i],
+              pCorrIQi[i]);
+      Serial.print(strBuf);
+    }
+    // Read some data into the buffer so we can test. Set the Clk to 750 Hz below LO
+    Clk2SetFreq = (centerFreq + IFFreq - 750)*SI5351_FREQ_MULT;
+    si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
+    MyDelay(10);
+    Q_in_L.clear();
+    Q_in_R.clear();
+    while (!((uint32_t)Q_in_L.available() > N_BLOCKS + 0 && 
+          (uint32_t)Q_in_R.available() > N_BLOCKS + 0)) {;}  
+    for (unsigned i = 0; i < N_BLOCKS; i++) {
+      sp_L1 = Q_in_R.readBuffer(); // I
+      sp_R1 = Q_in_L.readBuffer(); // Q
+      // Convert to float one buffer_size, standardized from > -1.0 to < 1.0 
+      arm_q15_to_float(sp_L1, &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);
+      arm_q15_to_float(sp_R1, &float_buffer_R[BUFFER_SIZE * i], BUFFER_SIZE);
+      Q_in_L.freeBuffer();
+      Q_in_R.freeBuffer();
+    }
+    // And print the L and R buffers:
+    Serial.println("-----------------------");
+    Serial.println("i,L,R");
+    for (int i=0; i<2048; i++){
+      sprintf(strBuf,"%d,%5.4f,%5.4f\n",
+              i,
+              float_buffer_L[i],
+              float_buffer_R[i]);
+      Serial.print(strBuf);
+    }
+
     val = ReadSelectedPushButton();
     if (val != BOGUS_PIN_READ) {        // Any button press??
       val = ProcessButtonPress(val);    // Use ladder value to get menu choice
@@ -984,7 +1113,6 @@ float PlotCalSpectrum(int x1, int cal_bins[2], int capture_bins) {
   Return value;
     void
 *****/
-float FFTbuf[4096];
 void MeasureIandQFFT(){
   /******************************************************
    * Teensy Audio Library stores ADC data in two buffers size=128, Q_in_L and Q_in_R.
@@ -1007,13 +1135,18 @@ void MeasureIandQFFT(){
     Q_in_R.freeBuffer();
   }
 
+  //if(corrections_calculated){
+  //  applyIQcorrections();
+  //}
+
   // perform windowing on 2048 real samples in the buffers
-  for (int idx = 0; idx < 2048; idx++)  {  // Hann window
+  for (int idx = 0; idx < 2048; idx++)  {  
+    // Hann window
     float32_t temp_sample = 0.5 * (float32_t)(1.0 - (cosf(PI * 2.0 * (float32_t)idx / (float32_t)(2048 - 1))));
     float_buffer_L[idx] *= temp_sample;
     float_buffer_R[idx] *= temp_sample;
-    FFTbuf[2*idx] = float_buffer_L[idx];
-    FFTbuf[2*idx+1] = 0.0;
+    //FFTbuf[2*idx] = float_buffer_L[idx];
+    //FFTbuf[2*idx+1] = 0.0;
   }
   // Perform real FFT on L and R (I and Q)
   arm_rfft_fast_f32( &Sreal, float_buffer_L, float_buffer_LTemp, 0); 	// I

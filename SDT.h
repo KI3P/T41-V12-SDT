@@ -1450,10 +1450,16 @@ extern const struct SR_Descriptor SR[];
 #ifdef QUADFFT
 void MeasureIandQFFT();
 void DoIQCalibrate();
+void CalculateIQCorrectionValues();
 extern arm_rfft_fast_instance_f32 Sreal;
 extern float Imag[];
 extern float Qmag[];
 extern float IQphase[];
+extern float gErrorIQ[];
+extern float pErrorIQ[];
+extern float gCorrIQ[];
+extern float pCorrIQr[];
+extern float pCorrIQi[];
 #endif
 
 extern const arm_cfft_instance_f32 *S;
@@ -1631,7 +1637,6 @@ extern uint8_t twinpeaks_tested;                      // initial value --> 2 !!
 extern uint8_t wait_flag;
 extern uint8_t which_menu;
 extern uint8_t write_analog_gain;
-extern uint8_t zoom_display;
 
 extern const uint8_t NR_L_frames;
 extern const uint8_t NR_N_frames;
@@ -2272,9 +2277,12 @@ extern const float32_t nuttallWindow256[];
 extern const float32_t sqrtHann[];
 
 extern float32_t FFT_buffer [] __attribute__ ((aligned (4)));
-
+extern float32_t FFT_ring_buffer_x[];
+extern float32_t FFT_ring_buffer_y[];
+#ifndef QUADFFT
 extern float32_t float_buffer_L_3[];
 extern float32_t float_buffer_R_3[];
+#endif
 
 extern const float32_t atanTable[];
 extern const float32_t DF1;           // decimation factor

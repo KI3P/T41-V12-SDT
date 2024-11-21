@@ -48,8 +48,6 @@ void ZoomFFTExe(uint32_t blockSize)  //AFP changed resolution 03-12-21  Only for
   if (updateDisplayFlag == 1) {  //Runs display FFT routine only once for each Audio process FFT.  Cuts number of FFTs by 1/512.
     float32_t x_buffer[blockSize];                      // can be 4096 [FFT length == 1024] or even 8192 [FFT length == 2048]
     float32_t y_buffer[blockSize];
-    static float32_t FFT_ring_buffer_x[SPECTRUM_RES*2];
-    static float32_t FFT_ring_buffer_y[SPECTRUM_RES*2];
     int sample_no = SPECTRUM_RES;                       // sample_no is 256, in high magnify modes it is smaller!
     // but it must never be > SPECTRUM_RES
 
@@ -64,22 +62,15 @@ void ZoomFFTExe(uint32_t blockSize)  //AFP changed resolution 03-12-21  Only for
       // decimation
       arm_fir_decimate_f32(&Fir_Zoom_FFT_Decimate_I, x_buffer, x_buffer, blockSize);
       arm_fir_decimate_f32(&Fir_Zoom_FFT_Decimate_Q, y_buffer, y_buffer, blockSize);
-
-      // This puts the sample_no samples into the ringbuffer -->
-      // the right order has to be thought about!
-      // we take all the samples from zoom_sample_ptr to 256 and
-      // then all samples from 0 to zoom_sampl_ptr - 1
-      // fill into ringbuffer
       
-      for (int i = 0; i < sample_no; i++) {                 // interleave real and imaginary input values [real, imag, real, imag . . .]
+      for (int i = 0; i < sample_no; i++) {
         FFT_ring_buffer_x[zoom_sample_ptr] = x_buffer[i];
         FFT_ring_buffer_y[zoom_sample_ptr] = y_buffer[i];
         zoom_sample_ptr++;
-        if (zoom_sample_ptr >= SPECTRUM_RES)
+        if (zoom_sample_ptr >= SPECTRUM_RES){
           zoom_sample_ptr = 0;
+        } 
       }
-    } else {                                                // I have to think about this:
-      zoom_display = 0;                                     // when do we want to display a new spectrum?
     }
     float32_t multiplier = (float32_t)spectrum_zoom;
     if (spectrum_zoom > SPECTRUM_ZOOM_8) { // && spectrum_zoom < SPECTRUM_ZOOM_1024) {

@@ -1165,7 +1165,14 @@ arm_rfft_fast_instance_f32 Sreal;
 DMAMEM float Imag[1024];
 DMAMEM float Qmag[1024];
 DMAMEM float IQphase[1024];
+DMAMEM float gCorrIQ[2048];
+DMAMEM float pCorrIQr[2048];
+DMAMEM float pCorrIQi[2048];
+DMAMEM float gErrorIQ[2048];
+DMAMEM float pErrorIQ[2048];
 #endif
+DMAMEM float32_t FFT_ring_buffer_x[SPECTRUM_RES];
+DMAMEM float32_t FFT_ring_buffer_y[SPECTRUM_RES];
 
 const arm_cfft_instance_f32 *S;
 const arm_cfft_instance_f32 *iS;
@@ -1465,7 +1472,6 @@ uint8_t T41State = 1;
 uint8_t wait_flag;
 uint8_t which_menu = 1;
 uint8_t write_analog_gain = 0;
-uint8_t zoom_display = 1;
 
 const uint8_t NR_L_frames = 3;
 const uint8_t NR_N_frames = 15;
@@ -1931,11 +1937,12 @@ float32_t DMAMEM Fir_Zoom_FFT_Decimate_coeffs[4];
 float32_t fixed_gain = 1.0;
 float32_t DMAMEM float_buffer_L[BUFFER_SIZE * N_B];
 float32_t DMAMEM float_buffer_R[BUFFER_SIZE * N_B];
+#ifndef QUADFFT
 float32_t DMAMEM float_buffer_L2[BUFFER_SIZE * N_B];
 float32_t DMAMEM float_buffer_R2[BUFFER_SIZE * N_B];
 float32_t float_buffer_L_3[BUFFER_SIZE * N_B];
 float32_t float_buffer_R_3[BUFFER_SIZE * N_B];
-
+#endif
 float32_t DMAMEM float_buffer_L_CW[256];       //AFP 09-01-22
 float32_t DMAMEM float_buffer_R_CW[256];       //AFP 09-01-22
 float32_t DMAMEM float_buffer_R_AudioCW[256];  //AFP 10-18-22

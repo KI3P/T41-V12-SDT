@@ -367,7 +367,6 @@ void ProcessIQData2() {
     FreqShift1();  // Why done here? KF5N
 
     if (spectrum_zoom == SPECTRUM_ZOOM_1) {  // && display_S_meter_or_spectrum_state == 1)
-      zoom_display = 1;
       CalcZoom1Magn();  //AFP Moved to display function
     }
 

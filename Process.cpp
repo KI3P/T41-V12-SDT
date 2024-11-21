@@ -162,7 +162,6 @@ void ProcessIQData()
      ***********************************************************************************************/
 
     if (spectrum_zoom == SPECTRUM_ZOOM_1) { // && display_S_meter_or_spectrum_state == 1)
-      zoom_display = 1;
       CalcZoom1Magn();  //AFP Moved to display function
     }
     display_S_meter_or_spectrum_state++;
@@ -198,12 +197,6 @@ void ProcessIQData()
       // does not work for magnifications > 8
     }
 
-    if (zoom_display) {
-      if (show_spectrum_flag) {
-      }
-      zoom_display = 1;
-      //zoom_sample_ptr = 0;
-    }
     /**********************************************************************************  AFP 12-31-20
         S-Meter & dBm-display ?? not usually called
      **********************************************************************************/
