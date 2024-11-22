@@ -743,7 +743,9 @@ void DoIQCalibrate() {
     Serial.println("-----------------------");
     Serial.println("i,Clk2SetFreq,I-Q phase,I/Q amp");
     for (int i=0; i<numIQPoints; i++){
-      Clk2SetFreq = i*(((IQfreqStop_kHz-IQfreqStart_kHz)*1000*SI5351_FREQ_MULT)/numIQPoints) + (centerFreq + IFFreq + IQfreqStart_kHz*1000)*SI5351_FREQ_MULT; //+ FREQ_OFFSET; 
+      int offset_dHz = IQfreqStart_kHz*1000*SI5351_FREQ_MULT
+                      +i*(((IQfreqStop_kHz-IQfreqStart_kHz)*1000*SI5351_FREQ_MULT)/numIQPoints);
+      Clk2SetFreq = (long long)offset_dHz + (long long)((centerFreq + IFFreq)*SI5351_FREQ_MULT); //+ FREQ_OFFSET; 
       si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
       MyDelay(10);
       // Let's get into the correct configuration
@@ -753,7 +755,7 @@ void DoIQCalibrate() {
       arm_max_f32(Imag,1024,&frmax,&index_of_max);
       gErrorIQ[i] = Imag[index_of_max]/Qmag[index_of_max];
       pErrorIQ[i] = IQphase[index_of_max];
-      float xx_kHz = ((float)Clk2SetFreq-(float)((centerFreq + IFFreq)*SI5351_FREQ_MULT))/(100.0*1000.0) ;
+      float xx_kHz = ((float)offset_dHz)/(100.0*1000.0) ;
       sprintf(strBuf,"%d,%lld,%3.2f,%4.3f\n",
               i,
               Clk2SetFreq,
@@ -773,7 +775,7 @@ void DoIQCalibrate() {
     corrections_calculated = true;
     Serial.println("-----------------------");
     Serial.println("i,gCorr,Re{pCorr},Im{pCorr}");
-    for (int i=0; i<2048; i++){
+    for (int i=0; i<numIQPoints; i++){
       sprintf(strBuf,"%d,%4.3f,%4.3f,%4.3f\n",
               i,
               gCorrIQ[i],
