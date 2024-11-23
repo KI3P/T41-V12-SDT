@@ -559,6 +559,7 @@ void DoXmitCalibrate() {
   calTypeFlag = 1;
   IQEXChoice = 0;
   bool calState = true;
+  updateDisplayFlag = 1;
   // For the receive chain calibration portion of transmit cal use CLK2
   // CLK0/1 will be set to centerFreq + IFFreq
   SetFreq();
@@ -728,7 +729,7 @@ void DoIQCalibrate() {
   //IQfreqStop = (int)((float)(centerFreq + IFFreq + 192000/2) / 1000.0); // kHz
   IQfreqStart_kHz = -2; // Hz
   IQfreqStop_kHz = +2; // Hz
-  numIQPoints = 512;
+  numIQPoints = 2048;//512;
 
   digitalWrite(XMIT_MODE, XMIT_CW);
   digitalWrite(CW_ON_OFF, CW_ON);
@@ -934,11 +935,12 @@ void ProcessIQData2() {
     if (spectrum_zoom == SPECTRUM_ZOOM_1) {
       // This is executed during receive cal
       CalcZoom1Magn();
+      FFTupdated = true;
     } else {
       // This is used during transmit cal
       ZoomFFTExe(BUFFER_SIZE * N_BLOCKS);
+      if (zoom_sample_ptr == 0) FFTupdated = true;
     }
-    FFTupdated = true;
   }
 }
 

@@ -56,7 +56,7 @@ void ZoomFFTExe(uint32_t blockSize)  //AFP changed resolution 03-12-21  Only for
       sample_no = SPECTRUM_RES;
     }
 
-    if (spectrum_zoom != SPECTRUM_ZOOM_1) {                                                       //For magnifications >1
+    if (spectrum_zoom != SPECTRUM_ZOOM_1) {                                                     //For magnifications >1
       arm_biquad_cascade_df1_f32 (&IIR_biquad_Zoom_FFT_I, float_buffer_L, x_buffer, blockSize);
       arm_biquad_cascade_df1_f32 (&IIR_biquad_Zoom_FFT_Q, float_buffer_R, y_buffer, blockSize);
       // decimation
@@ -67,9 +67,11 @@ void ZoomFFTExe(uint32_t blockSize)  //AFP changed resolution 03-12-21  Only for
         FFT_ring_buffer_x[zoom_sample_ptr] = x_buffer[i];
         FFT_ring_buffer_y[zoom_sample_ptr] = y_buffer[i];
         zoom_sample_ptr++;
-        if (zoom_sample_ptr >= SPECTRUM_RES){
-          zoom_sample_ptr = 0;
-        } 
+      }
+      if (zoom_sample_ptr >= SPECTRUM_RES){
+        zoom_sample_ptr = 0;
+      } else {
+        return;
       }
     }
     float32_t multiplier = (float32_t)spectrum_zoom;
@@ -84,6 +86,7 @@ void ZoomFFTExe(uint32_t blockSize)  //AFP changed resolution 03-12-21  Only for
         zoom_sample_ptr = 0;
       }
     }
+    zoom_sample_ptr = 0;
     //***************
     // adjust lowpass filter coefficient, so that
     // "spectrum display smoothness" is the same across the different sample rates
