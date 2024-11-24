@@ -1834,7 +1834,6 @@ extern const int myInput;
 extern const int pos_x_smeter;
 extern const int waterfallBottom;
 extern const int waterfallTop;
-extern int wtf;
 
 extern unsigned framesize;
 extern unsigned nbits;

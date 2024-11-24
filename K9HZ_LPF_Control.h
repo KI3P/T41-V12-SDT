@@ -4,11 +4,6 @@
 #include <Adafruit_MCP23X17.h> 
 #include "AD7991.h"
 
-extern Adafruit_MCP23X17 mcpLPF; // connected to Wire2
-extern AD7991 swrADC; // on K9HZ LPF board
-extern uint8_t LPF_GPB_state;
-extern uint8_t LPF_GPA_state;
-
 // The LPF band control definitions
 #define LPF_BAND_NF 0b1111
 #define LPF_BAND_6M 0b1010

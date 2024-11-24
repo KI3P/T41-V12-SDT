@@ -4,9 +4,6 @@
 #include <Adafruit_MCP23X17.h> 
 #include "AD7991.h"
 
-extern Adafruit_MCP23X17 mcpBPF; // connected to Wire2
-extern uint16_t BPF_GPAB_state;
-
 // BPF band control word definitions
 #define BPF_BAND_BYPASS 0x0008
 #define BPF_BAND_6M     0x0004

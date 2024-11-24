@@ -1740,7 +1740,6 @@ int x2 = 0;  //AFP
 int zoom_sample_ptr = 0;
 int zoomIndex = 1;                 //AFP 9-26-22
 int tuneIndex = DEFAULTFREQINDEX;  //AFP 2-10-21
-int wtf;
 int updateDisplayFlag = 1;
 int xrState;  // Is the T41 in xmit or rec state? 1 = rec, 0 = xmt
 
