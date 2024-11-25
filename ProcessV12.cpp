@@ -549,6 +549,8 @@ void DoXmitCalibrate() {
   calculate750HzCalibration();
   #endif
   ShowTransmitReceiveStatus();
+  // Switch to transmit path cal upon entering loop
+  task = CAL_TOGGLE_TX_STATE;
   while (true) {
     adjdB = ShowSpectrum2();
     val = ReadSelectedPushButton();
