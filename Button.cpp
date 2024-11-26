@@ -49,7 +49,7 @@ int ReadSelectedPushButton() {
 #if defined(G0ORX_FRONTPANEL)
   __disable_irq();
   int i=G0ORXButtonPressed;
-  G0ORXButtonPressed=-1;
+  G0ORXButtonPressed = BOGUS_PIN_READ;
   __enable_irq();
   return i;
 #else

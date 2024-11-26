@@ -36,7 +36,7 @@
 
 int my_ptt=HIGH;  // active LOW
 
-#define DEBOUNCE_DELAY 10
+#define DEBOUNCE_DELAY 250
 
 #define e1 volumeEncoder
 #define e2 filterEncoder
@@ -47,6 +47,7 @@ G0ORX_Rotary volumeEncoder;
 G0ORX_Rotary filterEncoder;
 G0ORX_Rotary tuneEncoder;
 G0ORX_Rotary fineTuneEncoder;
+int button_press_ms;
 
 enum {
   PRESSED,
@@ -83,7 +84,10 @@ static void interrupt1() {
   while((pin = mcp1.getLastInterruptPin())!=MCP23XXX_INT_ERR) {
     state = mcp1.digitalRead(pin);
     if (state == PRESSED) {
-      G0ORXButtonPressed = pin;
+      if ((millis()-button_press_ms)>DEBOUNCE_DELAY){
+        G0ORXButtonPressed = pin;
+        button_press_ms = millis();
+      }
     } else {
       //buttonReleased(pin1);
     }
@@ -161,10 +165,14 @@ static void interrupt2() {
     case 5:
       state = (a_state >> pin) & 0x01;
       if (state == PRESSED) {
-        G0ORXButtonPressed = (pin+16);
+        if ((millis()-button_press_ms)>DEBOUNCE_DELAY){
+          G0ORXButtonPressed = (pin+16);
+          button_press_ms = millis();
+        }
       } else {
         //buttonReleased(pin2+16);
       }
+
       break;
     default:
       // 255 sometimes caused by switch bounce
