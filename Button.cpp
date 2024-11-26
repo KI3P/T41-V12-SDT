@@ -86,40 +86,10 @@ int ReadSelectedPushButton() {
     void
 *****/
 void ExecuteButtonPress(int val) {
-  /*
-  if (val == 1) {                           // If they selected Menu Up
-    DrawMenuDisplay();
-  }
-
-  if (val == MENU_OPTION_SELECT && menuStatus == NO_MENUS_ACTIVE) {  // Pressed Select with no primary/secondary menu selected
-    NoActiveMenu();
-    return;
-  } else {
-    menuStatus = PRIMARY_MENU_ACTIVE;
-  }
-    menuStatus = PRIMARY_MENU_ACTIVE;
-*/
-  MyDelay(100L);
-  //("top of ExecuteButtonPress(),     val = ");
- //Serial.println(val);
-
   switch (val) {
     case MENU_OPTION_SELECT:  // 0
       break;
 
-      /*  
-
-      const char *topMenus[] = { "CW Options", "RF Set", "VFO Select",
-                           "EEPROM", "AGC", "Spectrum Options",
-                           "Noise Floor", "Mic Gain", "Mic Comp",
-                           "EQ Rec Set", "EQ Xmt Set", "Calibrate", "Bearing" };
-
-int (*functionPtr[])() = { &CWOptions, &RFOptions, &VFOSelect,
-                           &EEPROMOptions, &AGCOptions, &SpectrumOptions,
-                           &ButtonSetNoiseFloor, &MicGainSet, &MicOptions,
-                           &EqualizerRecOptions, &EqualizerXmtOptions, &IQOptions, &BearingMaps };
-
-*/
     case MAIN_MENU_UP:                      // 1          11/16/23 JJP                                     Button 1
       DrawMenuDisplay();                    // Draw selection box and primary menu
       SetPrimaryMenuIndex();                // Scroll through primary indexes and select one

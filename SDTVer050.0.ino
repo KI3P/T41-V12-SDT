@@ -3150,20 +3150,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
 
   valPin = ReadSelectedPushButton();  // Poll UI push buttons
   if (valPin != BOGUS_PIN_READ) {     // If a button was pushed...
-
-//    Serial.print("\nIn loop() top: valPin = ");
-//    Serial.println(valPin);
     pushButtonSwitchIndex = ProcessButtonPress(valPin);  // Winner, winner...chicken dinner!
-//    Serial.print("pushButtonSwitchIndex = ");
-//    Serial.println(pushButtonSwitchIndex);
     ExecuteButtonPress(pushButtonSwitchIndex);
-    //Serial.print("   mainMenuIndex = " );
-    //Serial.print(mainMenuIndex);
-    //Serial.print("   secondaryMenuIndex = " );
-    //Serial.println(secondaryMenuIndex);
   }
-
-
 
   //  State detection
 #if defined(G0ORX_FRONTPANEL) || defined(G0ORX_CAT)
