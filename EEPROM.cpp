@@ -123,7 +123,6 @@ FLASHMEM void EEPROMRead() {
   currentBandB = EEPROMData.currentBandB;                      // 4 bytes
   currentFreqA = EEPROMData.lastFrequencies[currentBandA][0];  // JJP 7/17/23
   currentFreqB = EEPROMData.lastFrequencies[currentBandB][1];  // JJP 7/17/23
-  freqCorrectionFactor = EEPROMData.freqCorrectionFactor;
 
   for (int i = 0; i < EQUALIZER_CELL_COUNT; i++) {
     recEQ_Level[i] = EEPROMData.equalizerRec[i];  // 4 bytes each
@@ -298,7 +297,7 @@ FLASHMEM void EEPROMWrite() {
   EEPROMData.lastFrequencies[currentBand][activeVFO] = currentFreq;  // 4 bytes
   EEPROMData.lastFrequencies[currentBandA][VFO_A] = currentFreqA;    // 4 bytes
   EEPROMData.lastFrequencies[currentBandB][VFO_B] = currentFreqB;    // 4 bytes
-  EEPROMData.freqCorrectionFactor = freqCorrectionFactor;
+  //EEPROMData.freqCorrectionFactor = freqCorrectionFactor;
 
   strncpy(EEPROMData.mapFileName, mapFileName, 49);  // 1 smaller to allow for null
   strncpy(EEPROMData.myCall, myCall, 9);

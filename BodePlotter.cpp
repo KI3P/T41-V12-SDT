@@ -90,7 +90,7 @@ void BodePLotter() {
  
   int k = 0;
   si5351.reset();                                                                // KF5N.  Moved Si5351 start-up to setup. JJP  7/14/23
-  si5351.init(SI5351_LOAD_CAPACITANCE, Si_5351_crystal, freqCorrectionFactor);  //JJP  7/14/23
+  si5351.init(SI5351_LOAD_CAPACITANCE, Si_5351_crystal, EEPROMData.freqCorrectionFactor);  //JJP  7/14/23
   si5351.set_ms_source(SI5351_CLK2, SI5351_PLLB);                                //  Allows CLK1 and CLK2 to exceed 100 MHz simultaneously.
   si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_CURRENT);                          //AFP 10-13-22
   si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_CURRENT);

@@ -1759,8 +1759,6 @@ unsigned tcr5;
 unsigned tcr2div;
 
 int32_t FFT_shift = 2048;
-long long freqCorrectionFactor = 68000LL;
-long long freqCorrectionFactorOld = 68000LL;
 int32_t IFFreq = SR[SampleRate].rate / 4;  // IF (intermediate) frequency
 int32_t IF_FREQ1 = 0;
 int32_t mainMenuIndex = START_MENU;  // Done so we show menu[0] at startup
@@ -3005,9 +3003,7 @@ void setup() {
   ****************************************************************************************/
   si5351.reset();
   MyDelay(100L);
-                                                              // KF5N.  Moved Si5351 start-up to setup. JJP  7/14/23
-  //si5351.init(SI5351_CRYSTAL_LOAD_10PF, Si_5351_crystal, freqCorrectionFactor);  //JJP  7/14/23
-  if(!si5351.init(SI5351_LOAD_CAPACITANCE, Si_5351_crystal, freqCorrectionFactor)) {
+  if(!si5351.init(SI5351_LOAD_CAPACITANCE, Si_5351_crystal, EEPROMData.freqCorrectionFactor)) {
     #ifdef V12HWR
     bit_results.RF_Si5351_present = false;
     #endif

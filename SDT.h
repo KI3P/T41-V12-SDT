@@ -1367,13 +1367,13 @@ extern struct config_t {
 
   int activeVFO           = 0;                        // 2 bytes
   int freqIncrement       = 5;                        // 4 bytes
+  int freqCorrectionFactor = 68000;
 
   int currentBand         = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
   int currentBandA        = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
   int currentBandB        = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
   long currentFreqA       = CURRENT_FREQ_A;           // 4 bytes   JJP 7-3-23
   long currentFreqB       = CURRENT_FREQ_B;           // 4 bytes   JJP 7-3-23
-  long freqCorrectionFactor = 68000;
 
   int equalizerRec[EQUALIZER_CELL_COUNT];             // 4 bytes each
   int equalizerXmt[EQUALIZER_CELL_COUNT] = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 0, 0};   // Provide equalizer optimized for SSB voice based on Neville's tests.  KF5N November 2, 2023
@@ -1842,8 +1842,6 @@ extern unsigned tcr5;
 extern unsigned tcr2div;
 
 extern int32_t FFT_shift;
-extern long long freqCorrectionFactor;
-extern long long freqCorrectionFactorOld; //AFP 09-21-22
 extern long favoriteFrequencies[];
 
 extern int32_t IFFreq;     // IF (intermediate) frequency

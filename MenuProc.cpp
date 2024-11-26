@@ -22,14 +22,16 @@
 int CalibrateOptions(int IQChoice) {
   int val;
   int32_t increment = 100L;
+  int freqCorrectionFactorOld;
   tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 30, CHAR_HEIGHT, RA8875_BLACK);
   //  float transmitPowerLevelTemp;  //AFP 05-11-23
   switch (IQChoice) {
 
-    case 0:  // Calibrate Frequency  - uses WWV
-      freqCorrectionFactor = GetEncoderValueLive(-200000, 200000, freqCorrectionFactor, increment, (char *)"Freq Cal: ");
-      if (freqCorrectionFactor != freqCorrectionFactorOld) {
-        si5351.init(SI5351_LOAD_CAPACITANCE, Si_5351_crystal, freqCorrectionFactor); // KI3P July 27 2024, updated to mirror Setup()
+    case 0:{  // Calibrate Frequency  - uses WWV
+      freqCorrectionFactorOld = EEPROMData.freqCorrectionFactor;
+      EEPROMData.freqCorrectionFactor = (int)GetEncoderValueLive(-200000, 200000, EEPROMData.freqCorrectionFactor, increment, (char *)"Freq Cal: ");
+      if (EEPROMData.freqCorrectionFactor != freqCorrectionFactorOld) {
+        si5351.init(SI5351_LOAD_CAPACITANCE, Si_5351_crystal, EEPROMData.freqCorrectionFactor); // KI3P July 27 2024, updated to mirror Setup()
         MyDelay(100L); // KI3P July 27 2024, updated to mirror Setup()
         si5351.drive_strength(SI5351_CLK0, SI5351_DRIVE_CURRENT);  // KI3P July 27 2024, updated to mirror Setup()
         si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_CURRENT);  // KI3P July 27 2024, updated to mirror Setup()
@@ -39,7 +41,6 @@ int CalibrateOptions(int IQChoice) {
         
         SetFreq();
         MyDelay(10L);
-        freqCorrectionFactorOld = freqCorrectionFactor;
       }
       val = ReadSelectedPushButton();
       if (val != BOGUS_PIN_READ) {        // Any button press??
@@ -56,7 +57,7 @@ int CalibrateOptions(int IQChoice) {
           return IQChoice;
         }
       }
-      break;
+      break;}
 
     case 1:  // CW PA Cal
       if (keyPressedOn == 1 && xmtMode == CW_MODE) {
