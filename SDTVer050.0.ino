@@ -3227,6 +3227,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       #if !defined(V12HWR)
       digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
       #else
+      // Set the frequency of the transmit: remove the IF offset
+      centerFreq = centerFreq - IFFreq;
+      SetFreq();
       digitalWrite(XMIT_MODE, XMIT_SSB); // KI3P, July 28, 2024
       setBPFPath(BPF_IN_TX_PATH);
       currentRF_OutAtten = XAttenSSB[currentBand] + getPowerLevelAdjustmentDB();
@@ -3259,6 +3262,11 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         CATSerialEvent();
 #endif // G0ORX_CAT
       }
+      #ifdef V12HWR
+      // restore the centerFreq
+      centerFreq = centerFreq + IFFreq;
+      SetFreq();
+      #endif
       Q_in_L_Ex.end();  // End Transmit Queue
       Q_in_R_Ex.end();
       Q_in_L.begin();  // Start Receive Queue

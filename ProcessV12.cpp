@@ -515,7 +515,10 @@ void DoXmitCalibrate() {
   stateMachine = TX_STATE_RX_PHASE;
   int task = -1;
   int lastUsedTask = -2;
+  // Set the frequency of the transmit: remove the IF offset
   CalibratePreamble(4); //16x zoom
+  centerFreq = centerFreq - IFFreq;
+  SetFreq();
   corrChange = 0;
   tft.setFontScale((enum RA8875tsize)1);
   tft.setTextColor(RA8875_CYAN);
