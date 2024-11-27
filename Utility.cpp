@@ -315,7 +315,7 @@ void Calculatedbm() {
       case DISPLAY_S_METER_DBM:
         dbm = dbm_calibration + bands[currentBand].gainCorrection + slope * log10f_fast(sum_db) + cons - (float32_t)bands[currentBand].RFgain * 1.5;
         #ifdef V12HWR
-        dbm = dbm + ((float32_t)currentRF_InAtten)/2.0 - 30.0; // input RF attenuator and amplifier
+        dbm = dbm + ((float32_t)currentRF_InAtten)/2.0 - 31.0; // input RF attenuator and PSA-8+ amplifier
         #endif
         dbmhz = 0;
         break;
