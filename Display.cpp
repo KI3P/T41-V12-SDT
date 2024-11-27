@@ -501,6 +501,11 @@ void ShowAnalogGain() {
   static uint8_t RF_gain_old = 0;
   static uint8_t RF_att_old = 0;
   const uint16_t col = RA8875_GREEN;
+  // Note that attenuator = attenuation * 2. It is also not used in the plot below.
+  int attenuator = 0;
+  #ifdef V12HWR
+  attenuator = currentRF_InAtten;
+  #endif
   if ((((bands[currentBand].RFgain != RF_gain_old) || (attenuator != RF_att_old)) && twinpeaks_tested == 1) || write_analog_gain) {
     tft.setFontScale((enum RA8875tsize)0);
     tft.setCursor(pos_x_time - 40, pos_y_time + 26);
@@ -850,9 +855,12 @@ void DisplaydbM() {
   tft.fillRect(SMETER_X + 1, SMETER_Y + 1, SMETER_BAR_LENGTH, SMETER_BAR_HEIGHT, RA8875_BLACK);   //AFP 09-18-22  Erase old bar
 #ifdef TCVSDR_SMETER
   //DB2OO, 9-OCT_23: dbm_calibration set to -22 in SDT.ino; gainCorrection is a value between -2 and +6 to compensate the frequency dependant pre-Amp gain
-  // attenuator is 0 and could be set in a future HW revision; RFgain is initialized to 1 in the bands[] init in SDT.ino; cons=-92; slope=10
-  dbm = dbm_calibration + bands[currentBand].gainCorrection + (float32_t)attenuator + slope * log10f_fast(audioMaxSquaredAve) + 
+  // RFgain is initialized to 1 in the bands[] init in SDT.ino; cons=-92; slope=10
+  dbm = dbm_calibration + bands[currentBand].gainCorrection + slope * log10f_fast(audioMaxSquaredAve) + 
         cons - (float32_t)bands[currentBand].RFgain * 1.5 - rfGainAllBands; //DB2OO, 08-OCT-23; added rfGainAllBands
+  #ifdef V12HWR
+  dbm = dbm + ((float32_t)currentRF_InAtten)/2.0 - 31.0; // input RF attenuator and PSA-8+ amplifier
+  #endif
 #else
   //DB2OO, 9-OCT-23: audioMaxSquaredAve is proportional to the input power. With rfGainAllBands=0 it is approx. 40 for -73dBm @ 14074kHz with the V010 boards and the pre-Amp fed by 12V
   // for audioMaxSquaredAve=40 audioLogAveSq will be 26
@@ -890,7 +898,7 @@ void DisplaydbM() {
 #ifdef DEBUG_SMETER
 //added, to debug S-Meter display problems
   Serial.printf("DisplaydbM(): dbm=%.1f, dbm_calibration=%.1f, bands[currentBand].gainCorrection=%.1f, attenuator=%d, bands[currentBand].RFgain=%d, rfGainAllBands=%d\n", 
-                                dbm, dbm_calibration, bands[currentBand].gainCorrection, attenuator, bands[currentBand].RFgain, rfGainAllBands);
+                                dbm, dbm_calibration, bands[currentBand].gainCorrection, currentRF_InAtten, bands[currentBand].RFgain, rfGainAllBands);
   Serial.printf("\taudioMaxSquaredAve=%.4f, audioLogAveSq=%.1f\n", audioMaxSquaredAve, audioLogAveSq);
 #endif
 

@@ -1624,7 +1624,6 @@ int ANR_in_idx = 0;
 int ANR_mask = ANR_dline_size - 1;
 int ANR_position = 0;
 int ANR_taps = 64;
-int attenuator = 0;
 int attack_buffsize;
 int audioVolume = 30;  // KF5N JJP 7/14/23
 int audioVolumeOld2 = 30;

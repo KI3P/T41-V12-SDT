@@ -1714,7 +1714,6 @@ extern int ANR_in_idx;
 extern int ANR_mask;
 extern int ANR_position;
 extern int ANR_taps;
-extern int attenuator;
 extern int attack_buffsize;
 extern int audioVolume;
 extern int audioVolumeOld;

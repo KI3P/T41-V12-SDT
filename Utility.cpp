@@ -313,7 +313,10 @@ void Calculatedbm() {
     //#ifdef USE_LOG10FAST
     switch (display_dbm) {
       case DISPLAY_S_METER_DBM:
-        dbm = dbm_calibration + bands[currentBand].gainCorrection + (float32_t)attenuator + slope * log10f_fast(sum_db) + cons - (float32_t)bands[currentBand].RFgain * 1.5;
+        dbm = dbm_calibration + bands[currentBand].gainCorrection + slope * log10f_fast(sum_db) + cons - (float32_t)bands[currentBand].RFgain * 1.5;
+        #ifdef V12HWR
+        dbm = dbm + ((float32_t)currentRF_InAtten)/2.0 - 30.0; // input RF attenuator and amplifier
+        #endif
         dbmhz = 0;
         break;
       case DISPLAY_S_METER_DBMHZ:
