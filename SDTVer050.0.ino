@@ -3345,9 +3345,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       modeSelectOutR.gain(0, 0);
       modeSelectOutExL.gain(0, 0);
       modeSelectOutExR.gain(0, 0);
-      // KI3P merge notes: AFP routes signal to RX input via cal here, I suspect to
-      // ensure that the transmit power is even lower when off.
-      //digitalWrite(CAL,CAL_ON); // CW Signal Off, CAL on
+      // Route signal to RX input via cal here to ensure that the transmit 
+      // power is even lower when off.
+      digitalWrite(CAL,CAL_ON); // CW Signal Off, CAL on
       cwTimer = millis();
       while (millis() - cwTimer <= cwTransmitDelay) {  //Start CW transmit timer on
         digitalWrite(RXTX, HIGH);
@@ -3363,8 +3363,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
           #else
           digitalWrite(CW_ON_OFF, CW_ON);
           // Now route the CW signal to the antenna
-          //MyDelay(1.5);  // Wait 1.5mS
-          //digitalWrite(CAL,CAL_OFF);  // point hose to antenna
+          MyDelay(1.5);  // Wait 1.5mS
+          digitalWrite(CAL,CAL_OFF);  // point hose to antenna
           #endif
         } else {
           if (digitalRead(paddleDit) == HIGH && keyType == 0) {  //Turn off CW signal
@@ -3378,8 +3378,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
             #else
             digitalWrite(CW_ON_OFF, CW_OFF);  //Turn off CW signal thru wave shape circuit
             // And route the CW signal away from the output
-            //MyDelay(8); // Delay to allow CW signal to ramp down
-            //digitalWrite(CAL, CAL_ON);  // CW Signal Off, CAL On
+            MyDelay(8); // Delay to allow CW signal to ramp down
+            digitalWrite(CAL, CAL_ON);  // CW Signal Off, CAL On
             #endif
           }
         }
@@ -3390,6 +3390,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       modeSelectOutExL.gain(0, 0);  //Power = 0 //AFP 10-11-22
       modeSelectOutExR.gain(0, 0);  //AFP 10-11-22
       digitalWrite(RXTX, LOW);      // End Straight Key Mode
+      digitalWrite(CAL,CAL_OFF); 
       break;
     case CW_TRANSMIT_KEYER_STATE:
       #if !defined(V12HWR)
@@ -3428,6 +3429,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         digitalWrite(RXTX, HIGH);  //Turns on relay
         #if defined(V12HWR)
         digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
+        digitalWrite(CAL,CAL_ON); // No signal to output
         #else 
         CW_ExciterIQData();
         modeSelectInR.gain(0, 0);
@@ -3452,6 +3454,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
             CW_ExciterIQData();                                      // Creates CW output signal
             #else
             digitalWrite(CW_ON_OFF, CW_ON);
+            MyDelay(1.5);  // Wait 1.5mS
+            digitalWrite(CAL,CAL_OFF);  // point hose to antenna
             #endif
             keyPressedOn = 0;
           }
@@ -3466,6 +3470,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
             CW_ExciterIQData();
             #else
             digitalWrite(CW_ON_OFF, CW_OFF);
+            MyDelay(8); // Delay to allow CW signal to ramp down
+            digitalWrite(CAL, CAL_ON);  // CW Signal Off, CAL On
             #endif
             keyPressedOn = 0;
           }
@@ -3484,6 +3490,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
               CW_ExciterIQData();                                       // Creates CW output signal
               #else
               digitalWrite(CW_ON_OFF, CW_ON);
+              MyDelay(1.5);  // Wait 1.5mS
+              digitalWrite(CAL,CAL_OFF);  // point hose to antenna
               #endif
               keyPressedOn = 0;
             }
@@ -3498,6 +3506,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
               CW_ExciterIQData();
               #else
               digitalWrite(CW_ON_OFF, CW_OFF);
+              MyDelay(8); // Delay to allow CW signal to ramp down
+              digitalWrite(CAL, CAL_ON);  // CW Signal Off, CAL On  
               #endif
             }
           }
@@ -3511,6 +3521,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       modeSelectOutExL.gain(0, 0);  //Power = 0 //AFP 10-11-22
       modeSelectOutExR.gain(0, 0);  //AFP 10-11-22
       digitalWrite(RXTX, LOW);
+      digitalWrite(CAL, CAL_OFF);  
       xmtMode = CW_MODE;
       //   RedrawDisplayScreen();
       //   DrawFrequencyBarValue();
