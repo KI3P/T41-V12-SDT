@@ -3227,8 +3227,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       #if !defined(V12HWR)
       digitalWrite(MUTE, HIGH);  // KI3P, no MUTE function in V12
       #else
-      // Set the frequency of the transmit: remove the IF offset
-      centerFreq = centerFreq - IFFreq;
+      // Set the frequency of the transmit: remove the IF offset, add the fine tune
+      centerFreq = centerFreq - IFFreq + NCOFreq;
       SetFreq();
       digitalWrite(XMIT_MODE, XMIT_SSB); // KI3P, July 28, 2024
       setBPFPath(BPF_IN_TX_PATH);
@@ -3264,7 +3264,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       }
       #ifdef V12HWR
       // restore the centerFreq
-      centerFreq = centerFreq + IFFreq;
+      centerFreq = centerFreq + IFFreq - NCOFreq;
       SetFreq();
       #endif
       Q_in_L_Ex.end();  // End Transmit Queue
