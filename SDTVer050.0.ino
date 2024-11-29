@@ -764,6 +764,9 @@ uint32_t T4_CPU_FREQUENCY = 500000000UL;  //AFP 2-10-21
 //======================================== Global object definitions ==================================================
 // ===========================  AFP 08-22-22
 
+AudioSynthWaveformSine sidetone_oscillator;
+#define SIDETONE_FREQUENCY 300
+
 AudioControlSGTL5000_Extended sgtl5000_1;      //controller for the Teensy Audio Board
 AudioConvert_I16toF32 int2Float1, int2Float2;  //Converts Int16 to Float.  See class in AudioStream_F32.h
 AudioEffectGain_F32 gain1, gain2;              //Applies digital gain to audio data.  Expected Float data.
@@ -839,6 +842,8 @@ AudioConnection patchCord22(modeSelectOutR, 0, i2s_quadOut, 3);
 
 AudioConnection patchCord23(Q_out_L_Ex, 0, modeSelectOutL, 1);  //Rec out Queue for sidetone
 AudioConnection patchCord24(Q_out_R_Ex, 0, modeSelectOutR, 1);
+AudioConnection sidetone_patchcord( sidetone_oscillator, 0, modeSelectOutL, 2 );
+
 
 // ================================== AFP 11-01-22
 
@@ -2818,6 +2823,25 @@ void BIT_display() {
   }
   tft.fillWindow(RA8875_BLACK);
 }
+
+void start_sending_cw()
+  {
+  si5351.output_enable( SI5351_CLK2, 1 );            
+  digitalWrite( CW_ON_OFF, CW_ON );
+  MyDelay(1.5);  // Wait 1.5mS
+  digitalWrite( CAL, CAL_OFF ); // Route signal to TX output
+  modeSelectOutL.gain( 2, 1 );       //start the sidetone!
+  }
+
+void stop_sending_cw()
+  {
+ 	digitalWrite( CW_ON_OFF, CW_OFF );
+  modeSelectOutL.gain( 2, 0 );                       // turn off the sidetone
+	MyDelay( 8 ); // Delay to allow CW signal to ramp down
+	digitalWrite( CAL, CAL_ON ); // Route signal away from TX output
+  si5351.output_enable( SI5351_CLK2, 0 );
+  }
+
 #endif // V12HWR
 
 
@@ -3114,6 +3138,8 @@ void setup() {
   lastState = 1111;                  // To make sure the receiver will be configured on the first pass through.  KF5N September 3, 2023
   decodeStates = state0;             // Initialize the Morse decoder.
   
+  sidetone_oscillator.amplitude( 0.0 );
+  sidetone_oscillator.frequency( SIDETONE_FREQUENCY );
   Debug("Setup complete");
 }
 //============================================================== END setup() =================================================================
@@ -3318,7 +3344,6 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       CW_ExciterIQData();
       digitalWrite(MUTE, HIGH);
       #else
-      si5351.output_enable(SI5351_CLK2, 1);
       //si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_8MA);
       if (bands[currentBand].mode == DEMOD_USB){
         Clk2SetFreq = centerFreq*SI5351_FREQ_MULT + (long long)(CWToneOffsetsHz[EEPROMData.CWToneIndex]*SI5351_FREQ_MULT);
@@ -3326,9 +3351,11 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       if (bands[currentBand].mode == DEMOD_LSB){
         Clk2SetFreq = centerFreq*SI5351_FREQ_MULT - (long long)(CWToneOffsetsHz[EEPROMData.CWToneIndex]*SI5351_FREQ_MULT);
       }
+      sidetone_oscillator.amplitude( 1.0 );
       si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
       digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
       digitalWrite(XMIT_MODE, XMIT_CW); // KI3P, July 28, 2024
+      si5351.output_enable(SI5351_CLK2, 1);
       // Adjust the power level
       currentRF_OutAtten = XAttenCW[currentBand] + getPowerLevelAdjustmentDB();
       if (currentRF_OutAtten > 63) currentRF_OutAtten = 63;
@@ -3341,13 +3368,13 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       modeSelectInR.gain(0, 0);
       modeSelectInL.gain(0, 0);
       modeSelectInExR.gain(0, 0);
-      modeSelectOutL.gain(0, 0);
+			modeSelectOutL.gain( 0, 1 );      //sidetone!
       modeSelectOutR.gain(0, 0);
       modeSelectOutExL.gain(0, 0);
       modeSelectOutExR.gain(0, 0);
       // Route signal to RX input via cal here to ensure that the transmit 
       // power is even lower when off.
-      digitalWrite(CAL,CAL_ON); // CW Signal Off, CAL on
+      //digitalWrite(CAL,CAL_ON); // CW Signal Off, CAL on
       cwTimer = millis();
       while (millis() - cwTimer <= cwTransmitDelay) {  //Start CW transmit timer on
         digitalWrite(RXTX, HIGH);
@@ -3361,10 +3388,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
           modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);  // Sidetone  AFP 10-01-22
           //  modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
           #else
-          digitalWrite(CW_ON_OFF, CW_ON);
-          // Now route the CW signal to the antenna
-          MyDelay(1.5);  // Wait 1.5mS
-          digitalWrite(CAL,CAL_OFF);  // point hose to antenna
+          start_sending_cw();
           #endif
         } else {
           if (digitalRead(paddleDit) == HIGH && keyType == 0) {  //Turn off CW signal
@@ -3376,10 +3400,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
             modeSelectOutL.gain(1, 0);  // Sidetone off
             modeSelectOutR.gain(1, 0);
             #else
-            digitalWrite(CW_ON_OFF, CW_OFF);  //Turn off CW signal thru wave shape circuit
-            // And route the CW signal away from the output
-            MyDelay(8); // Delay to allow CW signal to ramp down
-            digitalWrite(CAL, CAL_ON);  // CW Signal Off, CAL On
+            stop_sending_cw();
             #endif
           }
         }
@@ -3387,10 +3408,14 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         CW_ExciterIQData();
         #endif
       }
+      #if !defined(V12HWR)
       modeSelectOutExL.gain(0, 0);  //Power = 0 //AFP 10-11-22
       modeSelectOutExR.gain(0, 0);  //AFP 10-11-22
+      #else
       digitalWrite(RXTX, LOW);      // End Straight Key Mode
       digitalWrite(CAL,CAL_OFF); 
+      sidetone_oscillator.amplitude( 0.0 );
+      #endif
       break;
     case CW_TRANSMIT_KEYER_STATE:
       #if !defined(V12HWR)
@@ -3404,6 +3429,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       if (bands[currentBand].mode == DEMOD_LSB){
         Clk2SetFreq = centerFreq*SI5351_FREQ_MULT - (long long)(CWToneOffsetsHz[EEPROMData.CWToneIndex]*SI5351_FREQ_MULT);
       }
+      sidetone_oscillator.amplitude( 1.0 );
       si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
       si5351.output_enable(SI5351_CLK2, 1);
       digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
@@ -3443,71 +3469,69 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         if (digitalRead(paddleDit) == LOW) {  // Keyer Dit
           cwTimer = millis();
           ditTimerOn = millis();
-          //          while (millis() - ditTimerOn <= ditLength) {
+
+          #if !defined(V12HWR)
+          modeSelectOutExL.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
+          modeSelectOutExR.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
+          digitalWrite(MUTE, LOW);
+          modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);  // Sidetone
+          #else
+          start_sending_cw();
+          #endif
+          
           while (millis() - ditTimerOn <= transmitDitLength) {       // JJP 8/19/23
             #if !defined(V12HWR)
-            modeSelectOutExL.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
-            modeSelectOutExR.gain(0, powerOutCW[currentBand]);       //AFP 10-21-22
-            digitalWrite(MUTE, LOW);
-            modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);  // Sidetone
-            //modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
             CW_ExciterIQData();                                      // Creates CW output signal
-            #else
-            digitalWrite(CW_ON_OFF, CW_ON);
-            MyDelay(1.5);  // Wait 1.5mS
-            digitalWrite(CAL,CAL_OFF);  // point hose to antenna
-            #endif
             keyPressedOn = 0;
+            #endif
           }
+          #if !defined(V12HWR)
+          modeSelectOutExL.gain(0, 0);                               //Power =0
+          modeSelectOutExR.gain(0, 0);
+          modeSelectOutL.gain(1, 0);  // Sidetone off
+          modeSelectOutR.gain(1, 0);
+          #else
+          stop_sending_cw();
+          #endif
           ditTimerOff = millis();
-          //          while (millis() - ditTimerOff <= ditLength - 10) {  //Time between
           while (millis() - ditTimerOff <= transmitDitLength - 10L) {  // JJP 8/19/23
             #if !defined(V12HWR)
-            modeSelectOutExL.gain(0, 0);                               //Power =0
-            modeSelectOutExR.gain(0, 0);
-            modeSelectOutL.gain(1, 0);  // Sidetone off
-            modeSelectOutR.gain(1, 0);
             CW_ExciterIQData();
-            #else
-            digitalWrite(CW_ON_OFF, CW_OFF);
-            MyDelay(8); // Delay to allow CW signal to ramp down
-            digitalWrite(CAL, CAL_ON);  // CW Signal Off, CAL On
-            #endif
             keyPressedOn = 0;
+            #endif
           }
         } else {
           if (digitalRead(paddleDah) == LOW) {  //Keyer DAH
             cwTimer = millis();
             dahTimerOn = millis();
-            //            while (millis() - dahTimerOn <= 3UL * ditLength) {
+            #if !defined(V12HWR)
+            modeSelectOutExL.gain(0, powerOutCW[currentBand]);        //AFP 10-21-22
+            modeSelectOutExR.gain(0, powerOutCW[currentBand]);        //AFP 10-21-22
+            digitalWrite(MUTE, LOW);
+            modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);   // Dah sidetone was using constants.  KD0RC
+            #else
+            start_sending_cw();
+            #endif
             while (millis() - dahTimerOn <= 3UL * transmitDitLength) {  // JJP 8/19/23
               #if !defined(V12HWR)
-              modeSelectOutExL.gain(0, powerOutCW[currentBand]);        //AFP 10-21-22
-              modeSelectOutExR.gain(0, powerOutCW[currentBand]);        //AFP 10-21-22
-              digitalWrite(MUTE, LOW);
-              modeSelectOutL.gain(1, volumeLog[(int)sidetoneVolume]);   // Dah sidetone was using constants.  KD0RC
-              //modeSelectOutR.gain(1, volumeLog[(int)sidetoneVolume]);           // Right side not used.  KF5N September 1, 2023
               CW_ExciterIQData();                                       // Creates CW output signal
-              #else
-              digitalWrite(CW_ON_OFF, CW_ON);
-              MyDelay(1.5);  // Wait 1.5mS
-              digitalWrite(CAL,CAL_OFF);  // point hose to antenna
-              #endif
               keyPressedOn = 0;
+              #endif
             }
+            #if !defined(V12HWR)
+            modeSelectOutExL.gain(0, 0);                               //Power =0
+            modeSelectOutExR.gain(0, 0);
+            modeSelectOutL.gain(1, 0);  // Sidetone off
+            modeSelectOutR.gain(1, 0);
+            #else
+            stop_sending_cw();
+            #endif
             ditTimerOff = millis();
             //            while (millis() - ditTimerOff <= ditLength - 10UL) {  //Time between characters                         // mutes audio
             while (millis() - ditTimerOff <= transmitDitLength - 10UL) {  // JJP 8/19/23
               #if !defined(V12HWR)
-              modeSelectOutExL.gain(0, 0);                                //Power =0
-              modeSelectOutExR.gain(0, 0);
-              modeSelectOutL.gain(1, 0);  // Sidetone off
-              modeSelectOutR.gain(1, 0);
               CW_ExciterIQData();
-              #else
-              digitalWrite(CW_ON_OFF, CW_OFF);
-              MyDelay(8); // Delay to allow CW signal to ramp down
-              digitalWrite(CAL, CAL_ON);  // CW Signal Off, CAL On  
+              keyPressedOn = 0;
               #endif
             }
           }
@@ -3517,11 +3541,14 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         #endif
         keyPressedOn = 0;  // Fix for keyer click-clack.  KF5N August 16, 2023
       }                    //End Relay timer
-
+      #if !defined(V12HWR)
       modeSelectOutExL.gain(0, 0);  //Power = 0 //AFP 10-11-22
       modeSelectOutExR.gain(0, 0);  //AFP 10-11-22
+      #else
+      sidetone_oscillator.amplitude( 0.0 );
       digitalWrite(RXTX, LOW);
       digitalWrite(CAL, CAL_OFF);  
+      #endif
       xmtMode = CW_MODE;
       //   RedrawDisplayScreen();
       //   DrawFrequencyBarValue();
