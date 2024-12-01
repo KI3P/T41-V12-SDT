@@ -1016,7 +1016,7 @@ long long f_pll_freq;
 long long pll_freq;
 long long freq;
 int multiple = 126;
-int oldMultiple = 126;
+int oldMultiple = 0;
 long long oldfreq;
 long long freq1;
 // =========================
