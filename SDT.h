@@ -215,6 +215,7 @@ extern struct maps myMapFiles[];
 #define CAL_TOGGLE_OUTPUT           14
 #define CAL_AUTOCAL                 13
 #define CAL_TOGGLE_TX_STATE         12
+#define CAL_TOGGLE_ATTENUATOR       15
 #define BODE_SAVE                   15
 #define BODE_BAND                   16
 #define BODE_REF                    17

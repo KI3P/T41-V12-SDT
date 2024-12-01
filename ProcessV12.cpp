@@ -410,13 +410,15 @@ void DoReceiveCalibrate() {
   digitalWrite(CW_ON_OFF, CW_ON);
   digitalWrite(CAL, CAL_ON);
   uint8_t out_atten = 60;
-  uint8_t previous_atten = out_atten;
-  SetRF_InAtten(out_atten);
+  uint8_t in_atten = 60;
+  uint8_t previous_out_atten = out_atten;
+  uint8_t previous_in_atten = in_atten;
+  SetRF_InAtten(in_atten);
   SetRF_OutAtten(out_atten);
   zoomIndex = 0;
   calTypeFlag = 0;  // RX cal
   bool calState = true;
-
+  bool changeOutAtten = true; // let's you change in_atten when false
   while (true) {
     val = ReadSelectedPushButton();
     if (val != BOGUS_PIN_READ) {
@@ -475,6 +477,9 @@ void DoReceiveCalibrate() {
         EEPROMData.IQPhaseCorrectionFactor[currentBand] = IQPhaseCorrectionFactor[currentBand];
         IQChoice = 6;
         break;}
+      case (CAL_TOGGLE_ATTENUATOR):{
+        changeOutAtten = ! changeOutAtten;
+        break;}
       default:
         break;
     }                                     // End switch
@@ -486,11 +491,19 @@ void DoReceiveCalibrate() {
       IQPhaseCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase");
     }
     // Adjust the value of the TX attenuator:
-    out_atten = GetFineTuneValueLive(0,63,out_atten,1,(char *)"Out Atten");
+    if (changeOutAtten){
+      out_atten = GetFineTuneValueLive(0,63,out_atten,1,(char *)"Out Atten");
+    } else {
+      in_atten = GetFineTuneValueLive(0,63,in_atten,1,(char *)"In Atten");
+    }
     // Update via I2C if the attenuation value changed
-    if (out_atten != previous_atten){
+    if (out_atten != previous_out_atten){
         SetRF_OutAtten(out_atten);
-        previous_atten = out_atten;
+        previous_out_atten = out_atten;
+    }
+    if (in_atten != previous_in_atten){
+        SetRF_InAtten(in_atten);
+        previous_in_atten = in_atten;
     }
     if (val == MENU_OPTION_SELECT) {
       break;
