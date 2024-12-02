@@ -190,9 +190,6 @@ void ResetTuning() {
 *****/
 
 void SetFreq() {   // reworked VK3KQT
-  #if defined(G0ORX_FRONTPANEL)
-  __disable_irq();
-  #endif // G0ORX_FRONTPANEL
   #ifdef V12HWR   // V12 hardware Si5351 quadrature clocks 0, 1
   long long f=centerFreq;
   Clk1SetFreq = ((f * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT);
@@ -274,11 +271,6 @@ void SetFreq() {   // reworked VK3KQT
     si5351.output_enable(SI5351_CLK1, 1);
   }
   #endif
-
-  #if defined(G0ORX_FRONTPANEL)
-  __enable_irq();
-  #endif // G0ORX_FRONTPANEL
-  //=====================  AFP 10-03-22 =================
   DrawFrequencyBarValue();
 }
 
