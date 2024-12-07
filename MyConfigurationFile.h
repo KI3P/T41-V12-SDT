@@ -43,6 +43,12 @@
 #define G0ORX_PANEL_MCP23017_ADDR_1 0x20
 #define G0ORX_PANEL_MCP23017_ADDR_2 0x21
 
+// Change to true if the corresponding rotary encoder is reversed
+#define VOLUME_REVERSED     false
+#define FILTER_REVERSED     false
+#define MAIN_TUNE_REVERSED  false
+#define FINE_TUNE_REVERSED  false
+
 // Pick one of the following encoder configurations
 #define                           NORM_ENCODER                              // Leave as is UNLESS...
 //#define                           FOURSQRP                                // ...you are using the 4 States QRP kit
