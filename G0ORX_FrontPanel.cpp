@@ -43,10 +43,11 @@ int my_ptt=HIGH;  // active LOW
 #define e3 tuneEncoder
 #define e4 fineTuneEncoder
 
-G0ORX_Rotary volumeEncoder;
-G0ORX_Rotary filterEncoder;
-G0ORX_Rotary tuneEncoder;
-G0ORX_Rotary fineTuneEncoder;
+// No rotary encoders are reversed by default
+G0ORX_Rotary volumeEncoder( false );
+G0ORX_Rotary filterEncoder( false );
+G0ORX_Rotary tuneEncoder( false );
+G0ORX_Rotary fineTuneEncoder( false );
 int button_press_ms;
 
 enum {

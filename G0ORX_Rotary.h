@@ -32,7 +32,7 @@
 class G0ORX_Rotary
 {
   public:
-    G0ORX_Rotary();
+    G0ORX_Rotary(bool reversed);
     void updateA(unsigned char aState);
     void updateB(unsigned char bState);
     int process();
@@ -41,6 +41,7 @@ class G0ORX_Rotary
     int aLastState;
     int bLastState;
     int value;
+    bool _reversed;
 };
 
 #endif
