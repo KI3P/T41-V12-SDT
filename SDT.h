@@ -6,11 +6,12 @@
 #include "MyConfigurationFile.h"                                          // This file name should remain unchanged
 #define VERSION                     "V050.2"                              // Change this for updates. If you make this longer than 9 characters, brace yourself for surprises
 #define UPDATE_SWITCH_MATRIX        0                                     // 1 = Yes, redo the switch matrix values, 0 = leave switch matrix values as is from the last change
-struct maps {
-  char mapNames[50];
-  float lat;
-  float lon;
-};
+struct maps
+	{
+	char mapNames[50];
+	float lat;
+	float lon;
+	};
 extern struct maps myMapFiles[];
 
 #if defined(V12HWR)
@@ -110,23 +111,23 @@ extern struct maps myMapFiles[];
 // ================== Use one of the following encoder configurations. Set in MyConfiguratonFile.h
 //=================== Encoder pins  Jack Purdum W8TEE September 25, 2023
 #ifdef FOURSQRP
-    #define VOLUME_ENCODER_A          2
-    #define VOLUME_ENCODER_B          3
-    #define FILTER_ENCODER_A         16
-    #define FILTER_ENCODER_B         15
-    #define FINETUNE_ENCODER_A        4
-    #define FINETUNE_ENCODER_B        5
-    #define TUNE_ENCODER_A           14
-    #define TUNE_ENCODER_B           17
+#define VOLUME_ENCODER_A          2
+#define VOLUME_ENCODER_B          3
+#define FILTER_ENCODER_A         16
+#define FILTER_ENCODER_B         15
+#define FINETUNE_ENCODER_A        4
+#define FINETUNE_ENCODER_B        5
+#define TUNE_ENCODER_A           14
+#define TUNE_ENCODER_B           17
 #else
-    #define VOLUME_ENCODER_A         2//5   //2
-    #define VOLUME_ENCODER_B         3//4   //3
-    #define FILTER_ENCODER_A         15
-    #define FILTER_ENCODER_B         14
-    #define FINETUNE_ENCODER_A       4//17  // 4
-    #define FINETUNE_ENCODER_B       5//16  // 5
-    #define TUNE_ENCODER_A           17//2  //16
-    #define TUNE_ENCODER_B           16//3  // 17
+#define VOLUME_ENCODER_A         2//5   //2
+#define VOLUME_ENCODER_B         3//4   //3
+#define FILTER_ENCODER_A         15
+#define FILTER_ENCODER_B         14
+#define FINETUNE_ENCODER_A       4//17  // 4
+#define FINETUNE_ENCODER_B       5//16  // 5
+#define TUNE_ENCODER_A           17//2  //16
+#define TUNE_ENCODER_B           16//3  // 17
 #endif
 //
 //#define DEBUG_JACK
@@ -172,7 +173,7 @@ extern struct maps myMapFiles[];
 #define MAIN_MENU_UP                 1
 #define BAND_UP                      2
 #define ZOOM                         3
-#define RESET_TUNING                 4   
+#define RESET_TUNING                 4
 #define BAND_DN                      5
 #define SET_MODE                     6
 #define DEMODULATION                 7
@@ -410,7 +411,7 @@ extern struct maps myMapFiles[];
 //#define DEFAULTFREQINCREMENT        1000L       //Values 10, 50, 100, 250, 1000, 10000  AFP 09-26-22
 //#define FAST_TUNE_INCREMENT         50L
 #define DEFAULTFREQINDEX            4           //  Index 10Hz=> 0, 50Hz=> 1, 100Hz=> 2, 250Hz=> 3, 
-                                                //  1000Hz=> 4, 10000Hz=> 5, 100000=> 6, 1000000=> 7 
+//  1000Hz=> 4, 10000Hz=> 5, 100000=> 6, 1000000=> 7
 #define MAX_FREQ_INDEX              8
 #define TEMPMON_ROOMTEMP            25.0f
 #define MAX_WPM                     60
@@ -431,7 +432,7 @@ extern struct maps myMapFiles[];
 // KI3P: Teensy shutdown pins
 #define BEGIN_TEENSY_SHUTDOWN       0
 #define SHUTDOWN_COMPLETE           1
-void ShutdownTeensy(void);
+void ShutdownTeensy( void );
 
 //========================================= Display pins
 #define BACKLIGHT_PIN               6     // unfortunately connected to 3V3 in DO7JBHs PCB 
@@ -502,7 +503,7 @@ void ShutdownTeensy(void);
 #define TMS0_ALARM_VALUE(x)         (((uint32_t)(((uint32_t)(x)) << 20U)) & 0xFFF00000U)
 #define TMS02_LOW_ALARM_VALUE(x)    (((uint32_t)(((uint32_t)(x)) << 0U)) & 0xFFFU)
 #define TMS02_PANIC_ALARM_VALUE(x)  (((uint32_t)(((uint32_t)(x)) << 16U)) & 0xFFF0000U)
-//#define MAX_NUMCOEF                 (FFT_LENGTH / 2) + 1    // This is alread defined in AudioFilterConvolution_F32.h at line 110     
+//#define MAX_NUMCOEF                 (FFT_LENGTH / 2) + 1    // This is alread defined in AudioFilterConvolution_F32.h at line 110
 
 #undef  round
 #undef  PI
@@ -676,8 +677,8 @@ extern int radioState, lastState;  // Used by the loop to monitor current state.
 
 //#define TERMCHRXWIDTH               9                     // print stuff for text terminal
 //#define TERMCHRYWIDTH               10
-//#define TERMNROWS                   4                     // 15 
-//#define TERMNCOLS                   28                    // 34 
+//#define TERMNROWS                   4                     // 15
+//#define TERMNCOLS                   28                    // 34
 
 #define CW_TEXT_START_X             5
 #define CW_TEXT_START_Y             449                   // 480 * 0.97 = 465 - height = 465 - 16 = 449
@@ -804,13 +805,13 @@ extern float32_t audioBodePlot;
 extern float32_t audioBodeMax;
 int  BodeOptions();
 void SetFreqBode();                                                                   //Bode
-void BodePLotter(); 
+void BodePLotter();
 void DrawBodePlotContainer();  // Bode
-//void ReadFilterEncoder(); 
+//void ReadFilterEncoder();
 void MoveBodeCursor();                                                            // Bode
 void SetFreqBode();                                                                   // Bode
 void ProcessIQDataBode();                                                             //Bode
-void SetDDSFreqBode();     
+void SetDDSFreqBode();
 long MoveStopFreqBode() ;                                                          //Bode
 extern float32_t BodePlotterBPFCoeffs[];                                              // Bode
 extern float32_t BodePlotterBPF_state[];
@@ -857,7 +858,7 @@ extern int currentRF_OutAtten; //AFP 04-12-24
 //=================== AFP 09-04-23 V012 Quad Si5351 variables
 extern int Even_Divisor;
 extern int oldEven_Divisor;
-int EvenDivisor(long freq2);
+int EvenDivisor( long freq2 );
 
 //extern long long Clk2SetFreq;  // AFP 09-27-22
 
@@ -891,7 +892,7 @@ extern long tempSigTime;
 extern int audioTempPrevious;
 extern int filterWidth;
 extern int filterWidthX;                                           // The current filter X.
-extern int filterWidthY;    
+extern int filterWidthY;
 extern int x1AdjMax; //AFP 2-6-23
 // The current filter Y.
 extern float sigStart;
@@ -1297,10 +1298,10 @@ extern AudioConvert_F32toI16     float2Int1, float2Int2;    //Converts Float to 
 //===============  AFP 11-01-22
 
 #if defined(G0ORX_FRONTPANEL)
- extern G0ORX_Rotary volumeEncoder;
- extern G0ORX_Rotary tuneEncoder;
- extern G0ORX_Rotary filterEncoder;
- extern G0ORX_Rotary fineTuneEncoder;
+extern G0ORX_Rotary volumeEncoder;
+extern G0ORX_Rotary tuneEncoder;
+extern G0ORX_Rotary filterEncoder;
+extern G0ORX_Rotary fineTuneEncoder;
 #else
 extern Bounce decreaseBand;
 extern Bounce increaseBand;
@@ -1335,117 +1336,119 @@ extern  RA8875 tft;
 
 //======================================== Global structure declarations ===============================================
 
-struct secondaryMenuConfiguration {
-  byte whichType;                         // 0 = no options, 1 = list, 2 = encoder value
-  int numberOfOptions;                     // Number of submenu topions
-};
+struct secondaryMenuConfiguration
+	{
+	byte whichType;                         // 0 = no options, 1 = list, 2 = encoder value
+	int numberOfOptions;                     // Number of submenu topions
+	};
 extern char versionSettings[];
 
-extern struct config_t {
-  
-  char versionSettings[10];
-  int AGCMode             = 1;     
-  int audioVolume         = 30;                       // 4 bytes
-  int rfGainAllBands      = 1;
-  int spectrumNoiseFloor  = SPECTRUM_NOISE_FLOOR;     // AFP 09-26-22
-  int tuneIndex           = DEFAULTFREQINCREMENT;     // JJP 7-3-23
-  long stepFineTune       = FAST_TUNE_INCREMENT;      // JJP 7-3-23
-  int powerLevel          = DEFAULT_POWER_LEVEL;      // JJP 7-3-23
-  int xmtMode             = 0;                        // AFP 09-26-22
-  int nrOptionSelect      = 0;                        // 1 byte
-  int currentScale        = 1;
-  long spectrum_zoom      = 1;
-  float spectrum_display_scale  = 20.0;               // 4 bytes
+extern struct config_t
+	{
 
-  int CWFilterIndex       = 5;                        // Off
-  int paddleDit           = 36;
-  int paddleDah           = 35;
-  int decoderFlag         = DECODER_STATE;            // JJP 7-3-23
-  int keyType             = STRAIGHT_KEY_OR_PADDLES;  // straight key = 0, keyer = 1  JJP 7-3-23
-  int currentWPM          = DEFAULT_KEYER_WPM;        // 4 bytes default = 15 JJP 7-3-23
-  float32_t sidetoneVolume = 20.0;                     // 4 bytes
-  long cwTransmitDelay    = 750;                      // 4 bytes
+	char versionSettings[10];
+	int AGCMode             = 1;
+	int audioVolume         = 30;                       // 4 bytes
+	int rfGainAllBands      = 1;
+	int spectrumNoiseFloor  = SPECTRUM_NOISE_FLOOR;     // AFP 09-26-22
+	int tuneIndex           = DEFAULTFREQINCREMENT;     // JJP 7-3-23
+	long stepFineTune       = FAST_TUNE_INCREMENT;      // JJP 7-3-23
+	int powerLevel          = DEFAULT_POWER_LEVEL;      // JJP 7-3-23
+	int xmtMode             = 0;                        // AFP 09-26-22
+	int nrOptionSelect      = 0;                        // 1 byte
+	int currentScale        = 1;
+	long spectrum_zoom      = 1;
+	float spectrum_display_scale  = 20.0;               // 4 bytes
 
-  int activeVFO           = 0;                        // 2 bytes
-  int freqIncrement       = 5;                        // 4 bytes
-  int freqCorrectionFactor = 68000;
+	int CWFilterIndex       = 5;                        // Off
+	int paddleDit           = 36;
+	int paddleDah           = 35;
+	int decoderFlag         = DECODER_STATE;            // JJP 7-3-23
+	int keyType             = STRAIGHT_KEY_OR_PADDLES;  // straight key = 0, keyer = 1  JJP 7-3-23
+	int currentWPM          = DEFAULT_KEYER_WPM;        // 4 bytes default = 15 JJP 7-3-23
+	float32_t sidetoneVolume = 20.0;                     // 4 bytes
+	long cwTransmitDelay    = 750;                      // 4 bytes
 
-  int currentBand         = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
-  int currentBandA        = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
-  int currentBandB        = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
-  long currentFreqA       = CURRENT_FREQ_A;           // 4 bytes   JJP 7-3-23
-  long currentFreqB       = CURRENT_FREQ_B;           // 4 bytes   JJP 7-3-23
+	int activeVFO           = 0;                        // 2 bytes
+	int freqIncrement       = 5;                        // 4 bytes
+	int freqCorrectionFactor = 68000;
 
-  int equalizerRec[EQUALIZER_CELL_COUNT];             // 4 bytes each
-  int equalizerXmt[EQUALIZER_CELL_COUNT] = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 0, 0};   // Provide equalizer optimized for SSB voice based on Neville's tests.  KF5N November 2, 2023
+	int currentBand         = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
+	int currentBandA        = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
+	int currentBandB        = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
+	long currentFreqA       = CURRENT_FREQ_A;           // 4 bytes   JJP 7-3-23
+	long currentFreqB       = CURRENT_FREQ_B;           // 4 bytes   JJP 7-3-23
 
-  int currentMicThreshold   = -10;                    // 4 bytes       AFP 09-22-22
-  float currentMicCompRatio = 5.0;
-  float currentMicAttack    = 0.1;
-  float currentMicRelease   = 2.0;
-  int currentMicGain        = -10;
+	int equalizerRec[EQUALIZER_CELL_COUNT];             // 4 bytes each
+	int equalizerXmt[EQUALIZER_CELL_COUNT] = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 0, 0};   // Provide equalizer optimized for SSB voice based on Neville's tests.  KF5N November 2, 2023
 
-  int switchValues[18];
+	int currentMicThreshold   = -10;                    // 4 bytes       AFP 09-22-22
+	float currentMicCompRatio = 5.0;
+	float currentMicAttack    = 0.1;
+	float currentMicRelease   = 2.0;
+	int currentMicGain        = -10;
 
-  float LPFcoeff             = 0.0;                   // 4 bytes
-  float NR_PSI               = 0.0;                   // 4 bytes
-  float NR_alpha             = 0.0;                   // 4 bytes
-  float NR_beta              = 0.0;                   // 4 bytes
-  float omegaN               = 0.0;                   // 4 bytes
-  float pll_fmax             = 4000.0;                // 4 bytes
+	int switchValues[18];
 
-  float powerOutCW[NUMBER_OF_BANDS];
-  float powerOutSSB[NUMBER_OF_BANDS];
-  float CWPowerCalibrationFactor[NUMBER_OF_BANDS];    // 0.019;
-  float SSBPowerCalibrationFactor[NUMBER_OF_BANDS];   // 0.008
-  float IQAmpCorrectionFactor[NUMBER_OF_BANDS];
-  float IQPhaseCorrectionFactor[NUMBER_OF_BANDS];
-  float IQXAmpCorrectionFactor[NUMBER_OF_BANDS];
-  float IQXPhaseCorrectionFactor[NUMBER_OF_BANDS];
-  float IQXRecAmpCorrectionFactor[NUMBER_OF_BANDS];
-  float IQXRecPhaseCorrectionFactor[NUMBER_OF_BANDS];
-  int XAttenCW[NUMBER_OF_BANDS];  // transmit digital attenuation in CW mode
-  int XAttenSSB[NUMBER_OF_BANDS]; // transmit digital attenuation in SSB mode
-  int RAtten[NUMBER_OF_BANDS];    // receive digital attenuation
-  long favoriteFreqs[MAX_FAVORITES];
-  long lastFrequencies[NUMBER_OF_BANDS][2];
+	float LPFcoeff             = 0.0;                   // 4 bytes
+	float NR_PSI               = 0.0;                   // 4 bytes
+	float NR_alpha             = 0.0;                   // 4 bytes
+	float NR_beta              = 0.0;                   // 4 bytes
+	float omegaN               = 0.0;                   // 4 bytes
+	float pll_fmax             = 4000.0;                // 4 bytes
 
-  int antennaSelection[NUMBER_OF_BANDS];
-  
-  long centerFreq               = 7030000L;              // 4 bytes
+	float powerOutCW[NUMBER_OF_BANDS];
+	float powerOutSSB[NUMBER_OF_BANDS];
+	float CWPowerCalibrationFactor[NUMBER_OF_BANDS];    // 0.019;
+	float SSBPowerCalibrationFactor[NUMBER_OF_BANDS];   // 0.008
+	float IQAmpCorrectionFactor[NUMBER_OF_BANDS];
+	float IQPhaseCorrectionFactor[NUMBER_OF_BANDS];
+	float IQXAmpCorrectionFactor[NUMBER_OF_BANDS];
+	float IQXPhaseCorrectionFactor[NUMBER_OF_BANDS];
+	float IQXRecAmpCorrectionFactor[NUMBER_OF_BANDS];
+	float IQXRecPhaseCorrectionFactor[NUMBER_OF_BANDS];
+	int XAttenCW[NUMBER_OF_BANDS];  // transmit digital attenuation in CW mode
+	int XAttenSSB[NUMBER_OF_BANDS]; // transmit digital attenuation in SSB mode
+	int RAtten[NUMBER_OF_BANDS];    // receive digital attenuation
+	long favoriteFreqs[MAX_FAVORITES];
+	long lastFrequencies[NUMBER_OF_BANDS][2];
 
-  // New user config data                                JJP 7-3-23
-  char mapFileName[50];
-  char myCall[10];
-  char myTimeZone[10];
-  int  separationCharacter      = (int) '.';            // JJP 7/25/23
+	int antennaSelection[NUMBER_OF_BANDS];
 
-  int paddleFlip                = PADDLE_FLIP;          // 0 = right paddle = DAH, 1 = DIT
-  int sdCardPresent             = 0;                           //   JJP  7/18/23
+	long centerFreq               = 7030000L;              // 4 bytes
 
-  float myLong                  = MY_LON;
-  float myLat                   = MY_LAT;
-  int currentNoiseFloor[NUMBER_OF_BANDS];             // JJP 7/17/23
-  int compressorFlag;                                 // JJP 8/28/23
-  int receiveEQFlag             = 0;
-  int xmitEQFlag                = 0;
-  int CWToneIndex              = 0;
+	// New user config data                                JJP 7-3-23
+	char mapFileName[50];
+	char myCall[10];
+	char myTimeZone[10];
+	int  separationCharacter      = ( int ) '.';          // JJP 7/25/23
 
-} EEPROMData;                                 //  Total:       438 bytes
+	int paddleFlip                = PADDLE_FLIP;          // 0 = right paddle = DAH, 1 = DIT
+	int sdCardPresent             = 0;                           //   JJP  7/18/23
+
+	float myLong                  = MY_LON;
+	float myLat                   = MY_LAT;
+	int currentNoiseFloor[NUMBER_OF_BANDS];             // JJP 7/17/23
+	int compressorFlag;                                 // JJP 8/28/23
+	int receiveEQFlag             = 0;
+	int xmitEQFlag                = 0;
+	int CWToneIndex              = 0;
+
+	} EEPROMData;                                 //  Total:       438 bytes
 
 
 typedef struct SR_Descriptor
-{
-  const uint8_t SR_n;
-  const uint32_t rate;
-  const char* const text;
-  const char* const f1;
-  const char* const f2;
-  const char* const f3;
-  const char* const f4;
-  const float32_t x_factor;
-  const uint8_t x_offset;
-} SR_Desc;
+	{
+	const uint8_t SR_n;
+	const uint32_t rate;
+	const char* const text;
+	const char* const f1;
+	const char* const f2;
+	const char* const f3;
+	const char* const f4;
+	const float32_t x_factor;
+	const uint8_t x_offset;
+	} SR_Desc;
 extern const struct SR_Descriptor SR[];
 
 #ifdef QUADFFT
@@ -1488,46 +1491,48 @@ extern arm_lms_norm_instance_f32 LMS_Norm_instance;
 extern arm_lms_instance_f32      LMS_instance;
 extern elapsedMicros usec;
 
-struct band {
-  long freq;      // Current frequency in Hz * 100
-  long fBandLow;  // Lower band edge
-  long fBandHigh; // Upper band edge
-  const char* name; // name of band
-  int mode;
-  int FHiCut;
-  int FLoCut;
-  int RFgain;
-  uint8_t band_type;
-  float32_t gainCorrection; // is hardware dependent and has to be calibrated ONCE and hardcoded in the table below
-  int AGC_thresh;
-  int16_t pixel_offset;
-};
+struct band
+	{
+	long freq;      // Current frequency in Hz * 100
+	long fBandLow;  // Lower band edge
+	long fBandHigh; // Upper band edge
+	const char* name; // name of band
+	int mode;
+	int FHiCut;
+	int FLoCut;
+	int RFgain;
+	uint8_t band_type;
+	float32_t gainCorrection; // is hardware dependent and has to be calibrated ONCE and hardcoded in the table below
+	int AGC_thresh;
+	int16_t pixel_offset;
+	};
 extern struct band bands[];
 
 typedef struct DEMOD_Descriptor
-{ const uint8_t DEMOD_n;
-  const char* const text;
-} DEMOD_Desc;
+	{
+	const uint8_t DEMOD_n;
+	const char* const text;
+	} DEMOD_Desc;
 extern const DEMOD_Descriptor DEMOD[];
 
 struct dispSc
-{
-  const char *dbText;
-  float32_t   dBScale;
-  uint16_t    pixelsPerDB;
-  uint16_t    baseOffset;
-  float32_t   offsetIncrement;
-};
+	{
+	const char *dbText;
+	float32_t   dBScale;
+	uint16_t    pixelsPerDB;
+	uint16_t    baseOffset;
+	float32_t   offsetIncrement;
+	};
 
 extern struct dispSc displayScale[];
 
 typedef struct Menu_Descriptor
-{
-  const uint8_t no;           // Menu ID
-  const char* const text1;    // upper text
-  const char* text2;          // lower text
-  const uint8_t menu2;        // 0 = belongs to Menu, 1 = belongs to Menu2
-} Menu_D;
+	{
+	const uint8_t no;           // Menu ID
+	const char* const text1;    // upper text
+	const char* text2;          // lower text
+	const uint8_t menu2;        // 0 = belongs to Menu, 1 = belongs to Menu2
+	} Menu_D;
 extern Menu_D Menus[];
 
 //======================================== Global variables declarations ===============================================
@@ -1755,7 +1760,7 @@ extern int freqIncrement;
 extern int freqSeparationChar;
 extern int FLoCutOld;
 extern int FHiCutOld;
-extern int (*functionPtr[])();
+extern int ( *functionPtr[] )();
 extern int gapAtom;                                  //Space between atoms
 extern int gapChar;                                  // Space between characters
 extern int hang_counter;
@@ -1927,9 +1932,9 @@ extern uint64_t output12khz;
 extern long long Clk2SetFreq;             // AFP 09-27-22
 extern long long Clk1SetFreq;             // AFP 09-27-22
 
-float32_t arm_atan2_f32(float32_t y, float32_t x);
-float ApproxAtan(float z);
-float ApproxAtan2(float y, float x);
+float32_t arm_atan2_f32( float32_t y, float32_t x );
+float ApproxAtan( float z );
+float ApproxAtan2( float y, float x );
 
 extern float dcfRefLevel;
 extern float DD4WH_RF_gain;
@@ -1939,15 +1944,16 @@ extern float myLong;
 
 #ifdef V12HWR // KI3P, 10/16/24
 // Define a structure to hold the results of built-in-test routine
-struct BIT {
-  bool RF_I2C_present;
-  bool RF_Si5351_present;
-  bool BPF_I2C_present;
-  bool K9HZ_LPF_I2C_present;
-  bool K9HZ_LPF_AD7991_present;
-  bool G0ORX_PANEL_I2C_present;
-  byte AD7991_I2C_ADDR;
-};
+struct BIT
+	{
+	bool RF_I2C_present;
+	bool RF_Si5351_present;
+	bool BPF_I2C_present;
+	bool K9HZ_LPF_I2C_present;
+	bool K9HZ_LPF_AD7991_present;
+	bool G0ORX_PANEL_I2C_present;
+	byte AD7991_I2C_ADDR;
+	};
 extern struct BIT bit_results;
 #endif // V12HWR
 
@@ -2080,7 +2086,7 @@ extern float32_t float_buffer_L2[];
 extern float32_t float_buffer_R2[];
 extern float32_t float_buffer_R_AudioCW[]; //AFP 10-18-22
 extern float32_t float_buffer_L_AudioCW[]; //AFP 10-18-22
-
+extern unsigned long transmitDitLength;  // JJP 8/19/23
 //extern float32_t signalHistogram[];
 
 extern float32_t hang_backaverage;
@@ -2273,7 +2279,7 @@ extern const float displayscale;
 extern const float32_t nuttallWindow256[];
 extern const float32_t sqrtHann[];
 
-extern float32_t FFT_buffer [] __attribute__ ((aligned (4)));
+extern float32_t FFT_buffer [] __attribute__ ( ( aligned ( 4 ) ) );
 extern float32_t FFT_ring_buffer_x[];
 extern float32_t FFT_ring_buffer_y[];
 #ifndef QUADFFT
@@ -2304,18 +2310,18 @@ void AGC();
 void AGCLoadValues(); // AGC fix.  G0ORX September 5, 2023
 int  AGCOptions();
 void AGCPrep();
-float32_t AlphaBetaMag(float32_t  inphase, float32_t  quadrature);
-void AltNoiseBlanking(float* insamp, int Nsam, float* E);
+float32_t AlphaBetaMag( float32_t  inphase, float32_t  quadrature );
+void AltNoiseBlanking( float* insamp, int Nsam, float* E );
 void AMDemodAM();
 void AMDecodeSAM(); // AFP 11-03-22
 void AssignEEPROMObjectToVariable();
 
 int  BandOptions();
 #if !defined(EXCLUDE_BEARING)
-float BearingHeading(char *dxCallPrefix);
+float BearingHeading( char *dxCallPrefix );
 int  BearingMaps();
 
-void bmpDraw(const char *filename, int x, int y);
+void bmpDraw( const char *filename, int x, int y );
 #endif // EXCLUDE_BEARING
 void ButtonBandDecrease();
 void ButtonBandIncrease();
@@ -2333,11 +2339,11 @@ int  ButtonSetNoiseFloor();
 void ButtonZoom();
 
 void CalcZoom1Magn();
-void CalcFIRCoeffs(float * coeffs_I, int numCoeffs, float32_t fc, float32_t Astop, int type, float dfc, float Fsamprate);
-void CalcCplxFIRCoeffs(float * coeffs_I, float * coeffs_Q, int numCoeffs, float32_t FLoCut, float32_t FHiCut, float SampleRate);
+void CalcFIRCoeffs( float * coeffs_I, int numCoeffs, float32_t fc, float32_t Astop, int type, float dfc, float Fsamprate );
+void CalcCplxFIRCoeffs( float * coeffs_I, float * coeffs_Q, int numCoeffs, float32_t FLoCut, float32_t FHiCut, float SampleRate );
 void CalcNotchBins();
 void Calculatedbm();
-int  CalibrateOptions(int IQChoice); // AFP 10-22-22, changed JJP 2/3/23
+int  CalibrateOptions( int IQChoice ); // AFP 10-22-22, changed JJP 2/3/23
 void CalibratePreamble();   // KF5N August 14, 2023
 #ifndef V12HWR
 void CalibratePrologue();   // KF5N August 14, 2023
@@ -2349,45 +2355,47 @@ void CaptureKeystrokes();
 void CenterFastTune();
 void ClearEEPROM();
 void Codec_gain();
-uint16_t Color565(uint8_t r, uint8_t g, uint8_t b);
+uint16_t Color565( uint8_t r, uint8_t g, uint8_t b );
 void ControlFilterF();
 void CopyEEPROM();
 #if !defined(USE_JSON)
 int  CopyEEPROMToSD();
 int  CopySDToEEPROM();
 #endif // USE_JSON
-int  CreateMapList(char ptrMaps[10][50], int *count);
+int  CreateMapList( char ptrMaps[10][50], int *count );
 int  CWOptions();
 void CW_DecodeLevelDisplay();
 void CW_ExciterIQData();  // AFP 08-18-22
 
 void Dah();
+void start_sending_cw();
+void stop_sending_cw();
 void DecodeIQ();
 void DisplayClock();
 void DisplaydbM();
 void DisplayDitLength();
 void DisplayIncrementField();
 void Dit();
-void DoCWDecoding(int audioValue);
+void DoCWDecoding( int audioValue );
 void DoCWReceiveProcessing(); //AFP 09-19-22
 void DoExciterEQ();
-void DoGapHistogram(long valGap);
+void DoGapHistogram( long valGap );
 void DoReceiveEQ();
 void DrawSignalPlotFrame();
-void DoSignalHistogram(long val);
-void DoSignalPlot(float val);
+void DoSignalHistogram( long val );
+void DoSignalPlot( float val );
 int  DoSplitVFO();
 void DoPaddleFlip();
 void DoXmitCalibrate();
 void DoReceiveCalibrate();
-void DrawActiveLetter(int row, int horizontalSpacer, int whichLetterIndex, int keyWidth, int keyHeight);
+void DrawActiveLetter( int row, int horizontalSpacer, int whichLetterIndex, int keyWidth, int keyHeight );
 void DrawBandWidthIndicatorBar(); // AFP 03-27-22 Layers
 void DrawFrequencyBarValue();
 void DrawInfoWindowFrame();
 void DrawKeyboard();
 int  DrawMenuDisplay();
-int  DrawNewFloor(int floor);
-void DrawNormalLetter(int row, int horizontalSpacer, int whichLetterIndex, int keyWidth, int keyHeight);
+int  DrawNewFloor( int floor );
+void DrawNormalLetter( int row, int horizontalSpacer, int whichLetterIndex, int keyWidth, int keyHeight );
 void DrawSMeterContainer();
 void DrawSpectrumBandwidthInfo();
 void DrawSpectrumDisplayContainer();
@@ -2399,7 +2407,7 @@ void EEPROMRead();
 void EEPROMSaveDefaults2();
 void EEPROMShow();
 void EEPROMStartup();
-void EEPROMStuffFavorites(unsigned long current[]);
+void EEPROMStuffFavorites( unsigned long current[] );
 void EEPROMWrite();
 void EncoderFineTune();
 void EncoderFilter();
@@ -2412,41 +2420,41 @@ void ErasePrimaryMenu();
 void EraseSecondaryMenu();
 void EraseSpectrumDisplayContainer();
 void EraseSpectrumWindow();
-void ExecuteButtonPress(int val);
+void ExecuteButtonPress( int val );
 
 void FilterBandwidth();
 void FilterOverlay();
 void FilterSetSSB();
-int  FindCountry(char *prefix);
+int  FindCountry( char *prefix );
 int  ValidEEPROMData();
 int  FirstTimeSDCard();
-void FormatFrequency(long f, char *b);
+void FormatFrequency( long f, char *b );
 int  FrequencyOptions();
 void FreqShift1();
 void FreqShift2();
-float goertzel_mag(int numSamples, int TARGET_FREQUENCY, int SAMPLING_RATE, float* data);
-int  GetEncoderValue(int minValue, int maxValue, int startValue, int increment, char prompt[]);
-float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[]);//AFP 10-22-22
-float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals);
-int GetEncoderValueLiveInt(int minValue, int maxValue, int startValue, int increment, char prompt[]);
-int GetFineTuneValueLive(int minValue, int maxValue, int startValue, int increment, char prompt[]);
+float goertzel_mag( int numSamples, int TARGET_FREQUENCY, int SAMPLING_RATE, float* data );
+int  GetEncoderValue( int minValue, int maxValue, int startValue, int increment, char prompt[] );
+float GetEncoderValueLive( float minValue, float maxValue, float startValue, float increment, char prompt[] ); //AFP 10-22-22
+float GetEncoderValueLive( float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals );
+int GetEncoderValueLiveInt( int minValue, int maxValue, int startValue, int increment, char prompt[] );
+int GetFineTuneValueLive( int minValue, int maxValue, int startValue, int increment, char prompt[] );
 void GetFavoriteFrequency();
 int getPowerLevelAdjustmentDB();
 
 //double HaversineDistance(double hLat, double hLon, double dxLat, double dxLon);
-float HaversineDistance(float dxLat, float dxLon);
+float HaversineDistance( float dxLat, float dxLon );
 
 int  InitializeSDCard();
 void InitializeDataArrays();
 void InitFilterMask();
 void InitLMSNoiseReduction();
-void initTempMon(uint16_t freq, uint32_t lowAlarmTemp, uint32_t highAlarmTemp, uint32_t panicAlarmTemp);
+void initTempMon( uint16_t freq, uint32_t lowAlarmTemp, uint32_t highAlarmTemp, uint32_t panicAlarmTemp );
 int  IQOptions();
-void IQPhaseCorrection(float32_t *I_buffer, float32_t *Q_buffer, float32_t factor, uint32_t blocksize);
-void IQXPhaseCorrection(float32_t *I_buffer, float32_t *Q_buffer, float32_t factor, uint32_t blocksize);
-float32_t Izero(float32_t x);
+void IQPhaseCorrection( float32_t *I_buffer, float32_t *Q_buffer, float32_t factor, uint32_t blocksize );
+void IQXPhaseCorrection( float32_t *I_buffer, float32_t *Q_buffer, float32_t factor, uint32_t blocksize );
+float32_t Izero( float32_t x );
 
-void JackClusteredArrayMax(int32_t *array, int32_t elements, int32_t *maxCount, int32_t *maxIndex, int32_t *firstDit, int32_t spread);
+void JackClusteredArrayMax( int32_t *array, int32_t elements, int32_t *maxCount, int32_t *maxIndex, int32_t *firstDit, int32_t spread );
 
 void Kim1_NR();
 void KeyOn();
@@ -2454,40 +2462,40 @@ void KeyRingOn();
 void KeyTipOn();
 
 void LetterSpace();
-void LMSNoiseReduction(int16_t blockSize, float32_t *nrbuffer);
-float32_t log10f_fast(float32_t X);
+void LMSNoiseReduction( int16_t blockSize, float32_t *nrbuffer );
+float32_t log10f_fast( float32_t X );
 
 void MainTune();
 int  MicGainSet();
 int  MicOptions();
 int  ModeOptions();
 //DB2OO, 29-AUG-23: added
-void MorseCharacterClear(void);
-void MorseCharacterDisplay(char currentLetter);
-void MyDelay(unsigned long millisWait);
-void MyDrawFloat(float val, int decimals, int x, int y, char *buff);
-float MSinc(int m, float fc);
+void MorseCharacterClear( void );
+void MorseCharacterDisplay( char currentLetter );
+void MyDelay( unsigned long millisWait );
+void MyDrawFloat( float val, int decimals, int x, int y, char *buff );
+float MSinc( int m, float fc );
 
 int NewMenuSelectDisplay();
 void NoActiveMenu();
-void NoiseBlanker(float32_t* inputsamples, float32_t* outputsamples );
+void NoiseBlanker( float32_t* inputsamples, float32_t* outputsamples );
 int  NROptions();
 
 //int  PostProcessorAudio();
-float PlotCalSpectrum(int x1, int cal_bins[2], int capture_bins);
-int  ProcessButtonPress(int valPin);
-void ProcessEqualizerChoices(int EQType, char *title);
+float PlotCalSpectrum( int x1, int cal_bins[2], int capture_bins );
+int  ProcessButtonPress( int valPin );
+void ProcessEqualizerChoices( int EQType, char *title );
 void ProcessIQData();
 void ProcessIQData2();
 
-uint16_t read16(File &f);
-uint32_t read32(File &f);
+uint16_t read16( File &f );
+uint32_t read32( File &f );
 int  ReadSelectedPushButton();
 void RedrawDisplayScreen();
 void ResetHistograms();
 void ResetTuning();                 // AFP 10-11-22
 int  RFOptions();
-void ResetZoom(int zoomIndex1); // AFP 11-06-22
+void ResetZoom( int zoomIndex1 ); // AFP 11-06-22
 
 int  SampleOptions();
 void SDUpdate();
@@ -2503,50 +2511,50 @@ void SaveAnalogSwitchValues();
 int  SDDataCheck();
 void SDEEPROMDump();
 int  SDEEPROMWriteDefaults();
-void Send(char myChar);
-void SendCode(char code);
+void Send( char myChar );
+void SendCode( char code );
 void SelectCWFilter();  // AFP 10-18-22
-extern "C" uint32_t set_arm_clock(uint32_t frequency);
+extern "C" uint32_t set_arm_clock( uint32_t frequency );
 void SetBand();
-void SetBandRelay(int state);
+void SetBandRelay( int state );
 void SetDecIntFilters();
-void SetDitLength(int wpm);
+void SetDitLength( int wpm );
 void SetFavoriteFrequency();
 void SetFreq();
-int  SetI2SFreq(int freq);
-void SetIIRCoeffs(float32_t f0, float32_t Q, float32_t sample_rate, uint8_t filter_type);
+int  SetI2SFreq( int freq );
+void SetIIRCoeffs( float32_t f0, float32_t Q, float32_t sample_rate, uint8_t filter_type );
 void SetKeyType();
 void SetKeyPowerUp();
-void SetRF_InAtten(int attenIn);       // AFP 04-12-24
-void SetRF_OutAtten(int attenOut);  // AFP 04-12-24
+void SetRF_InAtten( int attenIn );     // AFP 04-12-24
+void SetRF_OutAtten( int attenOut ); // AFP 04-12-24
 int  SetSecondaryMenuIndex();
 void SetSidetoneVolume();  // Abandon this function if encoder-based sidetone volume works.  KF5N August 29, 2023
 void SetSideToneVolume();  // This function uses encoder to set sidetone volume.  KF5N August 29, 2023
 long SetTransmitDelay();
-void SetTransmitDitLength(int wpm);     // JJP 8/19/23
-void SetupMode(int sideBand);
-void SetupMyCompressors(boolean use_HP_filter, float knee_dBFS, float comp_ratio, float attack_sec, float release_sec); //AFP 11-01-22 in DSP.cpp
+void SetTransmitDitLength( int wpm );   // JJP 8/19/23
+void SetupMode( int sideBand );
+void SetupMyCompressors( boolean use_HP_filter, float knee_dBFS, float comp_ratio, float attack_sec, float release_sec ); //AFP 11-01-22 in DSP.cpp
 int  SetWPM();
 void ShowAnalogGain();
 void ShowBandwidth();
 void ShowCurrentPowerSetting();
 void ShowDecoderMessage();
-void sineTone(int numCycles);
+void sineTone( int numCycles );
 int  SpectrumOptions();
 
 void TurnOffInitializingMessage();
 
 void UpdateInfoWindow();
 
-void SetFreqCal(void) ;
+void SetFreqCal( void ) ;
 extern "C"
-{
-  void sincosf(float err, float *s, float *c);
-  void sincos(double err, double *s, double *c);
-}
+	{
+	void sincosf( float err, float *s, float *c );
+	void sincos( double err, double *s, double *c );
+	}
 void ShowFrequency();
-void ShowMenu(const char *menu[], int where);
-void ShowMessageOnWaterfall(String message);  // G0ORX
+void ShowMenu( const char *menu[], int where );
+void ShowMessageOnWaterfall( String message ); // G0ORX
 void ShowName();
 void ShowNotch();
 void ShowSpectrum();
@@ -2555,15 +2563,15 @@ void ShowSpectrumdBScale();
 void ShowTempAndLoad();
 void ShowTransmitReceiveStatus();
 void BandInformation();
-float32_t sign(float32_t x);
-void sineTone(long freqSideTone);
-int  SmallMenuSelection(const char *options[], int optionCount, int defaultOpion);
-void SpectralNoiseReduction(void);
+float32_t sign( float32_t x );
+void sineTone( long freqSideTone );
+int  SmallMenuSelection( const char *options[], int optionCount, int defaultOpion );
+void SpectralNoiseReduction( void );
 void SpectralNoiseReductionInit();
 void Splash();
-int  SubmenuSelect(const char *options[], int numberOfChoices, int defaultStart);
+int  SubmenuSelect( const char *options[], int numberOfChoices, int defaultStart );
 
-void T4_rtc_set(unsigned long t);
+void T4_rtc_set( unsigned long t );
 float TGetTemp();
 
 int  Unused1();                            // Placeholders for array of pointers to function
@@ -2580,33 +2588,33 @@ void UpdateNoiseField();
 void UpdateNotchField();
 void UpdateNRField();
 void UpdateRFGainField();
-void UpdateSDIndicator(int present);
+void UpdateSDIndicator( int present );
 void UpdateVolumeField();
 void UpdateWPMField();
 void UpdateZoomField();
 
 int ValidEEPROMData();
-float VolumeToAmplification(int volume);
+float VolumeToAmplification( int volume );
 int  VFOSelect();
 
 void WaitforWRComplete();
-int  WhichOneToUse(char ptrMaps[][50], int count);
+int  WhichOneToUse( char ptrMaps[][50], int count );
 void WordSpace();
-void writeClippedRect(int x, int y, int cx, int cy, uint16_t *pixels, bool waitForWRC);
-inline void writeRect(int x, int y, int cx, int cy, uint16_t *pixels);
+void writeClippedRect( int x, int y, int cx, int cy, uint16_t *pixels, bool waitForWRC );
+inline void writeRect( int x, int y, int cx, int cy, uint16_t *pixels );
 
 void Xanr();
 int  Xmit_IQ_Cal(); //AFP 09-21-22
 
 void ZoomFFTPrep();
 void ZoomFFTPrep2();
-void ZoomFFTExe(uint32_t blockSize);
-void ZoomFFTExeCal(uint32_t blockSize);
+void ZoomFFTExe( uint32_t blockSize );
+void ZoomFFTExeCal( uint32_t blockSize );
 
 #if defined(G0ORX_AUDIO_DISPLAY)
- extern float32_t mic_audio_buffer[];
- void ShowTXAudio();
- void ClearTXAudio();
+extern float32_t mic_audio_buffer[];
+void ShowTXAudio();
+void ClearTXAudio();
 #endif // G0ORX_AUDIO_DISPLAY
 
 #endif
