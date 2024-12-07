@@ -34,8 +34,8 @@ void G0ORX_Rotary::updateA(unsigned char state) {
   if (ccw_fall && (state == 0b00)) { // if ccw_fall is already set to true from a previous B phase trigger, the ccw event will be triggered
     cw_fall = false;
     ccw_fall = false;
-  if( _reversed ) value++;
-  else value--;
+    if( _reversed ) value++;
+    else value--;
   }
 }
 
@@ -47,8 +47,8 @@ void G0ORX_Rotary::updateB(unsigned char state) {
   if (cw_fall && (state == 0b00)) { //cw trigger
     cw_fall = false;
     ccw_fall = false;
-  if( _reversed ) value++;
-  else value--;
+    if( _reversed ) value--;
+    else value++;
   }
 }
 
