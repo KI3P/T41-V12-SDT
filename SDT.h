@@ -89,7 +89,6 @@ extern struct maps myMapFiles[];
 #define RIGNAME_X_OFFSET            570             // Pixel count to rig name field                                       // Says we are using a Teensy 4 or 4.1
 #define RA8875_DISPLAY              1               // Comment out if not using RA8875 display
 #define TEMPMON_ROOMTEMP            25.0f
-//#define SD_CARD_PRESENT             1               // 1 if SD present, 0 otherwise       //   JJP  7/18/23
 #define SD_CS                       BUILTIN_SDCARD  // Works on T_3.6 and T_4.1 ...
 #define MAX_SD_ITEMS                184             // Number of discrete data items written to EEPROM
 
@@ -2616,5 +2615,9 @@ extern float32_t mic_audio_buffer[];
 void ShowTXAudio();
 void ClearTXAudio();
 #endif // G0ORX_AUDIO_DISPLAY
+
+#ifdef USE_JSON
+void printFile(const char *filename);
+#endif
 
 #endif

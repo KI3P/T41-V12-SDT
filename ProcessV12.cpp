@@ -49,7 +49,7 @@ static float adjdB;
 static int IQfreqStart_kHz,IQfreqStop_kHz,numIQPoints;
 static float frmax;
 static uint32_t index_of_max;
-static bool corrections_calculated = false;
+//static bool corrections_calculated = false;
 float r,i;
 static int delay_R = 0;
 static float scale_R = 1.0;

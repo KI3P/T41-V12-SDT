@@ -98,7 +98,6 @@
 #define PADDLE_FLIP								0						                              // 0 = right paddle = DAH, 1 = DIT
 #define STRAIGHT_KEY_OR_PADDLES		0						                              // 0 = straight, 1 = paddles
 #define SDCARD_MESSAGE_LENGTH     3000L                                     // The number of milliseconds to leave error message on screen
-//#define SD_CARD_PRESENT         0                                         //   JJP  7/18/23
 
 //====================== System specific ===============
 #define CURRENT_FREQ_A            7200000                                   // VFO_A

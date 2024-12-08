@@ -586,11 +586,11 @@ struct maps {
 */
 struct maps myMapFiles[10] =
 	{
+		{ MAP_FILE_NAME, MY_LAT, MY_LON },
 		{ "Cincinnati.bmp", 39.07466, -84.42677 },  // Map name and coordinates for QTH
 		{ "Denver.bmp", 39.61331, -105.01664 },
 		{ "Honolulu.bmp", 21.31165, -157.89291 },
 		{ "SiestaKey.bmp", 27.26657, -82.54197 },
-		{ "", 0.0, 0.0 },
 		{ "", 0.0, 0.0 },
 		{ "", 0.0, 0.0 },
 		{ "", 0.0, 0.0 },
@@ -3308,7 +3308,7 @@ void setup()
 #endif // G0ORX_FRONTPANEL
 
 #if defined(V12HWR)
-	//BIT_display();
+	BIT_display();
 #endif
 
 	if ( xmtMode == CW_MODE && decoderFlag == DECODE_OFF )
@@ -3394,8 +3394,6 @@ elapsedMicros usec = 0;  // Automatically increases as time passes; no ++ necess
 FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
 	{
 	int pushButtonSwitchIndex = -1;
-
-
 
 #if defined(G0ORX_CAT)
 	CATSerialEvent();

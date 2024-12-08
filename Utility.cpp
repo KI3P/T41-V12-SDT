@@ -683,6 +683,7 @@ void ShowMessageOnWaterfall(String message) {
 *****/
 int SDPresentCheck() {
   if (!SD.begin(chipSelect)) {
+    Serial.println("No SD card or cannot be initialized.");
     /*
     Serial.print("No SD card or cannot be initialized.");
     tft.setFontScale((enum RA8875tsize) 1);
@@ -699,11 +700,20 @@ int SDPresentCheck() {
     return 0;
   }
   // open the file.
+  #ifdef USE_JSON
+  File dataFile = SD.open("config.txt");
+  #else
   File dataFile = SD.open("SDEEPROMData.txt");
+  #endif
 
   if (dataFile) {
     return 1;
   } else {
+    #ifdef USE_JSON
+    Serial.println("config.txt not found.");
+    #else
+    Serial.println("SDEEPROMData.txt not found.");
+    #endif
     return 0;
   }
 }

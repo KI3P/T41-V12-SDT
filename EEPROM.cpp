@@ -2420,9 +2420,11 @@ void SDEEPROMDump()
   }
   // open the file.
   Serial.println(F("----- Start SD EEPROM File Dump ------"));
+  #ifdef USE_JSON
+  printFile("/config.txt");
+  #else
   File dataFile = SD.open("SDEEPROMData.txt");
-
-  // if the file is available, write to it:
+  // if the file is available, read from it:
   if (dataFile) {
     //     while (dataFile.available()) {
     //      Serial.write(dataFile.read());
@@ -2440,6 +2442,7 @@ void SDEEPROMDump()
   } else {
     Serial.println(F("error opening SDEEPROMData.txt"));
   }
+  #endif
 }
 
 
