@@ -42,7 +42,7 @@ int CalibrateOptions( int IQChoice )
 				si5351.drive_strength( SI5351_CLK2, SI5351_DRIVE_CURRENT ); // KF5N July 10 2023
 				si5351.set_ms_source( SI5351_CLK0, SI5351_PLLA ); // KI3P July 27 2024, updated to mirror Setup()
 				si5351.set_ms_source( SI5351_CLK1, SI5351_PLLA ); // KI3P July 27 2024, updated to mirror Setup()
-
+				oldMultiple = 0;
 				SetFreq();
 				MyDelay( 10L );
 				}
