@@ -2973,7 +2973,7 @@ void setup_cw_transmit_mode()
 		{
 		Clk2SetFreq = centerFreq * SI5351_FREQ_MULT - ( long long )( CWToneOffsetsHz[EEPROMData.CWToneIndex] * SI5351_FREQ_MULT );
 		}
-	sidetone_oscillator.amplitude( 1.0 );
+	sidetone_oscillator.amplitude( sidetoneVolume/500.0 );
 	si5351.set_freq( Clk2SetFreq, SI5351_CLK2 );
 	digitalWrite( CW_ON_OFF, CW_OFF ); // LOW = CW off, HIGH = CW on
 	digitalWrite( XMIT_MODE, XMIT_CW ); // KI3P, July 28, 2024
