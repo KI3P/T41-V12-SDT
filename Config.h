@@ -30,6 +30,10 @@
 //#define DEBUG8
 //#define DEBUG9
 
+// Uncomment the line below if your main board is populated with 
+// the ATTiny shutdown routine activation hardware
+// #define MAIN_BOARD_ATTINY_SHUTDOWN
+
 // Set the I2C addresses of the LPF, BPF, and RF boards
 #define V12_LPF_MCP23017_ADDR 0x25
 #define BPF_MCP23017_ADDR 0x24

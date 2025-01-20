@@ -2883,7 +2883,7 @@ void cw_keyer() {
 *****/
 void setup() {
   Serial.begin(38400);
-  Serial.println("Starting T41 radio");
+  //while(!Serial);
   if (CrashReport) {
     Serial.println(CrashReport);
   }
@@ -3130,6 +3130,14 @@ elapsedMicros usec = 0;  // Automatically increases as time passes; no ++ necess
 *****/
 FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
 {
+  #ifdef MAIN_BOARD_ATTINY_SHUTDOWN
+  // KI3P: Check for signal to begin shutdown and perform shutdown routine if requested
+  if ( digitalRead( BEGIN_TEENSY_SHUTDOWN ) == HIGH )
+  {
+    ShutdownTeensy();
+  }
+  #endif
+
   int pushButtonSwitchIndex = -1;
 
   valPin = ReadSelectedPushButton();  // Poll UI push buttons

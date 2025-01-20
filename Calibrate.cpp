@@ -337,7 +337,7 @@ void CalibrateFrequency() {
       } else {
         task = val;
         switch (task) {
-          case (13):  //13 Decode
+          case (DECODER_TOGGLE):  //13 Decode
 
 
 
@@ -378,7 +378,7 @@ void CalibrateFrequency() {
               task = -1;
               break;
             }
-          case (16):  //User2 Auto Plot
+          case (CAL_CHANGE_TYPE):  //User2 Auto Plot
             freqAutoPlotFlag = !freqAutoPlotFlag;
             if (freqAutoPlotFlag == 1) {
               freqCalType = 1;
@@ -387,7 +387,7 @@ void CalibrateFrequency() {
             }
             break;
 
-          case (15):  //User2Time Plot
+          case (BEARING):  //User2Time Plot
             freqTimePlotFlag = !freqTimePlotFlag;
             freqCalType = 2;
             timeIncrement = 0;
