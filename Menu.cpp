@@ -168,11 +168,9 @@ int SetPrimaryMenuIndex()
     val = ReadSelectedPushButton();  // Read the ladder value
 
     MyDelay(150L);
-#if defined(G0ORX_FRONTPANEL)
+
     if(val!=-1) {
-#else
-    if (val != -1 && val < (EEPROMData.switchValues[0] + WIGGLE_ROOM)) {      // Did they press Select?
-#endif // G0ORX_FRONTPANEL
+
       val = ProcessButtonPress(val);                                          // Use ladder value to get menu choice
 
       if (mainMenuWindowActive == true && val == MENU_BAILOUT_VALUE) {       // Cancel out of the main menu choices
@@ -249,8 +247,6 @@ int SetSecondaryMenuIndex()
       tft.setCursor(300, i * 27 + 21);
       tft.print(secondaryChoices[mainMenuIndex][i]);
       filterEncoderMove = 0;
-
-Serial.println(String(__FUNCTION__)+": "+String(i));
     }
     val = ReadSelectedPushButton();  // Read the ladder value
     MyDelay(200L);
@@ -268,6 +264,5 @@ Serial.println(String(__FUNCTION__)+": "+String(i));
     }
   }  // End while True
 
-Serial.println(String(__FUNCTION__)+": returning "+String(i));
   return secondaryMenuIndex;
 }

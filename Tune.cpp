@@ -70,86 +70,7 @@ int EvenDivisor(long freq2) {
   return multiple;
 }
 
-#ifndef V12HWR
-/*****
-  Purpose: A special variant of SetFreq() used only for calibration.
 
-  Parameter list:
-    void
-
-  Return value;
-    void
-
-  CAUTION: SI5351_FREQ_MULT is set in the si5253.h header file and is 100UL
-*****/
-void SetFreqCal(void) {   
-  // V12 hardware using Si5351 quadrature clocks.
-  Clk1SetFreq = ((centerFreq * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT);
-  multiple = EvenDivisor(Clk1SetFreq / SI5351_FREQ_MULT);
-  pll_freq = freq * multiple;
-  pll_freq = Clk1SetFreq * multiple;
-  freq = pll_freq / multiple;
-  si5351.output_enable(SI5351_CLK0, 1);
-  si5351.output_enable(SI5351_CLK1, 1);
-  //si5351.output_enable(SI5351_CLK2, 0);
-  si5351.set_freq_manual(freq, pll_freq, SI5351_CLK0);
-  si5351.set_freq_manual(freq, pll_freq, SI5351_CLK1);
-  // freqCal = (centerFreq + 21000) * SI5351_FREQ_MULT;
-  // si5351.output_enable(SI5351_CLK2, 1);
-  //si5351.set_freq_manual(Clk1SetFreq, pll_freq, SI5351_CLK2);
-  si5351.set_phase(SI5351_CLK0, 0);
-  //si5351.set_freq_manual(0, pll_freq, SI5351_CLK2);
-  si5351.set_phase(SI5351_CLK0, 0);
-  si5351.set_phase(SI5351_CLK1, multiple);
-  if (multiple != oldMultiple) {
-    si5351.pll_reset(SI5351_PLLA);
-    si5351.pll_reset(SI5351_PLLB);
-    //Serial.println("Reset in SetCalFreq");      // does it get here?
-    //if(calOnFlag == 1){
-    Clk1SetFreq = ((centerFreq * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT);
-    multiple = EvenDivisor(Clk1SetFreq / SI5351_FREQ_MULT);
-    long pll_freq = Clk1SetFreq * multiple;
-   //    freqCal = (centerFreq + 21000) * SI5351_FREQ_MULT;
-    si5351.output_enable(SI5351_CLK2, 1);
-    si5351.set_freq_manual((centerFreq + 21000) * SI5351_FREQ_MULT, pll_freq, SI5351_CLK2);
-    // }
-  }
-  oldMultiple = multiple;
-  si5351.output_enable(SI5351_CLK2, 0);
-  DrawFrequencyBarValue();
-
- 
-  if (radioState == SSB_TRANSMIT_STATE) {
-    Clk1SetFreq = (TxRxFreq * SI5351_FREQ_MULT) * MASTER_CLK_MULT;  // AFP 09-27-22
-  } else if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {
-    if (bands[currentBand].mode == DEMOD_LSB) {
-      Clk1SetFreq = (((TxRxFreq + CWFreqShift + calFreqShift) * SI5351_FREQ_MULT)) * MASTER_CLK_MULT;  // AFP 09-27-22;   flip CWFreqShift, sign originally minus
-    } else {
-      if (bands[currentBand].mode == DEMOD_USB) {
-        Clk1SetFreq = (((TxRxFreq - CWFreqShift - calFreqShift) * SI5351_FREQ_MULT)) * MASTER_CLK_MULT;  // AFP 10-01-22;  flip CWFreqShift, sign originally plus
-      }
-    }
-  }
-
-  //  The receive LO frequency is not dependent on mode or sideband.  CW frequency shift is done in DSP code.
- //Clk2SetFreq = ((centerFreq * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT) * MASTER_CLK_MULT;
-
-  if (radioState == SSB_RECEIVE_STATE || radioState == CW_RECEIVE_STATE) {   //  Receive state
-    si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
-    si5351.output_enable(SI5351_CLK0, 1);
-    si5351.output_enable(SI5351_CLK1, 1);  // CLK2 (transmit) off during receive to prevent birdies
-    //si5351.output_enable(SI5351_CLK2, 0);
-  }
-
-  if (radioState == SSB_TRANSMIT_STATE || radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {  // Transmit state
-    si5351.set_freq(Clk1SetFreq, SI5351_CLK1);
-    //si5351.output_enable(SI5351_CLK2, 0);  // CLK2 (receive) off during transmit to prevent spurious outputs
-    si5351.output_enable(SI5351_CLK1, 1);
-  }
-  //=====================  AFP 10-03-22 =================
-  DrawFrequencyBarValue();
-}
-#endif
 
 /***** //AFP 10-11-22 all new
   Purpose:  Reset tuning to center
@@ -190,7 +111,7 @@ void ResetTuning() {
 *****/
 
 void SetFreq() {   // reworked VK3KQT
-  #ifdef V12HWR   // V12 hardware Si5351 quadrature clocks 0, 1
+
   long long f=centerFreq;
   Clk1SetFreq = ((f * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT);
   multiple = EvenDivisor(Clk1SetFreq / SI5351_FREQ_MULT);
@@ -211,7 +132,7 @@ void SetFreq() {   // reworked VK3KQT
         si5351.pll_reset(SI5351_PLLA);                         // reset PLLA to align outputs 
         si5351.output_enable(SI5351_CLK0, 1);                  // set outputs on or off
         si5351.output_enable(SI5351_CLK1, 1);
-        //si5351.output_enable(SI5351_CLK2, 0);
+        si5351.output_enable(SI5351_CLK2, 0);
     }
     else {        // this is the timed delay technique for frequencies below 3.2MHz as detailed in 
                   // https://tj-lab.org/2020/08/27/si5351単体で3mhz以下の直交信号を出力する/
@@ -230,48 +151,15 @@ void SetFreq() {   // reworked VK3KQT
         sei();
         si5351.output_enable(SI5351_CLK0, 1);                      // switch them on to be sure
         si5351.output_enable(SI5351_CLK1, 1);                      //    ""        ""
-        //si5351.output_enable(SI5351_CLK2, 0);
+        si5351.output_enable(SI5351_CLK2, 0);
         
       }
   }
   oldMultiple = multiple;
+  if(freqCalFlag!=1)
   DrawFrequencyBarValue();
-  #else                 // Version V11 and earlier
-
-   // NEVER USE AUDIONOINTERRUPTS HERE: that introduces annoying clicking noise with every frequency change
-  // SI5351_FREQ_MULT is 100ULL, MASTER_CLK_MULT is 4;
-
-  // The SSB LO frequency is always the same as the displayed transmit frequency.
-  // The CW LOT frequency must be shifted by 750 Hz due to the way the CW carrier is generated by a quadrature tone.
-  if (radioState == SSB_TRANSMIT_STATE) {
-    Clk1SetFreq = (TxRxFreq * SI5351_FREQ_MULT) * MASTER_CLK_MULT;  // AFP 09-27-22
-  } else if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {
-    if (bands[currentBand].mode == DEMOD_LSB) {
-      Clk1SetFreq = (((TxRxFreq + CWFreqShift + calFreqShift) * SI5351_FREQ_MULT)) * MASTER_CLK_MULT;  // AFP 09-27-22;  KF5N flip CWFreqShift, sign originally minus
-    } else {
-      if (bands[currentBand].mode == DEMOD_USB) {
-        Clk1SetFreq = (((TxRxFreq - CWFreqShift - calFreqShift) * SI5351_FREQ_MULT)) * MASTER_CLK_MULT;  // AFP 10-01-22; KF5N flip CWFreqShift, sign originally plus
-      }
-    }
-  }
-
-  //  The receive LO frequency is not dependent on mode or sideband.  CW frequency shift is done in DSP code.
-  Clk2SetFreq = ((centerFreq * SI5351_FREQ_MULT) + IFFreq * SI5351_FREQ_MULT) * MASTER_CLK_MULT;
-
-  if (radioState == SSB_RECEIVE_STATE || radioState == CW_RECEIVE_STATE) {   //  Receive state
-    si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
-    si5351.output_enable(SI5351_CLK0, 1);
-    si5351.output_enable(SI5351_CLK1, 1);  // CLK1 (transmit) off during receive to prevent birdies
-    si5351.output_enable(SI5351_CLK2, 0);
-  }
-
-  if (radioState == SSB_TRANSMIT_STATE || radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {  // Transmit state
-    si5351.set_freq(Clk1SetFreq, SI5351_CLK1);
-    si5351.output_enable(SI5351_CLK2, 0);  // CLK2 (receive) off during transmit to prevent spurious outputs
-    si5351.output_enable(SI5351_CLK1, 1);
-  }
-  #endif
-  DrawFrequencyBarValue();
+ 
+  //DrawFrequencyBarValue();
 }
 
 /*****
@@ -340,11 +228,11 @@ int DoSplitVFO() {
   FormatFrequency(currentFreqB, freqBuffer);
   tft.fillRect(FREQUENCY_X_SPLIT, FREQUENCY_Y - 12, VFOB_PIXEL_LENGTH, FREQUENCY_PIXEL_HI, RA8875_BLACK);
   tft.setCursor(FREQUENCY_X_SPLIT, FREQUENCY_Y);
-  tft.setFont(&FreeMonoBold24pt7b);
+  tft.setFont(&FreeSansBold24pt7b);
   tft.setTextColor(RA8875_GREEN);
   tft.print(freqBuffer);  // Show VFO_A
 
-  tft.setFont(&FreeMonoBold18pt7b);
+  tft.setFont(&FreeSansBold18pt7b);
   FormatFrequency(currentFreqA, freqBuffer);
   tft.setTextColor(RA8875_LIGHT_GREY);
   tft.setCursor(FREQUENCY_X, FREQUENCY_Y + 6);
@@ -356,7 +244,7 @@ int DoSplitVFO() {
   tft.clearMemory();
   tft.writeTo(L1);
 
-  tft.setFont(&FreeMono9pt7b);
+  tft.setFont(&FreeSansBold9pt7b);
   tft.setTextColor(RA8875_RED);
   tft.setCursor(FILTER_PARAMETERS_X + 180, FILTER_PARAMETERS_Y + 6);
   tft.print("Split Active");

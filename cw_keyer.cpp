@@ -159,7 +159,6 @@ void cw_keyer()
       {                    // Check for intercharacter space
       if( millis() > keyer_timer )
         {  // We have a character
-        // Serial.println(g_current_morse_character);
         keyer_state = IDLE;  // go idle
         if( keyer_command_state != CMD_IDLE )
           {

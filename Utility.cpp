@@ -314,9 +314,9 @@ void Calculatedbm() {
     switch (display_dbm) {
       case DISPLAY_S_METER_DBM:
         dbm = dbm_calibration + bands[currentBand].gainCorrection + slope * log10f_fast(sum_db) + cons - (float32_t)bands[currentBand].RFgain * 1.5;
-        #ifdef V12HWR
+       
         dbm = dbm + ((float32_t)currentRF_InAtten)/2.0 - 31.0; // input RF attenuator and PSA-8+ amplifier
-        #endif
+        
         dbmhz = 0;
         break;
       case DISPLAY_S_METER_DBMHZ:
@@ -498,12 +498,9 @@ void SaveAnalogSwitchValues() {
     tft.print(labels[index]);
     value = -1;
     minVal = NOTHING_TO_SEE_HERE;
-//    Serial.println("Into switch code.");
     while (true) {
       value = ReadSelectedPushButton();
       if (value != -1) {
-//        Serial.print("value = ");
-//        Serial.println(value);
       }
       if (value < NOTHING_TO_SEE_HERE && value > 0) {
 
@@ -581,11 +578,11 @@ void DisplayClock() {
   //tft.setCursor(TIME_X - 20, TIME_Y);
 
   // G0ORX changes to support larger Frequency display
-  tft.setFontScale( (enum RA8875tsize) 0);
+  tft.setFontScale( (enum RA8875tsize) 1);
   tft.fillRect(TIME_X, TIME_Y, XPIXELS - TIME_X - 1, CHAR_HEIGHT, RA8875_BLACK);
-  tft.setCursor(TIME_X, TIME_Y);
 
   tft.setTextColor(RA8875_WHITE);
+  tft.setCursor(TIME_X, TIME_Y);
   tft.print(timeBuffer);
 }  // end function displayTime
 
@@ -652,14 +649,14 @@ void SetBand() {
   FilterBandwidth();
 
   // Set the LPF bands, added by KI3P
-  #ifdef K9HZ_LPF
+  //#ifdef V12_LPF
   setLPFBand(currentBand);
-  #endif // K9HZ_LPF
+  //#endif // V12_LPF
 
   // Set the BPF bands, added by KI3P
-  #ifdef V12BPF
+  //#ifdef V12BPF
   setBPFBand(currentBand);
-  #endif // V12BPF
+  //#endif // V12BPF
 
 }
 
@@ -718,7 +715,7 @@ int SDPresentCheck() {
   }
 }
 
-#if defined(G0ORX_CAT)
+#if defined(V12_CAT)
 /*****
   Purpose: change band from frequency
   Paramter list:
@@ -742,11 +739,11 @@ int ChangeBand(long f, bool updateRelays) {
     digitalWrite(bandswitchPins[b], HIGH);
   }
 
-#if defined(V12HWR)
+
   RFControl_Enable_Prescaler(currentBand==BAND_630M || currentBand==BAND_160M);
-#endif // V12HWR
+
 
   return b;
 }
-#endif // G0ORX_CAT
+#endif // V12_CAT
 

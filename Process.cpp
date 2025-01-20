@@ -20,8 +20,8 @@ char atom, currentAtom;
  *****/
 void ProcessIQData()
 {
-  if (keyPressedOn == 1) { //AFP 09-01-22
-    return;
+  if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {                                                                   //AFP 09-01-22
+        return; 
   }
   /**********************************************************************************  AFP 12-31-20
         Get samples from queue buffers
@@ -54,17 +54,17 @@ void ProcessIQData()
       Q_in_L.freeBuffer();
       Q_in_R.freeBuffer();
     }
-    if (keyPressedOn == 1) { ////AFP 09-01-22
-      return;
-    }
+ if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {                                                                   //AFP 09-01-22
+        return; 
+ }
     // Set frequency here only to minimize interruption to signal stream during tuning
     // This code was unnecessary in the revised tuning scheme.  KF5N July 22, 2023
     if (centerTuneFlag == 1) { //AFP 10-04-22
       DrawBandWidthIndicatorBar();
       ShowFrequency();
-#if defined(G0ORX_FRONTPANEL)
+
       SetFreq();
-#endif // G0ORX_FRONTPANEL
+
   //    SetFreq();            //AFP 10-04-22
      // BandInformation();
 
@@ -165,8 +165,8 @@ void ProcessIQData()
       CalcZoom1Magn();  //AFP Moved to display function
     }
     display_S_meter_or_spectrum_state++;
-    if ( keyPressedOn == 1) { ////AFP 09-01-22
-      return;
+if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {                                                                   //AFP 09-01-22
+        return; 
     }
 
     /**********************************************************************************  AFP 12-31-20
@@ -240,6 +240,7 @@ void ProcessIQData()
     arm_fir_decimate_f32(&FIR_dec2_Q, float_buffer_R, float_buffer_R, BUFFER_SIZE * N_BLOCKS / (uint32_t)DF1);
 
 
+ 
     // =================  AFP 10-21-22 Level Adjust ===========
     float freqKHzFcut;
     float volScaleFactor;
@@ -249,8 +250,16 @@ void ProcessIQData()
       freqKHzFcut = (float32_t)bands[currentBand].FHiCut * 0.001;
     }
     volScaleFactor = 7.0874 * pow(freqKHzFcut, -1.232);
+   // sineTone(8);
+   //       arm_scale_f32(sinBuffer2, volScaleFactor, float_buffer_L, FFT_length / 2);// use to calibrate SAM
+   // arm_scale_f32(cosBuffer2, volScaleFactor, float_buffer_R, FFT_length / 2);
+
+    
     arm_scale_f32(float_buffer_L, volScaleFactor, float_buffer_L, FFT_length / 2);
     arm_scale_f32(float_buffer_R, volScaleFactor, float_buffer_R, FFT_length / 2);
+
+ 
+
 
     //=================  AFP 10-21-22  =================
     /**********************************************************************************  AFP 12-31-20

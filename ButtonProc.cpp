@@ -2,57 +2,6 @@
 #include "SDT.h"
 #endif
 
-/*****
-  Purpose: To process a menu increase button push
-
-  Parameter list:
-    void
-
-  Return value:
-    void
-*****/
-/*void ButtonMenuIncrease() {
-  if (menuStatus == PRIMARY_MENU_ACTIVE) {
-    mainMenuIndex++;
-    if (mainMenuIndex == TOP_MENU_COUNT) {  // At last menu option, so...
-      mainMenuIndex = 0;                    // ...wrap around to first menu option
-    }
-  } else {
-    if (menuStatus == SECONDARY_MENU_ACTIVE) {
-      secondaryMenuIndex++;
-      if (secondaryMenuIndex == subMenuMaxOptions) {  // Same here...
-        secondaryMenuIndex = 0;
-      }
-    }
-  }
-  MyDelay(100L);
-}*/
-
-/*****
-  Purpose: To process a menu decrease button push
-
-  Parameter list:
-    void
-
-  Return value:
-    void
-*****/
-/*void ButtonMenuDecrease() {
-  if (menuStatus == PRIMARY_MENU_ACTIVE) {
-    mainMenuIndex--;
-    if (mainMenuIndex < 0) {               // At last menu option, so...
-      mainMenuIndex = TOP_MENU_COUNT - 1;  // ...wrap around to first menu option
-    }
-  } else {
-    if (menuStatus == SECONDARY_MENU_ACTIVE) {
-      secondaryMenuIndex--;
-      if (secondaryMenuIndex < 0) {  // Same here...
-        secondaryMenuIndex = subMenuMaxOptions - 1;
-      }
-    }
-  }
-}*/
-//==================  AFP 09-27-22
 
 /*****
   Purpose: To process a band increase button push
@@ -542,16 +491,6 @@ void ResetZoom(int zoomIndex1) {
     void
     Base Code courtesy of Harry  GM3RVL
 *****/
-/*****
-  Purpose: Direct Frequency Entry
-
-  Parameter list:
-    void
-
-  Return value;
-    void
-    Base Code courtesy of Harry  GM3RVL
-*****/
 void ButtonFrequencyEntry() {
   TxRxFreqOld = TxRxFreq;
 
@@ -611,9 +550,7 @@ void ButtonFrequencyEntry() {
   tft.fillRect(WATERFALL_LEFT_X, SPECTRUM_TOP_Y + 1, MAX_WATERFALL_WIDTH, WATERFALL_BOTTOM - SPECTRUM_TOP_Y, RA8875_BLACK);  // Make space for FEInfo
   tft.fillRect(MAX_WATERFALL_WIDTH, WATERFALL_TOP_Y - 10, 15, 30, RA8875_BLACK);
   tft.writeTo(L2);
-
   tft.fillRect(WATERFALL_LEFT_X, SPECTRUM_TOP_Y + 1, MAX_WATERFALL_WIDTH, WATERFALL_BOTTOM - SPECTRUM_TOP_Y, RA8875_BLACK);
-
   tft.setCursor(centerLine - 140, WATERFALL_TOP_Y);
   tft.drawRect(SPECTRUM_LEFT_X - 1, SPECTRUM_TOP_Y, MAX_WATERFALL_WIDTH + 2, 360, RA8875_YELLOW);  // Spectrum box
 
@@ -662,7 +599,6 @@ void ButtonFrequencyEntry() {
   tft.setTextColor(RA8875_WHITE);
   tft.setCursor(10, 0);
   tft.print("Enter Frequency");
-
   tft.fillRect(SECONDARY_MENU_X + 20, MENUS_Y, EACH_MENU_WIDTH + 10, CHAR_HEIGHT, RA8875_MAGENTA);
   //tft.setTextColor(RA8875_WHITE);
   tft.setTextColor(RA8875_BLACK);       // JJP 7/17/23

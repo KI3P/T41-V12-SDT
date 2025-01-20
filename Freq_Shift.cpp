@@ -38,13 +38,10 @@ void FreqShift1()
     float_buffer_R[i + 3] = hh2;
   }
   for (unsigned i = 0; i < BUFFER_SIZE * N_BLOCKS; i ++) {
-    #ifdef QUADFFT
-    float_buffer_LTemp[i] = float_buffer_L[i];
-    float_buffer_RTemp[i] = float_buffer_R[i];
-    #else
+
     float_buffer_L_3[i] = float_buffer_L[i];
     float_buffer_R_3[i] = float_buffer_R[i];
-    #endif
+ 
   }
   // this is for -Fs/4 [moves receive frequency to the right in the spectrumdisplay]
 }
@@ -136,12 +133,9 @@ void FreqShift2()
     //
     // do actual frequency conversion
     float freqAdjFactor = 1.1;
-    #ifdef QUADFFT
-    float_buffer_L[i] = (float_buffer_LTemp[i] * freqAdjFactor * Osc_Q) + (float_buffer_RTemp[i] * freqAdjFactor * Osc_I); // multiply I/Q data by sine/cosine data to do translation
-    float_buffer_R[i] = (float_buffer_RTemp[i] * freqAdjFactor * Osc_Q) - (float_buffer_LTemp[i] * freqAdjFactor * Osc_I);
-    #else
+
     float_buffer_L[i] = (float_buffer_L_3[i] * freqAdjFactor * Osc_Q) + (float_buffer_R_3[i] * freqAdjFactor * Osc_I); // multiply I/Q data by sine/cosine data to do translation
     float_buffer_R[i] = (float_buffer_R_3[i] * freqAdjFactor * Osc_Q) - (float_buffer_L_3[i] * freqAdjFactor * Osc_I);
-    #endif
+ 
   }
 }

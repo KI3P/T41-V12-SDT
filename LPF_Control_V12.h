@@ -1,5 +1,5 @@
-#ifndef K9HZ_LPF_CONTROL_h
-#define K9HZ_LPF_CONTROL_h
+#ifndef LPF_CONTROL_V12_h
+#define LPF_CONTROL_V12_h
 
 #include <Adafruit_MCP23X17.h> 
 #include "AD7991.h"
@@ -30,21 +30,21 @@
 
 // Register B pin mapping:
 // Bit    Description     Default
-// GPB0   Band BIT0       1
-// GPB1   Band BIT1       1
-// GPB2   Band BIT2       1
-// GPB3   Band BIT3       1
-// GPB4   Antenna BIT0    0
-// GPB5   Antenna BIT1    0
+// GPB0   Band I2C0       1
+// GPB1   Band I2C1       1
+// GPB2   Band I2C2       1
+// GPB3   Band I2C3       1
+// GPB4   Antenna I2C0    0
+// GPB5   Antenna I2C1    0
 // GPB6   XVTR_SEL        1 (1 means no XVTR)
 // GPB7   100W_PA_SEL     0 (0 means no 100W)
 #define LPF_STARTUP_STATE_B 0b01001111
 
-void K9HZLPFControlInit();
+void V12_LPFControlInit();
 void setLPFBand(int currentBand);
 void setBPFPath(int pathSelection);
 void selectAntenna(int antennaNum);
 void select100WPA(bool selection);
 void selectXVTR(bool selection);
 
-#endif // K9HZ_LPF_CONTROL_h
+#endif // V12_LPF_CONTROL_h

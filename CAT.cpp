@@ -2,26 +2,27 @@
 #include "SDT.h"
 #endif
 
-#include "G0ORX_CAT.h"
+#include "CAT.h"
 
-#ifdef G0ORX_CAT
+#ifdef CAT
 // Kenwood TS2000 CAT Interface - Minimal support for WDSP-X
 //
 // Note that this uses SerialUSB1 for the CAT interface.
 // Configure the IDE to set Tools->USB Type to Dual Serial.
 
-// John Melton G0ORX
+// John Melton V12HW
 
 // Uncomment to see CAT messages on the Serial Output
 //#define DEBUG_CAT
 
-#if !defined(G0ORX_FRONTPANEL)
+#if !defined(FRONTPANEL)
 int my_ptt=HIGH; // active LOW
-#endif // G0ORX_FRONTPANEL
+#endif // FRONTPANEL
 bool catTX=false;
 static char catCommand[128];
 static int catCommandIndex=0;
 static char outputBuffer[256];
+
 
 void IFResponse() {
   int mode;

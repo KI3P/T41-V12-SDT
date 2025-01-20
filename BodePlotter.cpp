@@ -1,8 +1,6 @@
 #ifndef BEENHERE
 #include "SDT.h"
 #endif
-
-#if !defined(EXCLUDE_BODE)
 /*==================================
 Notes about the Bode Plotter code.
 * Most  of the Bode code is stand-alone, not using most of the resources of the T41 for things like Plotting, drawing the plot container, processing the signal, etc.
@@ -19,20 +17,22 @@ Notes about the Bode Plotter code.
   * In this addition, no plots are saved, although this would be a nice enhancement.
   * Useful dynamic range is approximately 70 dB.
   * T41 V12 Rf board attenuators can be used the reduce the signal level to suitable levels, however, the code to activate the attenuators is not yet impleiented as of version 49.7.
-*/
+
 //=================== AFP 03-30-24 V012 Bode Plot
+*/
 /*****
   Purpose: Bode Menu Options
   Parameter list:
   Return value;
-    int           Return value has no real meaning. Done to be consistent with pointer to function array.
+    int
 *****/
-int BodeOptions() 
-{
+int BodeOptions() {
+
   switch (secondaryMenuIndex) {
     case 0:  // Start Bode Plot
       BodePlotFlag = 1;
       BodePLotter();
+
       break;
     case 1:  // Set Start Frequency
       freqStartBode = 3000000;
@@ -51,83 +51,78 @@ int BodeOptions()
       BodePlotFlag = 0;
       break;
   }
-  return 1;
-}
+  return secondaryMenuIndex;
+}  
 /*****
-  Purpose: DoBodePlot
+  Purpose: Do Bode Plot
 
   Parameter list:
-    float freqStart, freqStop, long numBodePoints, float refLevel
+    void
 
   Return value;
     void
 
 *****/
-void BodePLotter() {
-
+void BodePLotter() 
+{
   int buttonIndex = 0;
-  doneViewing = 0;
-//  int nQ;
-//  int N;
-//  int rem;
+  int k = 0;
+  int valPin;
 
   float freqIncrement = (float)(freqStopBode - freqStartBode) / numBodePoints;
-//  int yBodePosition;
-//  int xBodePosition;
-//  int pushButtonSwitchIndex = -1;
-//  int valPin;
-//  float bodeResultROld;
-//  float bodeResultROld2;
-//  float bodeResultRSum = 0.0;
- freqBodeChangeFlag = 0;
+
+  digitalWrite(RXTX, HIGH);
+  selectAntenna(0);
+  setBPFBand(currentBand);
+  setLPFBand(currentBand);
+  setBPFPath(BPF_NOT_IN_PATH);
+  SetRF_InAtten(30);
+  SetRF_OutAtten(0);
+
+  freqBodeChangeFlag = 0;
   BodeValuesMax = -60;
+
   modeSelectInR.gain(0, 1);
   modeSelectInL.gain(0, 1);
   digitalWrite(33, HIGH);
   digitalWrite(34, LOW);
   digitalWrite(38, LOW);
+  SetDefaultBandLimits();
   DrawBodePlotContainer();
- 
-  int k = 0;
-  si5351.reset();                                                                // KF5N.  Moved Si5351 start-up to setup. JJP  7/14/23
-  si5351.init(SI5351_LOAD_CAPACITANCE, Si_5351_crystal, EEPROMData.freqCorrectionFactor);  //JJP  7/14/23
-  si5351.set_ms_source(SI5351_CLK2, SI5351_PLLB);                                //  Allows CLK1 and CLK2 to exceed 100 MHz simultaneously.
-  si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_CURRENT);                          //AFP 10-13-22
-  si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_CURRENT);
+
+  BodePlotFlag = 1;
+
+  doneViewing = 0;
+  si5351.reset();  // KF5N.  Moved Si5351 start-up to setup. JJP  7/14/23
+                   //si5351.init(SI5351_CRYSTAL_LOAD_10PF, Si_5351_crystal, freqCorrectionFactor);  //JJP  7/14/23
+  if (!si5351.init(SI5351_LOAD_CAPACITANCE, Si_5351_crystal, EEPROMData.freqCorrectionFactor)) {
+
+  } else {
+  }
+  MyDelay(100L);
+  si5351.set_ms_source(SI5351_CLK2, SI5351_PLLB);        //  Allows CLK1 and CLK2 to exceed 100 MHz simultaneously.
+  si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_2MA);  //AFP 10-13-22
+  si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_2MA);
   while (doneViewing != 1) {
-    ;
-   
 
-
-//=== for testing the attenuator
-/*
-numBodePoints=2;
-for(int j=0;j<63;j++){
- SetRF_OutAtten(j);
- MyDelay(10000);
-}
-*/
-//=================
-
-//Serial.print("currentRF_OutAtten=  ");Serial.println((float)currentRF_OutAtten);
     for (int iFreq1 = 0; iFreq1 < numBodePoints; iFreq1++) {
+
       EncoderCenterTune();
+
       if (freqBodeChangeFlag == 1) {
         DrawBodePlotContainer();
         freqBodeChangeFlag = 0;
       }
 
-//      int pushButtonSwitchIndex = -1;
-      int valPin;
       freqIncrement = (freqStopBode - freqStartBode) / (numBodePoints);
-    centerFreqBode = freqStartBode + freqIncrement * iFreq1;
-//centerFreqBode =7000000L;
+      centerFreqBode = freqStartBode + freqIncrement * iFreq1;
+
       Clk2SetFreq = ((centerFreqBode + 17500.) * SI5351_FREQ_MULT);
 
       si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
 
       SetFreqBode();
-      digitalWrite(CAL, HIGH);
+
       ProcessIQDataBode();
 
       centerFreqBode = float(centerFreqBode);
@@ -197,10 +192,10 @@ for(int j=0;j<63;j++){
       tft.writeTo(L1);
       //============  Print Max value and freq
       tft.setFontScale((enum RA8875tsize)0);
-      tft.fillRect(685, 118, 60, 50, RA8875_BLACK);
-      tft.setCursor(695, 120);
+      tft.fillRect(630, 51, 120, 14, RA8875_BLACK);
+      tft.setCursor(630, 51);
       tft.print(BodeValuesMaxFreq / 1000, 3);
-      tft.setCursor(695, 140);
+      tft.setCursor(695, 51);
       tft.print(BodeValuesMax, 1);
 
       tft.setFontScale((enum RA8875tsize)1);
@@ -212,42 +207,49 @@ for(int j=0;j<63;j++){
         switch (buttonIndex) {
           case BAND_UP:
             EraseMenus();
-            if (currentBand < 5) digitalWrite(bandswitchPins[currentBand], LOW);  // Added if so unused GPOs will not be touched.  KF5N October 16, 2023.
             ButtonBandIncrease();
-            if (currentBand < 5) digitalWrite(bandswitchPins[currentBand], HIGH);
+             SetDefaultBandLimits();
             DrawBodePlotContainer();
+            tft.setFontScale((enum RA8875tsize)1);
+            tft.setCursor(700, 20);
+            tft.fillRect(699, 0, 799, 49, RA8875_BLACK);
             tft.setTextColor(RA8875_LIGHT_ORANGE);
             tft.setCursor(700, 20);
             tft.print(bands[currentBandA].name);
             break;
           case BAND_DN:
             DrawBodePlotContainer();
-            if (currentBand < 5) digitalWrite(bandswitchPins[currentBand], LOW);  // Added if so unused GPOs will not be touched.  KF5N October 16, 2023.
-            ButtonBandIncrease();
-            if (currentBand < 5) digitalWrite(bandswitchPins[currentBand], HIGH);
+            ButtonBandDecrease();
+            tft.setFontScale((enum RA8875tsize)1);
+             SetDefaultBandLimits();
             DrawBodePlotContainer();
+            tft.setCursor(700, 20);
+            tft.fillRect(699, 0, 799, 49, RA8875_BLACK);
             tft.setTextColor(RA8875_LIGHT_ORANGE);
             tft.setCursor(700, 20);
             tft.print(bands[currentBandA].name);
             break;
-          case BODE_SAVE:
+          case BODE_SAVE:  // Pressed pushbutton 15 save current plot
             for (int iFreq1 = 0; iFreq1 < numBodePoints; iFreq1++) {
               BodePlotValuesSave[iFreq1] = BodePlotValues[iFreq1];
               BodePlotFreqSave[iFreq1] = BodePlotFreq[iFreq1];
             }
             break;
-          case BODE_BAND:
+          case BODE_BAND:  // Pressed pushbutton 16 band
             if (plotBodeBandFlag == 0) {
               DrawBodePlotContainer();
               plotBodeBandFlag = 1;
             } else if (plotBodeBandFlag == 1) {
               plotBodeBandFlag = 0;
+             
               DrawBodePlotContainer();
               DrawBands();
             }
             //DrawPlots();
             break;
-          case BODE_REF:
+          case BODE_BPF_BYPASS:
+            break;
+          case BODE_REF:  // Pressed pushbutton 17 ref
             if (plotBodeRefFlag == 0) {
               plotBodeRefFlag = 1;
             } else if (plotBodeRefFlag == 1) {
@@ -257,28 +259,36 @@ for(int j=0;j<63;j++){
 
             //DrawPlots();
             break;
-          case MENU_OPTION_SELECT:    // All done
+          case BODE_DONE:  // Pressed pushbutton 14
             doneViewing = 1;
             BodePlotFlag = 0;
+            tft.writeTo(L1);
+            tft.clearMemory();
+            tft.writeTo(L2);
+            tft.clearMemory();
+            RedrawDisplayScreen();
             break;
           default:
             break;
         }
       }
       if (doneViewing == 1) {
+
+
         break;
       }
     }
     k = k + 1;
     if (doneViewing == 1) {
+
       doneViewing = 0;
+
       break;
     }
   }
 }
 
-//stopFreqOld = freqStopBode;
-//}
+
 
 /*****
   Purpose: DrawPlots()
@@ -303,7 +313,6 @@ void DrawPlots() {
       tft.fillCircle(BodePlotFreqSave[iFreq1], BodePlotValuesSave[iFreq1], 2, RA8875_LIGHT_GREY);
     }
 
-    //MyDelay(100L);
     valPin = ReadSelectedPushButton();  // Poll UI push buttons
 
     //MyDelay(100L);
@@ -338,7 +347,7 @@ void SetFreqBode()
   multiple = EvenDivisor(Clk1SetFreq / SI5351_FREQ_MULT);
 
   pll_freq = Clk1SetFreq * multiple;
-// freqBode = pll_freq / multiple;
+//  freqBode = pll_freq / multiple;
   si5351.pll_reset(SI5351_PLLA);
   si5351.pll_reset(SI5351_PLLB);
   si5351.drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA);  // KF5N July 10 2023
@@ -359,14 +368,58 @@ void SetFreqBode()
   Return value;
     void
 
- 
 *****/
-void DrawBodePlotContainer() {
+void SetDefaultBandLimits() {
+switch (currentBand) {
+    case BAND_80M:
+      freqStartBode = 3000000;
+      freqStopBode = 15000000;
+      break;
+
+    case BAND_40M:
+      freqStartBode = 3000000;
+      freqStopBode = 15000000;
+      break;
+
+    case BAND_20M:
+      freqStartBode = 5000000;
+      freqStopBode = 25000000;
+      break;
+    case BAND_17M:
+      freqStartBode = 5000000;
+      freqStopBode = 40000000;
+      break;
+    case BAND_15M:
+      freqStartBode = 10000000;
+      freqStopBode = 40000000;
+      break;
+    case BAND_12M:
+      freqStartBode = 10000000;
+      freqStopBode = 50000000;
+      break;
+    case BAND_10M:
+      freqStartBode = 10000000;
+      freqStopBode = 50000000;
+      break;
+  }
+}
+/*****
+  Purpose: DrawDoBodePlotContainer
+
+  Parameter list:
+    float freqStart, freqStop, long numBodePoints, float refLevel
+
+  Return value;
+    void
+
+*****/
+void DrawBodePlotContainer() 
+{
   tft.writeTo(L1);
   tft.fillRect(0, 0, 799, 479, RA8875_BLACK);
   tft.writeTo(L2);
   tft.fillRect(0, 0, 799, 479, RA8875_BLACK);
-
+  
 //  float freqIncrement = (float)(freqStopBode - freqStartBode) / float(numBodePoints);
 //  int yBodePosition;
 //  int xBodePosition;
@@ -377,6 +430,12 @@ void DrawBodePlotContainer() {
   BodeValuesMax = -600;
   modeSelectInR.gain(0, 1);
   modeSelectInL.gain(0, 1);
+  tft.setFontScale((enum RA8875tsize)1);
+  tft.setCursor(700, 20);
+  tft.fillRect(699, 0, 799, 49, RA8875_BLACK);
+  tft.setTextColor(RA8875_LIGHT_ORANGE);
+  tft.setCursor(700, 20);
+  tft.print(bands[currentBandA].name);
   //============== Draw lines on Layer 2
 
   tft.drawFastHLine(40, 50, 710, RA8875_GREEN);
@@ -411,8 +470,29 @@ void DrawBodePlotContainer() {
   tft.setCursor(350, 440);
   tft.print("MHz");
   tft.setFontScale((enum RA8875tsize)0);
-  tft.setCursor(630, 120);
+  tft.setCursor(580, 50);
   tft.print("Max");
+  tft.setTextColor(RA8875_CYAN);
+  tft.setCursor(600, 90);
+  tft.print("Decode= BPF Bupass");
+  tft.setCursor(600, 102);
+  tft.print("Dir Freq= Save as Ref");
+  tft.setCursor(600, 114);
+  tft.print("User1= Plot Ref");
+  tft.setCursor(600, 126);
+  tft.print("User2= Show Bands");
+  tft.setCursor(600, 138);
+  tft.print("User1= Exit");
+
+  tft.setCursor(600, 150);
+  tft.print("Vol= set Level");
+  tft.setCursor(600, 162);
+  tft.print("Filter= Move Cursor");
+  tft.setCursor(600, 174);
+  tft.print("Ctr Tune= Set Start");
+  tft.setCursor(600, 186);
+  tft.print("Fine T= Set Stop");
+
   tft.setTextColor(RA8875_YELLOW);
   tft.setCursor(16, 225);
   tft.print("dB");
@@ -467,7 +547,7 @@ void DrawBands() {
     tft.print("40M");
   }
 
-  if (freqStartBode < 10100000 && freqStopBode > 10150000) {
+  if (freqStartBode < 9900000 && freqStopBode > 10150000) {
     BandStart = map(10100, freqStartBodePlot, freqStopBodePlot, 50, 750);
     BandStop = map(10150, freqStartBodePlot, freqStopBodePlot, 50, 750);
     tft.fillRect(BandStart, 50, BandStop - BandStart + 1, 350, tft.colorInterpolation(BLUE, BLACK, 4, 8));
@@ -523,21 +603,26 @@ void DrawBands() {
 
   CAUTION: SI5351_FREQ_MULT is set in the si5253.h header file and is 100UL
 *****/
-void MoveBodeCursor() {
+void MoveBodeCursor() 
+{
 //  int val;
-
+  tft.setFontScale((enum RA8875tsize)0);
+  tft.setTextColor(RA8875_WHITE);
+  tft.setCursor(580, 71);
+  tft.print("Cursor");
   if (filterEncoderMove != 0) {
     tft.writeTo(L1);
     tft.setFontScale((enum RA8875tsize)0);
-    tft.fillRect(685, 53, 60, 50, RA8875_BLACK);
+    tft.fillRect(630, 70, 120, 14, RA8875_BLACK);
     currentFreqPos += filterEncoderMove;
     tft.setTextColor(RA8875_WHITE);
-    tft.setCursor(695, 60);
+    tft.setCursor(630, 71);
     tft.print(BodeFreq[currentFreqPos] / 1000, 3);
-    tft.setCursor(695, 80);
+    tft.setCursor(695, 71);
     tft.print(BodeValues[currentFreqPos], 1);
     filterEncoderMove = 0;
     tft.writeTo(L1);
+
     tft.fillCircle(BodePlotFreqOld[lastCurrentFreqPos], BodePlotValuesOld[lastCurrentFreqPos], 12, RA8875_BLACK);
     tft.drawCircle(BodePlotFreq[currentFreqPos], BodePlotValues[currentFreqPos], 10, RA8875_CYAN);
     tft.drawCircle(BodePlotFreq[currentFreqPos], BodePlotValues[currentFreqPos], 9, RA8875_CYAN);
@@ -561,21 +646,30 @@ void MoveBodeCursor() {
  *****/
 void ProcessIQDataBode() {
 //  float bodeResultROld;
-  if ((uint32_t)Q_in_L.available() > N_BLOCKS + 0 && (uint32_t)Q_in_R.available() > N_BLOCKS + 0) {
+
+  if ((uint32_t)Q_in_R.available() > N_BLOCKS + 0) {
     usec = 0;
+    // get audio samples from the audio  buffers and convert them to float
+    // read in 32 blocks á 128 samples in I and Q
     for (unsigned i = 0; i < N_BLOCKS; i++) {
       sp_L1 = Q_in_R.readBuffer();
+      //sp_R1 = Q_in_L.readBuffer();
+
+
+      /**********************************************************************************  AFP 12-31-20
+          Using arm_Math library, convert to float one buffer_size.
+          Float_buffer samples are now standardized from > -1.0 to < 1.0
+      **********************************************************************************/
       arm_q15_to_float(sp_L1, &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);  // convert int_buffer to float 32bit
-      Q_in_L.freeBuffer();
+      //arm_q15_to_float(sp_R1, &float_buffer_R[BUFFER_SIZE * i], BUFFER_SIZE);  // convert int_buffer to float 32bit
+      // Q_in_L.freeBuffer();
       Q_in_R.freeBuffer();
     }
   }
-
   arm_biquad_cascade_df2T_f32(&S1_BodePlotFilter, float_buffer_L, float_buffer_L, 2048);
-  arm_scale_f32(float_buffer_L, 2, float_buffer_L_AudioCW, 2048);  //AFP 10-18-22
+  arm_scale_f32(float_buffer_L, 2.0, float_buffer_L_AudioCW, 2048);  //AFP 10-18-22
   arm_rms_f32(float_buffer_L_AudioCW, 2048, &bodeResultR);
 }
-
 // ================== Bode IIF Filter
 
 
@@ -633,11 +727,6 @@ long SetBodeStart() {
     if (filterEncoderMove != 0) {                     // Changed encoder?
       freqStartBode += filterEncoderMove * 1000000L;  // Yep
       lastfreqStartBode = freqStartBode;
-
-      tft.setFontScale((enum RA8875tsize)1);
-      tft.fillRect(SECONDARY_MENU_X + 200, MENUS_Y + 1, 50, CHAR_HEIGHT, RA8875_MAGENTA);
-      tft.setCursor(SECONDARY_MENU_X + 200, MENUS_Y + 1);
-      tft.print(lastfreqStartBode);
       filterEncoderMove = 0;
     }
     val = ReadSelectedPushButton();   // Read pin that controls all switches
@@ -696,17 +785,20 @@ long SetBodeStop() {
 
 /*****Purpose : Allows quick setting of Bode Stop Frequenct
 
-                 Parameter list : void
+  Parameter list : 
+    void
+
+  Return value:
+    void
 
 *****/
-
-long MoveStopFreqBode() {
+void MoveStopFreqBode() {
   char result;
 
   result = fineTuneEncoder.process();  // Read the encoder
   if (result == 0) {                   // Nothing read
     fineTuneEncoderMove = 0L;
-    return 0L;
+    return;
   } else {
     if (result == DIR_CW) {  // 16 = CW, 32 = CCW
       fineTuneEncoderMove = 1L;
@@ -717,7 +809,4 @@ long MoveStopFreqBode() {
 
   freqStopBode += 1000000L * fineTuneEncoderMove;
 
-  return freqStopBode;
 }
-
-#endif // EXCLUDE_BODE

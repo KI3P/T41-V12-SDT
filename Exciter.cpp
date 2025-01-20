@@ -21,9 +21,14 @@
     6.  Interpolate 8x (upsample and filter) the data stream to 192KHz sample rate
     7.  Output the data stream thruogh the DACs at 192KHz
 *****/
-void ExciterIQData()
-{
-  uint32_t N_BLOCKS_EX                         = N_B_EX;
+void ExciterIQData() {
+  uint32_t N_BLOCKS_EX = N_B_EX;
+  static int val;
+  int val2;
+  int task = -1;  // captures the button presses
+  int lastUsedTask = -2;
+  float exciteMaxL = 0;
+
 
   /**********************************************************************************  AFP 12-31-20
         Get samples from queue buffers
@@ -34,7 +39,7 @@ void ExciterIQData()
         BUFFER_SIZE*N_BLOCKS = 2024 samples
      **********************************************************************************/
   // are there at least N_BLOCKS buffers in each channel available ?
-  if ( (uint32_t) Q_in_L_Ex.available() > N_BLOCKS_EX + 0 && (uint32_t) Q_in_R_Ex.available() > N_BLOCKS_EX + 0 ) {
+  if ((uint32_t)Q_in_L_Ex.available() > N_BLOCKS_EX + 0 && (uint32_t)Q_in_R_Ex.available() > N_BLOCKS_EX + 0) {
 
     // get audio samples from the audio  buffers and convert them to float
     // read in 32 blocks á 128 samples in I and Q
@@ -46,13 +51,13 @@ void ExciterIQData()
           Using arm_Math library, convert to float one buffer_size.
           Float_buffer samples are now standardized from > -1.0 to < 1.0
       **********************************************************************************/
-      arm_q15_to_float (sp_L2, &float_buffer_L_EX[BUFFER_SIZE * i], BUFFER_SIZE); // convert int_buffer to float 32bit
-      arm_q15_to_float (sp_R2, &float_buffer_R_EX[BUFFER_SIZE * i], BUFFER_SIZE); // convert int_buffer to float 32bit
+      arm_q15_to_float(sp_L2, &float_buffer_L_EX[BUFFER_SIZE * i], BUFFER_SIZE);  // convert int_buffer to float 32bit
+      arm_q15_to_float(sp_R2, &float_buffer_R_EX[BUFFER_SIZE * i], BUFFER_SIZE);  // convert int_buffer to float 32bit
       Q_in_L_Ex.freeBuffer();
       Q_in_R_Ex.freeBuffer();
     }
 
-    float exciteMaxL = 0;
+
 
     /**********************************************************************************  AFP 12-31-20
               Decimation is the process of downsampling the data stream and LP filtering
@@ -63,25 +68,25 @@ void ExciterIQData()
 
     // 192KHz effective sample rate here
     // decimation-by-4 in-place!
-    arm_fir_decimate_f32(&FIR_dec1_EX_I, float_buffer_L_EX, float_buffer_L_EX, BUFFER_SIZE * N_BLOCKS_EX );
-    arm_fir_decimate_f32(&FIR_dec1_EX_Q, float_buffer_R_EX, float_buffer_R_EX, BUFFER_SIZE * N_BLOCKS_EX );
+    arm_fir_decimate_f32(&FIR_dec1_EX_I, float_buffer_L_EX, float_buffer_L_EX, BUFFER_SIZE * N_BLOCKS_EX);
+    arm_fir_decimate_f32(&FIR_dec1_EX_Q, float_buffer_R_EX, float_buffer_R_EX, BUFFER_SIZE * N_BLOCKS_EX);
     // 48KHz effective sample rate here
     // decimation-by-2 in-place
     arm_fir_decimate_f32(&FIR_dec2_EX_I, float_buffer_L_EX, float_buffer_L_EX, 512);
     arm_fir_decimate_f32(&FIR_dec2_EX_Q, float_buffer_R_EX, float_buffer_R_EX, 512);
 
     //============================  Transmit EQ  ========================  AFP 10-02-22
-    if (xmitEQFlag == ON ) {
+    if (xmitEQFlag == ON) {
       DoExciterEQ();
     }
     //============================ End Receive EQ  AFP 10-02-22
 
 
-    arm_copy_f32 (float_buffer_L_EX, float_buffer_R_EX, 256);
+    arm_copy_f32(float_buffer_L_EX, float_buffer_R_EX, 256);
 
-#ifdef G0ORX_AUDIO_DISPLAY
-    arm_copy_f32 (float_buffer_R_EX, mic_audio_buffer, 256);
-#endif
+    //#ifdef V12_AUDIO_DISPLAY
+    //   arm_copy_f32 (float_buffer_R_EX, mic_audio_buffer, 256);
+    //#endif
 
     // =========================    End CW Xmit
     //--------------  Hilbert Transformers
@@ -92,22 +97,52 @@ void ExciterIQData()
              create the SSB signals.
              Two Hilbert Transformers are used to preserve eliminate the relative time delays created during processing of the data
     **********************************************************************************/
-    arm_fir_f32(&FIR_Hilbert_L, float_buffer_L_EX, float_buffer_L_EX, 256);
-    arm_fir_f32(&FIR_Hilbert_R, float_buffer_R_EX, float_buffer_R_EX, 256);
+
+    if (IQCalFlag == 0) {
+      arm_fir_f32(&FIR_Hilbert_L, float_buffer_L_EX, float_buffer_L_EX, 256);
+      arm_fir_f32(&FIR_Hilbert_R, float_buffer_R_EX, float_buffer_R_EX, 256);
+
+    } else {
+      arm_scale_f32(cosBuffer2, -.1, float_buffer_L_EX, 256);
+      arm_scale_f32(sinBuffer2, .1, float_buffer_R_EX, 256);
+      SetRF_OutAtten(0);
+      //=================
+      val2 = ReadSelectedPushButton();
+      if (val2 != BOGUS_PIN_READ) {
+        val2 = ProcessButtonPress(val);
+        if (val2 != lastUsedTask && task == -100) {
+          task = val2;
+        } else 
+          task = BOGUS_PIN_READ;
+      }
+      lastUsedTask = val2;
+
+ 
+      //===================
+      //IQXAmpCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain");
+      if (IQEXChoice == 0) {  // AFP 2-11-23
+        IQXAmpCorrectionFactor[currentBand] = GetEncoderValueLiveXCal(-2.0, 2.0, IQXAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain", 3, IQEXChoice);
+
+      } else {
+        IQXPhaseCorrectionFactor[currentBand] = GetEncoderValueLiveXCal(-2.0, 2.0, IQXPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase", 3, IQEXChoice);
+      }
+      
+    }
 
     /**********************************************************************************
               Additional scaling, if nesessary to compensate for down-stream gain variations
      **********************************************************************************/
-
-    if (bands[currentBand].mode == DEMOD_LSB) { //AFP 12-27-21
-      arm_scale_f32 (float_buffer_L_EX, - IQXAmpCorrectionFactor[currentBandA], float_buffer_L_EX, 256);     // Flip SSB sideband KF5N, minus sign was original
+    //Serial.print("IQCalFlag1= "); Serial.println(IQCalFlag);
+    if (bands[currentBand].mode == DEMOD_LSB) {                                                        //AFP 12-27-21
+      arm_scale_f32(float_buffer_L_EX, IQXAmpCorrectionFactor[currentBandA], float_buffer_L_EX, 256);  // Flip SSB sideband KF5N, minus sign was original
+      //arm_scale_f32 (float_buffer_L_EX, 1.0, float_buffer_L_EX, 256);     // Flip SSB sideband KF5N, minus sign was original
+      IQXPhaseCorrection(float_buffer_L_EX, float_buffer_R_EX, IQXPhaseCorrectionFactor[currentBandA], 256);
+      //IQPhaseCorrection(float_buffer_L_EX, float_buffer_R_EX, 0.0, 256);
+    } else if (bands[currentBand].mode == DEMOD_USB) {                                                 //AFP 12-27-21
+      arm_scale_f32(float_buffer_L_EX, IQXAmpCorrectionFactor[currentBandA], float_buffer_L_EX, 256);  // Flip SSB sideband KF5N
       IQPhaseCorrection(float_buffer_L_EX, float_buffer_R_EX, IQXPhaseCorrectionFactor[currentBandA], 256);
     }
-    else if (bands[currentBand].mode == DEMOD_USB) { //AFP 12-27-21
-      arm_scale_f32 (float_buffer_L_EX, + IQXAmpCorrectionFactor[currentBandA], float_buffer_L_EX, 256);    // Flip SSB sideband KF5N
-      IQPhaseCorrection(float_buffer_L_EX, float_buffer_R_EX, IQXPhaseCorrectionFactor[currentBandA], 256);
-    }
-    arm_scale_f32 (float_buffer_R_EX, 1.00, float_buffer_R_EX, 256);
+    arm_scale_f32(float_buffer_R_EX, 1.00, float_buffer_R_EX, 256);
 
     exciteMaxL = 0;
     for (int k = 0; k < 256; k++) {
@@ -128,20 +163,20 @@ void ExciterIQData()
     arm_fir_interpolate_f32(&FIR_int2_EX_I, float_buffer_LTemp, float_buffer_L_EX, 512);
     arm_fir_interpolate_f32(&FIR_int2_EX_Q, float_buffer_RTemp, float_buffer_R_EX, 512);
     //  192KHz effective sample rate here
-    arm_scale_f32(float_buffer_L_EX, 20, float_buffer_L_EX, 2048); //Scale to compensate for losses in Interpolation
+    arm_scale_f32(float_buffer_L_EX, 20, float_buffer_L_EX, 2048);  //Scale to compensate for losses in Interpolation
     arm_scale_f32(float_buffer_R_EX, 20, float_buffer_R_EX, 2048);
 
     /**********************************************************************************  AFP 12-31-20
       CONVERT TO INTEGER AND PLAY AUDIO
     **********************************************************************************/
 
-    for (unsigned  i = 0; i < N_BLOCKS_EX; i++) {  //N_BLOCKS_EX=16  BUFFER_SIZE=128 16x128=2048
+    for (unsigned i = 0; i < N_BLOCKS_EX; i++) {  //N_BLOCKS_EX=16  BUFFER_SIZE=128 16x128=2048
       sp_L2 = Q_out_L_Ex.getBuffer();
       sp_R2 = Q_out_R_Ex.getBuffer();
-      arm_float_to_q15 (&float_buffer_L_EX[BUFFER_SIZE * i], sp_L2, BUFFER_SIZE);
-      arm_float_to_q15 (&float_buffer_R_EX[BUFFER_SIZE * i], sp_R2, BUFFER_SIZE);
-      Q_out_L_Ex.playBuffer(); // play it !
-      Q_out_R_Ex.playBuffer(); // play it !
+      arm_float_to_q15(&float_buffer_L_EX[BUFFER_SIZE * i], sp_L2, BUFFER_SIZE);
+      arm_float_to_q15(&float_buffer_R_EX[BUFFER_SIZE * i], sp_R2, BUFFER_SIZE);
+      Q_out_L_Ex.playBuffer();  // play it !
+      Q_out_R_Ex.playBuffer();  // play it !
     }
   }
 }
@@ -155,12 +190,11 @@ void ExciterIQData()
   Return value;
     void
 *****/
-void SetBandRelay(int state)
-{
+void SetBandRelay(int state) {
   // There are 4 physical relays.  Turn all of them off.
-  for(int i = 0; i < 4; i = i + 1) {
-  digitalWrite(bandswitchPins[i], LOW); // Set ALL band relays low.  KF5N July 21, 2023
+  for (int i = 0; i < 4; i = i + 1) {
+    digitalWrite(bandswitchPins[i], LOW);  // Set ALL band relays low.  KF5N July 21, 2023
   }
-// Set current band relay "on".  Ignore 12M and 10M.  15M and 17M use the same relay.  KF5N September 27, 2023.
-  if(currentBand < 5) digitalWrite(bandswitchPins[currentBand], state);  
+  // Set current band relay "on".  Ignore 12M and 10M.  15M and 17M use the same relay.  KF5N September 27, 2023.
+  if (currentBand < 5) digitalWrite(bandswitchPins[currentBand], state);
 }

@@ -2,7 +2,7 @@
 #include "SDT.h"
 #endif
 
-#if !defined(EXCLUDE_BEARING)
+
 /*
   #define SD_CS                       BUILTIN_SDCARD        // Works on T_3.6 and T_4.1 ...
 
@@ -96,7 +96,8 @@ float homeLon = myMapFiles[0].lon;  // your QTH longitude
 float dxLat;
 float dxLon;
 
-PROGMEM struct cities dxCities[] = {  // was PROGMEM
+PROGMEM struct cities dxCities[] = {
+  // was PROGMEM
   // From John G0ORX.  Increases stack size.
   // callPrefix country  lat lon
   "1A", "MALTA ORDER", 45, 12.5,
@@ -1380,7 +1381,7 @@ inline void Color565ToRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
   tft.Color565ToRGB(color, r, g, b);
 }
 
-#endif // BEARING
+//#endif  // BEARING
 
 /*****
   Purpose: Initialize the SD card
@@ -1406,7 +1407,7 @@ int InitializeSDCard() {
   return 1;
 }
 
-#if !defined(EXCLUDE_BEARING)
+//#if !defined(EXCLUDE_BEARING)
 /*****
   Purpose: Erase initialization error message
 
@@ -1444,8 +1445,6 @@ int BearingMaps() {
   char ptrMaps[10][50];
   int count;
 
-  //Serial.print("sdCardPresent = ");
-  //Serial.println(sdCardPresent);
   if (sdCardPresent == 0) {  // JJP 8/11/23
     tft.setCursor(200, 300);
     tft.setTextColor(RA8875_RED, RA8875_BLACK);
@@ -1490,7 +1489,8 @@ int BearingMaps() {
   homeLat = myMapFiles[selectedMapIndex].lat;
   homeLon = myMapFiles[selectedMapIndex].lon;  // your QTH longitude
 
-  strcpy(mapFileName, (const char *)myMapFiles[selectedMapIndex].mapNames);
+
+  strcpy(mapFileName, (const char *)myMapFiles[selectedMapIndex - 1].mapNames);
 
   //=======================================
   int buttonIndex, doneViewing, valPin;
@@ -1503,7 +1503,7 @@ int BearingMaps() {
   retVal = BearingHeading(keyboardBuffer);
 
   if (retVal != -1.0) {  // We have valid country
-    bmpDraw((char *)myMapFiles[selectedMapIndex].mapNames, IMAGE_CORNER_X, IMAGE_CORNER_Y);
+    bmpDraw((char *)myMapFiles[selectedMapIndex + 1].mapNames, IMAGE_CORNER_X, IMAGE_CORNER_Y);
     doneViewing = false;
   } else {
     tft.setTextColor(RA8875_RED);
@@ -1565,7 +1565,7 @@ int CreateMapList(char ptrMaps[][50], int *count) {
 
     tft.setCursor(50, 55 + temp * 30);
     if (strstr(entry.name(), ".bmp") != NULL) {
-      strcpy(&ptrMaps[temp][0], entry.name());
+      strcpy(&ptrMaps[temp][0], entry.name());  
       temp++;
     }
 
@@ -1575,6 +1575,7 @@ int CreateMapList(char ptrMaps[][50], int *count) {
     *count = temp;
     entry.close();
   }
+
   return temp;
 }
 
@@ -1631,5 +1632,3 @@ int WhichOneToUse(char ptrMaps[][50], int count) {
   tft.setTextColor(RA8875_WHITE, RA8875_BLACK);
   return temp;
 }
-
-#endif // EXCLUDE_BEARING

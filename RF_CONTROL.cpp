@@ -106,10 +106,6 @@ void SetRF_InAtten(int attenInx2) {
     if (attenInx2 > 63) attenInx2 = 63;
     GPA_state = (GPA_state & 0b11000000) | attenInx2;
     mcp.writeGPIOA(GPA_state);
-    Serial.print("InAtt Statex2: ");
-    Serial.print((float)attenInx2/2.0,DEC);
-    Serial.print("=");
-    Serial.println(GPA_state & 0b00111111 ,BIN);
   }
 }
 
@@ -135,9 +131,9 @@ void SetRF_OutAtten(int attenOutx2) {
     if (attenOutx2 > 63) attenOutx2 = 63;
     GPB_state = (GPB_state & 0b11000000) | attenOutx2;
     mcp.writeGPIOB(GPB_state);
-    Serial.print("OutAtt Statex2: ");
-    Serial.print((float)attenOutx2/2.0,DEC);
-    Serial.print("=");
-    Serial.println(GPB_state & 0b00111111 ,BIN);
+    //Serial.print("OutAtt Statex2: ");
+    //Serial.print((float)attenOutx2/2.0,DEC);
+    //Serial.print("=");
+    //Serial.println(GPB_state & 0b00111111 ,BIN);
   }
 }

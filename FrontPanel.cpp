@@ -29,11 +29,11 @@
 #include "SDT.h"
 #endif
 
-#if defined(G0ORX_FRONTPANEL)
+
 
 #include <Adafruit_MCP23X17.h>
-#include "G0ORX_FrontPanel.h"
-
+#include "FrontPanel.h"
+int ButtonPressed = -1;
 int my_ptt=HIGH;  // active LOW
 
 #define DEBOUNCE_DELAY 250
@@ -43,10 +43,10 @@ int my_ptt=HIGH;  // active LOW
 #define e3 tuneEncoder
 #define e4 fineTuneEncoder
 
-G0ORX_Rotary volumeEncoder( VOLUME_REVERSED );
-G0ORX_Rotary filterEncoder( FILTER_REVERSED );
-G0ORX_Rotary tuneEncoder( MAIN_TUNE_REVERSED );
-G0ORX_Rotary fineTuneEncoder( FINE_TUNE_REVERSED );
+Rotary_V12 volumeEncoder( VOLUME_REVERSED );
+Rotary_V12 filterEncoder( FILTER_REVERSED );
+Rotary_V12 tuneEncoder( MAIN_TUNE_REVERSED );
+Rotary_V12 fineTuneEncoder( FINE_TUNE_REVERSED );
 int button_press_ms;
 
 enum {
@@ -63,7 +63,6 @@ static volatile bool interrupted1 = false;
 static Adafruit_MCP23X17 mcp2;
 static volatile bool interrupted2 = false;
 
-int G0ORXButtonPressed = -1;
 
 #define LED1 0
 #define LED2 1
@@ -85,7 +84,7 @@ static void interrupt1() {
     state = mcp1.digitalRead(pin);
     if (state == PRESSED) {
       if ((millis()-button_press_ms)>DEBOUNCE_DELAY){
-        G0ORXButtonPressed = pin;
+        ButtonPressed = pin;
         button_press_ms = millis();
       }
     } else {
@@ -166,7 +165,7 @@ static void interrupt2() {
       state = (a_state >> pin) & 0x01;
       if (state == PRESSED) {
         if ((millis()-button_press_ms)>DEBOUNCE_DELAY){
-          G0ORXButtonPressed = (pin+16);
+          ButtonPressed = (pin+16);
           button_press_ms = millis();
         }
       } else {
@@ -185,27 +184,25 @@ static void interrupt2() {
 void FrontPanelInit() {
   bool failed=false;
   Debug("Initializing G0ORX front panel");
-  #ifdef V12HWR
-  bit_results.G0ORX_PANEL_I2C_present = true;
-  #endif
+
+  bit_results.FRONT_PANEL_I2C_present = true;
   // Set Wire1 I2C bus to 1MHz and start
   //Wire1.setClock(1000000UL);
   Wire1.begin();
 
-  if (!mcp1.begin_I2C(G0ORX_PANEL_MCP23017_ADDR_1,&Wire1)) {
+  if (!mcp1.begin_I2C(V12_PANEL_MCP23017_ADDR_1,&Wire1)) {
     //ShowMessageOnWaterfall("MCP23017 not found at 0x"+String(G0ORX_PANEL_MCP23017_ADDR_1,HEX));
     failed=true;
-    #ifdef V12HWR
-    bit_results.G0ORX_PANEL_I2C_present = false;
-    #endif
+    bit_results.FRONT_PANEL_I2C_present = false;
+ 
   }
 
-  if (!mcp2.begin_I2C(G0ORX_PANEL_MCP23017_ADDR_2,&Wire1)) {
+  if (!mcp2.begin_I2C(V12_PANEL_MCP23017_ADDR_2,&Wire1)) {
     //ShowMessageOnWaterfall("MCP23017 not found at 0x"+String(G0ORX_PANEL_MCP23017_ADDR_2,HEX));
     failed=true;
-    #ifdef V12HWR
-    bit_results.G0ORX_PANEL_I2C_present = false;
-    #endif
+ 
+    bit_results.FRONT_PANEL_I2C_present = false;
+
   }
 
   if(failed) return;
@@ -260,4 +257,4 @@ void FrontPanelSetLed(int led, uint8_t state) {
       break;
   }
 }
-#endif
+

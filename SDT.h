@@ -3,9 +3,7 @@
 
 #define USE_JSON
 //======================================== User section that might need to be changed ===================================
-#include "MyConfigurationFile.h"                                          // This file name should remain unchanged
-#define VERSION                     "V050.2"                              // Change this for updates. If you make this longer than 9 characters, brace yourself for surprises
-#define UPDATE_SWITCH_MATRIX        0                                     // 1 = Yes, redo the switch matrix values, 0 = leave switch matrix values as is from the last change
+#include "Config.h"                                          // This file name should remain unchanged
 struct maps
 	{
 	char mapNames[50];
@@ -14,36 +12,32 @@ struct maps
 	};
 extern struct maps myMapFiles[];
 
-#if defined(V12HWR)
 #include "RF_CONTROL.h"
-#endif // V12HWR
-
-#ifdef DEBUG
-#define DEBUG_MESSAGES
-#endif
-
-#ifdef DEBUG_MESSAGES
-#define Debug(x) Serial.println(x)
-#else
-#define Debug(x)
-#endif
 
 // KI3P: added support for lowpass and bandpass filter boards
-#if defined(K9HZ_LPF)
-#include "K9HZ_LPF_Control.h"
-#endif // K9HZ_LPF 
-
-#if defined(V12BPF)
+#include "LPF_Control_V12.h"
 #include "BPF_Control.h"
-#endif // V12BPF 
+//======================================== New libraries needed for latest version ======================================
+#include <Chrono.h>                                 // https://github.com/SofaPirate/Chrono/
+#include <LinearRegression.h>                       // https://github.com/cubiwan/Regressino/
+#include <Linear2DRegression.hpp>                   // https://github.com/nkaaf/Arduino-Regression
+
+//https://github.com/cubiwan/LinearRegressino
 
 //======================================== Library include files ========================================================
 #include <Adafruit_GFX.h>
 #include "Adafruit_MCP23X17.h"
+
 #include "Fonts/FreeMonoBold24pt7b.h"
 #include "Fonts/FreeMonoBold18pt7b.h"
 #include "Fonts/FreeMono24pt7b.h"
 #include "Fonts/FreeMono9pt7b.h"
+
+
+#include "Fonts/FreeSansBold24pt7b.h"
+#include "Fonts/FreeSansBold18pt7b.h"
+#include "Fonts/FreeSansBold9pt7b.h"
+
 //#include <Audio.h>                                  //https://github.com/chipaudette/OpenAudio_ArduinoLibrary
 #include <OpenAudio_ArduinoLibrary.h>               // AFP 11-01-22
 #include <TimeLib.h>                                // Part of Teensy Time library
@@ -54,6 +48,7 @@ extern struct maps myMapFiles[];
 #include <Bounce.h>
 #include <arm_math.h>
 #include <arm_const_structs.h>
+//#include <Timer.h>
 // ============ AFP 09-04-23 #include modified Si5351 library
 // == Modified Si linbrary must be included in folder with T41 code
 #include "si5351.h"
@@ -63,19 +58,22 @@ extern struct maps myMapFiles[];
 #define SI5351_DRIVE_CURRENT SI5351_DRIVE_2MA
 
 #include <RA8875.h>                                 // https://github.com/mjs513/RA8875/tree/RA8875_t4
-#if defined(G0ORX_FRONTPANEL)
-#include "G0ORX_Rotary.h"
-#else
-#include <Rotary.h>                                 // https://github.com/brianlow/Rotary
-#endif
+#include "Rotary_V12.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <util/crc16.h>                             // mdrhere
 #include <utility/imxrt_hw.h>                       // for setting I2S freq, Thanks, FrankB!
 #include <EEPROM.h>
+
 //======================================== Symbolic Constants for the T41 ===================================================
 #define RIGNAME                     "T41-EP SDT"
+#define VERSION                     "V063-0"
+#define RIGNAME_X_OFFSET            530
+#define TIME_X                      530             // Pixel count to rig name field                                       // Says we are using a Teensy 4 or 4.1
+#define TIME_Y                      30
+
 #define NUMBER_OF_SWITCHES          18              // Number of push button switches. 16 on older boards
 #if !defined(EXCLUDE_BEARING) && !defined(EXCLUDE_BODE)
 #define TOP_MENU_COUNT              14              // Menus to process AFP 09-27-22, JJP 7-8-23 AFP 04-12-2
@@ -86,14 +84,12 @@ extern struct maps myMapFiles[];
 #elif defined(EXCLUDE_BEARING) && defined(EXCLUDE_BODE)
 #define TOP_MENU_COUNT              12              // removed Bearing and Bode for memory space
 #endif // EXCLUDE_BEARING / EXCLUDE_BODE
-#define RIGNAME_X_OFFSET            570             // Pixel count to rig name field                                       // Says we are using a Teensy 4 or 4.1
 #define RA8875_DISPLAY              1               // Comment out if not using RA8875 display
 #define TEMPMON_ROOMTEMP            25.0f
 #define SD_CS                       BUILTIN_SDCARD  // Works on T_3.6 and T_4.1 ...
 #define MAX_SD_ITEMS                184             // Number of discrete data items written to EEPROM
 
 //#define STORE_SWITCH_VALUES                       // Uncomment to save the analog switch values for your push button matrix
-
 #define OFF                         0
 #define ON                          1
 
@@ -106,10 +102,9 @@ extern struct maps myMapFiles[];
 #define VALID_EEPROM_DATA           1
 #define INVALID_EEPROM_DATA         0
 
-
 // ================== Use one of the following encoder configurations. Set in MyConfiguratonFile.h
 //=================== Encoder pins  Jack Purdum W8TEE September 25, 2023
-#ifdef FOURSQRP
+/*#ifdef FOURSQRP
 #define VOLUME_ENCODER_A          2
 #define VOLUME_ENCODER_B          3
 #define FILTER_ENCODER_A         16
@@ -118,7 +113,7 @@ extern struct maps myMapFiles[];
 #define FINETUNE_ENCODER_B        5
 #define TUNE_ENCODER_A           14
 #define TUNE_ENCODER_B           17
-#else
+#else*/
 #define VOLUME_ENCODER_A         2//5   //2
 #define VOLUME_ENCODER_B         3//4   //3
 #define FILTER_ENCODER_A         15
@@ -127,20 +122,10 @@ extern struct maps myMapFiles[];
 #define FINETUNE_ENCODER_B       5//16  // 5
 #define TUNE_ENCODER_A           17//2  //16
 #define TUNE_ENCODER_B           16//3  // 17
-#endif
-//
-//#define DEBUG_JACK
-//#define DEBUG1
-//#define DEBUG2
-//#define DEBUG3
-//#define DEBUG4
-//#define DEBUG6
-//#define DEBUG7
-//#define DEBUG8
-//#define DEBUG9
+//#endif
+
 #define NUMBER_OF_ELEMENTS(x) (sizeof(x)/sizeof(x[0]))  // Typeless way to find number of elements in the x[] array
 #define NEW_SI5351_FREQ_MULT    1UL
-
 
 //======================================== Symbolic constants ==========================================================
 
@@ -167,62 +152,41 @@ extern struct maps myMapFiles[];
 #define EACH_MENU_WIDTH               260
 #define BOTH_MENU_WIDTHS             (EACH_MENU_WIDTH * 2 + 30)
 
-/*
-#define MENU_OPTION_SELECT           0     // Switches changed for new menu system JJP 3/10/24
-#define MAIN_MENU_UP                 1
-#define BAND_UP                      2
-#define ZOOM                         3
-#define RESET_TUNING                 4
-#define BAND_DN                      5
-#define SET_MODE                     6
-#define DEMODULATION                 7
-#define MAIN_TUNE_INCREMENT          8
-#define NOISE_REDUCTION              9
-#define NOTCH_FILTER                10
-#define FINE_TUNE_INCREMENT         11
-#define FILTER                      12
-#define DECODER_TOGGLE              13
-#define UNUSED_1                    14
-#define UNUSED_2                    15
-#define UNUSED_3                    16
-#define UNUSED_4                    17
-#define CAL_CHANGE_TYPE             16
-#define CAL_CHANGE_INC              17
-*/
-
+//=======================================================
+// Correct assignments for AC8GY front panel
 #define MENU_BAILOUT_VALUE          17    // Used to exit from main menu list 
 
 #define MENU_OPTION_SELECT           0     // These are the expected values from the switch ladder
 #define MAIN_MENU_UP                 1
 #define BAND_UP                      2
 #define ZOOM                         3
-#define MAIN_MENU_DN                 4
+#define NOISE_FLOOR                  4
 #define BAND_DN                      5
-#define FILTER                       6
+#define SET_MODE                     6
 #define DEMODULATION                 7
-#define SET_MODE                     8
+#define MAIN_TUNE_INCREMENT          8
 #define NOISE_REDUCTION              9
 #define NOTCH_FILTER                10
-#define NOISE_FLOOR                 11
-#define FINE_TUNE_INCREMENT         12
+
+#define FINE_TUNE_INCREMENT         11
+#define FILTER                      12
 #define DECODER_TOGGLE              13
-#define MAIN_TUNE_INCREMENT         14
-#define RESET_TUNING                15
-#define DDE                         16
-#define BEARING                     17
+#define DDE                         14
+#define BEARING                     15
+#define RESET_TUNING                25
 #define CAL_CHANGE_TYPE             16
 #define CAL_CHANGE_INC              17
-#define CAL_TOGGLE_OUTPUT           14
+#define CAL_TOGGLE_OUTPUT           12
 #define CAL_AUTOCAL                 13
-#define CAL_TOGGLE_TX_STATE         12
+#define CAL_DIRECTIONS              14
 #define CAL_TOGGLE_ATTENUATOR       15
-#define BODE_SAVE                   15
+#define BODE_BPF_BYPASS             13
+#define BODE_SAVE                   14
 #define BODE_BAND                   16
-#define BODE_REF                    17
-#define BODE_DONE                   14
+#define BODE_REF                    15
+#define BODE_DONE                   17
 #define BEARING_ERASE               16
 #define BEARING_DONE                17
-
 //=======================================================
 #define XPIXELS                     800           // This is for the 5.0" display
 #define YPIXELS                     480
@@ -260,7 +224,7 @@ extern struct maps myMapFiles[];
 #define SPECTRUMCORNER_Y      INCREMENT_Y
 #define INFORMATION_WINDOW_X  WATERFALL_RIGHT_X + 25                        // 512 + 25 = 537
 #define INFORMATION_WINDOW_Y  WATERFALL_TOP_Y + 37                          // 255 + 37 = 292
-#define BAND_INDICATOR_X      WATERFALL_RIGHT_X + 25
+#define BAND_INDICATOR_X      WATERFALL_RIGHT_X + 25                        // 515 + 25 = 540
 #define BAND_INDICATOR_Y      WATERFALL_TOP_Y + 37                          // 292
 #define OPERATION_STATS_X     130
 #define OPERATION_STATS_Y     75
@@ -274,13 +238,13 @@ extern struct maps myMapFiles[];
 #define RECEIVE_STATE         1
 #define TRANSMIT_STATE        0
 
-#define SMETER_X              WATERFALL_RIGHT_X + 16
+#define SMETER_X              WATERFALL_RIGHT_X + 16        // 515 + 16 = 531
 #define SMETER_Y              YPIXELS * 0.22                // 480 * 0.22 = 106
 #define SMETER_BAR_HEIGHT     18
 #define SMETER_BAR_LENGTH     180
 #define SPECTRUM_NOISE_FLOOR  (SPECTRUM_TOP_Y + SPECTRUM_HEIGHT - 3)
-#define TIME_X                (XPIXELS * 0.83)                            // Upper-left corner for time --G0ORX
-#define TIME_Y                (YPIXELS * 0.07)
+//#define TIME_X                (XPIXELS * 0.83)                            // Upper-left corner for time --G0ORX
+//#define TIME_Y                (YPIXELS * 0.07)
 #define WHICH_SIDEBAND_X      (XPIXELS * 0.70)
 #define WHICH_SIDEBAND_Y      (YPIXELS * 0.20)
 #define FILTER_PARAMETERS_X   (XPIXELS * 0.22)
@@ -296,20 +260,15 @@ extern struct maps myMapFiles[];
 #define VFOB_PIXEL_LENGTH     280
 #define FREQUENCY_PIXEL_HI    45
 #define SPLIT_INCREMENT       500L
-//                                                            Offsets for status info
+//                                                          Offsets for status info
 #define FIELD_OFFSET_X        WATERFALL_RIGHT_X + 118                     // X coordinate for field
 #define NOTCH_X               WATERFALL_RIGHT_X + 58
 #define NOTCH_Y               WATERFALL_TOP_Y   + 90
 #define NOISE_REDUCE_X        WATERFALL_RIGHT_X + 58
 #define NOISE_REDUCE_Y        WATERFALL_TOP_Y   + 110
 
-//#define AGC_Y_OFFSET          292
-//#define AGC_X_OFFSET          680
-
 #define ZOOM_X                705
 #define ZOOM_Y                365
-//#define RF_GAIN_X             681
-//#define RF_GAIN_Y             365
 #define RF_GAIN_X             681
 #define RF_GAIN_Y             WATERFALL_TOP_Y   + 90
 
@@ -461,12 +420,9 @@ void ShutdownTeensy( void );
 #define CW_OFF                      0
 #define CW_ON                       1
 #define CAL_POWER_LEVEL_W           10
-// KI3P: V12 does not have a hardware audio amp mute. It reuses the pin for calibration
-#ifdef V12HWR
+
 #define CAL                         38    // RX board calibration control (H=CAL,L=normal)
-#else
-#define MUTE                        38    // Mute Audio,  HIGH = "On" Audio available from Audio PA, LOW = Mute audio
-#endif
+
 //========================================= Switch pins
 #define BAND_MENUS                  100    // encoder2 button = button3SW
 #define BAND_PLUS                   101    // BAND+ = button2SW
@@ -534,11 +490,12 @@ void ShutdownTeensy( void );
 #define CW_RECEIVE                  2
 #define CW_XMIT                     3
 //  This second set of states are for the loop() modal state machine.
-#define SSB_RECEIVE_STATE 0
-#define SSB_TRANSMIT_STATE 1
-#define CW_RECEIVE_STATE 2
+#define SSB_RECEIVE_STATE          0
+#define SSB_TRANSMIT_STATE         1
+#define CW_RECEIVE_STATE           2
 #define CW_TRANSMIT_STRAIGHT_STATE 3
-#define CW_TRANSMIT_KEYER_STATE 4
+#define CW_TRANSMIT_KEYER_STATE 5554
+#define CAL_TRANSMIT_STATE         5
 extern int radioState, lastState;  // Used by the loop to monitor current state.
 
 #define DECODER_STATE               0               // 0 = off, 1 = on
@@ -643,7 +600,7 @@ extern int radioState, lastState;  // Used by the loop to monitor current state.
 #define MENU_NB_THRESH              36
 #define MENU_NB_TAPS                37
 #define MENU_NB_IMPULSE_SAMPLES     38
-#define MENU_BIT_NUMBER             39
+#define MENU_I2C_NUMBER             39
 #define MENU_F_LO_CUT               40
 #define MENU_NR_PSI                 41
 #define MENU_NR_ALPHA               42
@@ -671,66 +628,28 @@ extern int radioState, lastState;  // Used by the loop to monitor current state.
 #define MAX_TAU_ATTACK              (0.01)
 #define RB_SIZE                     (int) (MAX_SAMPLE_RATE * MAX_N_TAU * MAX_TAU_ATTACK + 1)
 
-//#define CONFIG_VERSION              "mr1"             //mdrhere ID of the E settings block, change if structure changes
-//#define CONFIG_START 0                                // Address start the EEPROM data. (emulated with size of 4K. Actual address managed in library)
-
-//#define TERMCHRXWIDTH               9                     // print stuff for text terminal
-//#define TERMCHRYWIDTH               10
-//#define TERMNROWS                   4                     // 15
-//#define TERMNCOLS                   28                    // 34
-
 #define CW_TEXT_START_X             5
 #define CW_TEXT_START_Y             449                   // 480 * 0.97 = 465 - height = 465 - 16 = 449
 #define CW_MESSAGE_WIDTH            MAX_WATERFALL_WIDTH   // 512
 #define CW_MESSAGE_HEIGHT           16                    // tft.getFontHeight()
 
-#if defined(V12HWR)
-#define BAND_630M                 0
-#define BAND_160M                 1
-#define BAND_80M                  2
-#define BAND_60M                  3
-#define BAND_40M                  4
-#define BAND_30M                  5
-#define BAND_20M                  6
-#define BAND_17M                  7
-#define BAND_15M                  8
-#define BAND_12M                  9
-#define BAND_10M                 10
-#define BAND_6M                  11
-#define BAND_4M                  12
-#define BAND_2M                  13
-#define BAND_125CM               14
-#define BAND_70CM                15
-#define BAND_33CM                16
-#define BAND_23CM                17
-
-#define FIRST_BAND                BAND_630M    //WJS 2-18-24
-#define LAST_BAND                 BAND_23CM    //WJS 2-18-24
-#define NUMBER_OF_BANDS           18           //WJS 2-18-24
-
-#else
-
 #define BAND_80M                  0
-#define BAND_40M                  1
-#define BAND_20M                  2
-#define BAND_17M                  3
-#define BAND_15M                  4
-#define BAND_12M                  5
-#define BAND_10M                  6
+#define BAND_60M                  1
+#define BAND_40M                  2
+#define BAND_30M                  3
+#define BAND_20M                  4
+#define BAND_17M                  5
+#define BAND_15M                  6
+#define BAND_12M                  7
+#define BAND_10M                  8
+#define BAND_6M                   9
 
 #define FIRST_BAND                BAND_80M
-#define LAST_BAND                 BAND_10M    //AFP 1-28-21
-#define NUMBER_OF_BANDS           7           //AFP 1-28-21
-#endif // V12HWR
-//#define STARTUP_BAND              BAND_40M    //AFP 1-28-21
-
-//#endif
+#define LAST_BAND                 BAND_6M    //AFP 1-28-21
+#define STARTUP_BAND              BAND_40M 
+#define NUMBER_OF_BANDS           10           //AFP 1-28-21
 
 //=== CW Filter ===
-
-// G0ORX - moved to RF_CONTROL source
-//extern Adafruit_MCP23X17 mcp;
-
 //------------------------- Global CW Filter declarations ----------
 
 extern arm_biquad_cascade_df2T_instance_f32 S1_CW_Filter;
@@ -802,16 +721,8 @@ extern float BodeFreqRaw[];
 extern float32_t bodeResultR;  //Bode
 extern float32_t audioBodePlot;
 extern float32_t audioBodeMax;
-int  BodeOptions();
-void SetFreqBode();                                                                   //Bode
-void BodePLotter();
-void DrawBodePlotContainer();  // Bode
-//void ReadFilterEncoder();
-void MoveBodeCursor();                                                            // Bode
-void SetFreqBode();                                                                   // Bode
-void ProcessIQDataBode();                                                             //Bode
-void SetDDSFreqBode();
-long MoveStopFreqBode() ;                                                          //Bode
+
+
 extern float32_t BodePlotterBPFCoeffs[];                                              // Bode
 extern float32_t BodePlotterBPF_state[];
 //extern float32_t DMAMEM float_buffer_LBode[];
@@ -820,6 +731,7 @@ extern long stopFreqBode;
 extern long stopFreqOld;
 extern long freqStartBode;
 extern long freqStopBode;
+extern int BodePlotFlag;
 extern int numBodePoints;
 extern float refLevelBode;
 extern int replotFlag;
@@ -838,13 +750,12 @@ long SetBodeStop();
 float SetBodeReference();
 extern int plotBodeRefFlag;
 extern int freqBodeChangeFlag;
-extern int BodePlotFlag;
+
 void DrawPlots();
 extern int plotBodeBandFlag;
 extern float bodeResultRdB;
 extern int levelBodeChangeFlag;
 #endif // EXCLUDE_BODE
-
 
 extern long long pll_freq;
 extern int valPin;
@@ -852,7 +763,6 @@ extern int valPin;
 extern int currentRF_InAtten; //AFP 04-12-24
 extern int currentRF_OutAtten; //AFP 04-12-24
 //=================== AFP 03-30-24 V012 Bode Plot end
-
 
 //=================== AFP 09-04-23 V012 Quad Si5351 variables
 extern int Even_Divisor;
@@ -887,13 +797,11 @@ extern float32_t float_Corr_Buffer[];   //AFP 02-02-22
 extern float32_t aveCorrResult;   //AFP 02-02-22
 extern float32_t magFFTResults[];
 extern long tempSigTime;
-//extern int audioTemp;  KF5N
 extern int audioTempPrevious;
 extern int filterWidth;
 extern int filterWidthX;                                           // The current filter X.
 extern int filterWidthY;
 extern int x1AdjMax; //AFP 2-6-23
-// The current filter Y.
 extern float sigStart;
 extern float sigDuration;
 extern float gapStartData;
@@ -932,16 +840,14 @@ extern long cwTime4;
 extern long cwTime5;
 extern long cwTime6;
 //===== New histogram stuff
-
+extern int freqCalmode;
 extern const char *secondaryChoices[][14];
-
 extern int endDitFlag;
 extern int endGapFlag;
 extern int topDitIndex;  //AFP 02-20-22
 extern int topDitIndexOld;
 extern int topGapIndex;
 extern int topGapIndexOld;
-
 extern int32_t signalHistogram[];
 extern int32_t gapHistogram[];
 extern uint32_t histMaxIndexDitOld;
@@ -981,7 +887,6 @@ extern long notchPosOld;
 extern long filter_pos;
 extern long last_filter_pos;
 
-
 //================== Global Excite Variables =================
 
 #define IIR_ORDER 8
@@ -991,7 +896,7 @@ extern arm_biquad_cascade_df2T_instance_f32   s1_Receive ;  //AFP 09-23-22
 extern arm_biquad_cascade_df2T_instance_f32   s1_Receive2 ;  //AFP 11-02-22
 extern float32_t HP_DC_Butter_state2[2];                     //AFP 11-04-22
 extern float32_t HP_DC_Butter_state[6];                     //AFP 09-23-22
-
+extern float freqErrorOld;
 extern float32_t coeffs192K_10K_LPF_FIR[];
 
 extern float32_t coeffs48K_8K_LPF_FIR[];
@@ -1013,7 +918,6 @@ extern float32_t EQ_Band11Coeffs[];
 extern float32_t EQ_Band12Coeffs[];
 extern float32_t EQ_Band13Coeffs[];
 extern float32_t EQ_Band14Coeffs[];
-
 
 //Setup for EQ filters
 extern float32_t rec_EQ_Band1_state[] ;
@@ -1064,8 +968,6 @@ extern float32_t EQ_Band11_state[];
 extern float32_t EQ_Band12_state[];
 extern float32_t EQ_Band13_state[];
 extern float32_t EQ_Band14_state[];
-
-
 
 extern float EQBand1GaindB ;
 extern float EQBand2GaindB ;
@@ -1148,7 +1050,6 @@ extern float32_t xmt_EQ14_float_buffer_L [];
 
 // ================= end  AFP 10-02-22 ===========
 
-
 extern arm_biquad_cascade_df2T_instance_f32 S1_EXcite ;
 extern arm_biquad_cascade_df2T_instance_f32 S2_EXcite ;
 extern arm_biquad_cascade_df2T_instance_f32 S3_EXcite ;
@@ -1164,9 +1065,11 @@ extern arm_biquad_cascade_df2T_instance_f32 S12_EXcite ;
 extern arm_biquad_cascade_df2T_instance_f32 S13_EXcite ;
 extern arm_biquad_cascade_df2T_instance_f32 S14_EXcite ;
 
-
 //static uint32_t filtBlockSize = BUFFER_SIZE;
-
+extern float volTimer;
+extern float SAMTimer;
+extern float SAMTimer2;
+extern int SAMPrintFlag;
 extern float32_t float_buffer_L1_EX [];
 extern float32_t float_buffer_L2_EX [];
 extern float32_t float_buffer_L3_EX [];
@@ -1181,8 +1084,6 @@ extern float32_t float_buffer_L11_EX [];
 extern float32_t float_buffer_L12_EX [];
 extern float32_t float_buffer_L13_EX [];
 extern float32_t float_buffer_L14_EX [];
-
-
 
 //Hilbert FIR Filter
 
@@ -1202,7 +1103,6 @@ extern arm_fir_instance_f32 FIR_CW_DecodeR;  //AFP 10-25-22
 extern float32_t FIR_CW_DecodeL_state [];  //AFP 10-25-22
 extern float32_t FIR_CW_DecodeR_state [];  //AFP 10-25-22
 
-
 extern arm_fir_decimate_instance_f32 FIR_dec1_EX_I;
 extern arm_fir_decimate_instance_f32 FIR_dec1_EX_Q;
 extern arm_fir_decimate_instance_f32 FIR_dec2_EX_I;
@@ -1212,7 +1112,6 @@ extern arm_fir_interpolate_instance_f32 FIR_int1_EX_I;
 extern arm_fir_interpolate_instance_f32 FIR_int1_EX_Q;
 extern arm_fir_interpolate_instance_f32 FIR_int2_EX_I;
 extern arm_fir_interpolate_instance_f32 FIR_int2_EX_Q;
-
 
 extern float32_t FIR_dec1_EX_I_state[];    //48 + (uint16_t) BUFFER_SIZE * (uint32_t) N_B - 1
 extern float32_t FIR_dec1_EX_Q_state[];
@@ -1237,7 +1136,6 @@ extern float32_t  float_buffer_RTemp[];
 void ExciterIQData();
 
 //==================== End Excite Variables ================================
-
 //======================================== Global object declarations ==================================================
 //extern float32_t NCOFreq ; // AFP 04-16-22
 extern long NCOFreq ; // AFP 04-16-22
@@ -1263,7 +1161,6 @@ extern float32_t q_temp;
 //======================================== Global object declarations ==================================================
 extern AudioMixer4              recMix_3;         // JJP
 extern AudioMixer4              CW_AudioOut;      // JJP 9/1/22
-
 
 //===============  AFP 09-01-22
 extern AudioMixer4          CW_AudioOutR; //AFP 09-01-22
@@ -1296,34 +1193,10 @@ extern AudioEffectCompressor_F32 comp1, comp2;
 extern AudioConvert_F32toI16     float2Int1, float2Int2;    //Converts Float to Int16.  See class in AudioStream_F32.h
 //===============  AFP 11-01-22
 
-#if defined(G0ORX_FRONTPANEL)
-extern G0ORX_Rotary volumeEncoder;
-extern G0ORX_Rotary tuneEncoder;
-extern G0ORX_Rotary filterEncoder;
-extern G0ORX_Rotary fineTuneEncoder;
-#else
-extern Bounce decreaseBand;
-extern Bounce increaseBand;
-extern Bounce modeSwitch;
-extern Bounce decreaseMenu;
-extern Bounce frequencyIncrement;
-extern Bounce filterSwitch;
-extern Bounce increaseMenu;
-extern Bounce selectExitMenues;
-extern Bounce changeNR;
-extern Bounce demodSwitch;
-extern Bounce zoomSwitch;
-extern Bounce cursorSwitch;
-
-extern Rotary volumeEncoder;        // (2,  3)
-extern Rotary tuneEncoder;          // (16, 17)
-extern Rotary filterEncoder;        // (14, 15)
-extern Rotary fineTuneEncoder;  // (4,  5);
-//extern Encoder fineTuneEncoder;   // (4,  5);
-//extern Rotary fineTuneEncoder;
-//extern Encoder filterEncoder;
-//extern Encoder volumeEncoder;
-#endif // G0ORX_FRONTPANEL
+extern Rotary_V12 volumeEncoder;
+extern Rotary_V12 tuneEncoder;
+extern Rotary_V12 filterEncoder;
+extern Rotary_V12 fineTuneEncoder;
 
 extern Metro ms_500;
 extern Metro ms_300000;// Set up a Metro
@@ -1370,7 +1243,7 @@ extern struct config_t
 
 	int activeVFO           = 0;                        // 2 bytes
 	int freqIncrement       = 5;                        // 4 bytes
-	int freqCorrectionFactor = 68000;
+	float freqCorrectionFactor = 0;
 
 	int currentBand         = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
 	int currentBandA        = STARTUP_BAND;             // 4 bytes   JJP 7-3-23
@@ -1450,20 +1323,7 @@ typedef struct SR_Descriptor
 	} SR_Desc;
 extern const struct SR_Descriptor SR[];
 
-#ifdef QUADFFT
-void MeasureIandQFFT();
-void DoIQCalibrate();
-void CalculateIQCorrectionValues();
-extern arm_rfft_fast_instance_f32 Sreal;
-extern float Imag[];
-extern float Qmag[];
-extern float IQphase[];
-extern float gErrorIQ[];
-extern float pErrorIQ[];
-extern float gCorrIQ[];
-extern float pCorrIQr[];
-extern float pCorrIQi[];
-#endif
+
 
 extern const arm_cfft_instance_f32 *S;
 extern const arm_cfft_instance_f32 *iS;
@@ -1546,7 +1406,8 @@ extern bool NR_long_tone_enable;
 //extern bool omitOutputFlag;
 extern bool timeflag;
 extern bool volumeChangeFlag;
-
+extern bool volumeChangeFlag2;
+extern char freqBuffer[];
 //extern char *bigMorseCodeTree;
 extern char decodeBuffer[];
 extern const char DEGREE_SYMBOL[];
@@ -1645,7 +1506,8 @@ extern uint8_t write_analog_gain;
 
 extern const uint8_t NR_L_frames;
 extern const uint8_t NR_N_frames;
-
+extern float freqCorrectionFactorOld;
+extern float freqCorrectionFactor;
 extern int16_t activeVFO;
 extern int16_t currentMode;
 extern int16_t fineEncoderRead;
@@ -1701,12 +1563,17 @@ extern const uint32_t IIR_biquad_Zoom_FFT_N_stages;
 extern const uint32_t N_stages_biquad_lowpass1;
 extern const uint16_t n_dec1_taps;
 extern const uint16_t n_dec2_taps;
-
+extern float aveAdjdB2;
+extern float adjdB2;
+extern float adjdBIQ;
+extern float adjdB;
 extern float adjustVolEncoder; //AFP 09-21-22
 extern int adjustIQ;           //AFP 09-21-22
 extern int encoderStepOld;
 extern int resultOldFactor;
 extern float incrFactor;
+
+extern float freqCorrectionFactor;
 extern int mute;
 extern int exciteOn;
 extern int agc_decay;
@@ -1934,27 +1801,25 @@ extern long long Clk1SetFreq;             // AFP 09-27-22
 float32_t arm_atan2_f32( float32_t y, float32_t x );
 float ApproxAtan( float z );
 float ApproxAtan2( float y, float x );
-
+extern float SamTimer;
 extern float dcfRefLevel;
 extern float DD4WH_RF_gain;
 extern float s_hotT_ROOM;     /*!< The value of s_hotTemp minus room temperature(25¡æ).*/
 extern float myLat;
 extern float myLong;
 
-#ifdef V12HWR // KI3P, 10/16/24
 // Define a structure to hold the results of built-in-test routine
-struct BIT
+struct I2C
 	{
 	bool RF_I2C_present;
 	bool RF_Si5351_present;
 	bool BPF_I2C_present;
-	bool K9HZ_LPF_I2C_present;
-	bool K9HZ_LPF_AD7991_present;
-	bool G0ORX_PANEL_I2C_present;
+	bool V12_LPF_I2C_present;
+	bool V12_LPF_AD7991_present;
+	bool FRONT_PANEL_I2C_present;
 	byte AD7991_I2C_ADDR;
 	};
-extern struct BIT bit_results;
-#endif // V12HWR
+extern struct I2C bit_results;
 
 //====== SAM stuff AFP 11-02-22
 extern float32_t a[3 * SAM_PLL_HILBERT_STAGES + 3];
@@ -2148,6 +2013,7 @@ extern float32_t max_gain;
 extern float32_t max_input;
 extern int calTypeFlag;
 extern int calOnFlag;
+extern int freqCalFlag;
 extern int currentMicThreshold; // AFP 09-22-22
 extern float currentMicCompRatio;
 extern float currentMicAttack;
@@ -2224,7 +2090,10 @@ extern float32_t ring_max;
 extern float32_t SAM_carrier;              // AFP 11-02-22
 extern float32_t SAM_lowpass;             // AFP 11-02-22
 extern float32_t SAM_carrier_freq_offset; // AFP 11-02-22
-extern float32_t SAM_carrier_freq_offsetOld; // AFP 11-02-22
+extern float32_t SAM_carrier_freq_offsetOld;
+extern float32_t SAM_carrier_freq_offsetHz;
+extern float32_t SAM_carrier_freq_offsetHzOld; // AFP 11-02-22
+extern float freqError;
 extern float32_t Sin;
 extern float32_t sample_meanL;
 extern float32_t sample_meanR;
@@ -2281,10 +2150,10 @@ extern const float32_t sqrtHann[];
 extern float32_t FFT_buffer [] __attribute__ ( ( aligned ( 4 ) ) );
 extern float32_t FFT_ring_buffer_x[];
 extern float32_t FFT_ring_buffer_y[];
-#ifndef QUADFFT
+
 extern float32_t float_buffer_L_3[];
 extern float32_t float_buffer_R_3[];
-#endif
+
 
 extern const float32_t atanTable[];
 extern const float32_t DF1;           // decimation factor
@@ -2301,7 +2170,18 @@ extern const float32_t n_samplerate;  // samplerate before decimation
 extern double elapsed_micros_idx_t;
 extern double elapsed_micros_mean;
 extern double elapsed_micros_sum;
-
+//======== Tx Call stuff
+extern float correctionIncrement;
+extern float corrChangeIQIncrement;
+extern int corrChangeIQ;
+//extern int stateMachine;
+#define RX_STATE 0
+#define TX_STATE 1
+#define TX_STATE_RX_PHASE 2
+#define TX_STATE_TX_PHASE 3
+extern uint8_t out_Atten;
+extern float corrPlotYValue;
+extern int setCorrPlotDecimalFlag;
 
 //======================================== Function prototypes =========================================================
 
@@ -2321,6 +2201,8 @@ float BearingHeading( char *dxCallPrefix );
 int  BearingMaps();
 
 void bmpDraw( const char *filename, int x, int y );
+int   BodeOptions();
+void BodePLotter();
 #endif // EXCLUDE_BEARING
 void ButtonBandDecrease();
 void ButtonBandIncrease();
@@ -2342,14 +2224,13 @@ void CalcFIRCoeffs( float * coeffs_I, int numCoeffs, float32_t fc, float32_t Ast
 void CalcCplxFIRCoeffs( float * coeffs_I, float * coeffs_Q, int numCoeffs, float32_t FLoCut, float32_t FHiCut, float SampleRate );
 void CalcNotchBins();
 void Calculatedbm();
+void CalibrateFrequency();
 int  CalibrateOptions( int IQChoice ); // AFP 10-22-22, changed JJP 2/3/23
-void CalibratePreamble();   // KF5N August 14, 2023
-#ifndef V12HWR
-void CalibratePrologue();   // KF5N August 14, 2023
-#else
+void CalibratePreamble(int setZoom) ;  // KF5N August 14, 2023
+
 void CalibratePost();   //  August 14, 2023
-#endif
-int  CalibrateFrequency();
+
+//int  CalibrateFrequency();
 void CaptureKeystrokes();
 void CenterFastTune();
 void ClearEEPROM();
@@ -2389,6 +2270,7 @@ void DoXmitCalibrate();
 void DoReceiveCalibrate();
 void DrawActiveLetter( int row, int horizontalSpacer, int whichLetterIndex, int keyWidth, int keyHeight );
 void DrawBandWidthIndicatorBar(); // AFP 03-27-22 Layers
+void DrawBodePlotContainer(); 
 void DrawFrequencyBarValue();
 void DrawInfoWindowFrame();
 void DrawKeyboard();
@@ -2434,7 +2316,11 @@ void FreqShift2();
 float goertzel_mag( int numSamples, int TARGET_FREQUENCY, int SAMPLING_RATE, float* data );
 int  GetEncoderValue( int minValue, int maxValue, int startValue, int increment, char prompt[] );
 float GetEncoderValueLive( float minValue, float maxValue, float startValue, float increment, char prompt[] ); //AFP 10-22-22
-float GetEncoderValueLive( float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals );
+float GetEncoderValueLiveFreq (float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals);
+float GetEncoderValueLiveIQLevel(float minValue, float maxValue, float startValue, float increment, char prompt[]);
+float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[]);
+float GetEncoderValueLiveRCal(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals, int IQEXChoice);
+float GetEncoderValueLiveXCal(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals, int IQEXChoice);
 int GetEncoderValueLiveInt( int minValue, int maxValue, int startValue, int increment, char prompt[] );
 int GetFineTuneValueLive( int minValue, int maxValue, int startValue, int increment, char prompt[] );
 void GetFavoriteFrequency();
@@ -2471,6 +2357,8 @@ int  ModeOptions();
 //DB2OO, 29-AUG-23: added
 void MorseCharacterClear( void );
 void MorseCharacterDisplay( char currentLetter );
+void MoveBodeCursor();                                                            // Bode
+void MoveStopFreqBode() ;  
 void MyDelay( unsigned long millisWait );
 void MyDrawFloat( float val, int decimals, int x, int y, char *buff );
 float MSinc( int m, float fc );
@@ -2482,11 +2370,13 @@ int  NROptions();
 
 //int  PostProcessorAudio();
 float PlotCalSpectrum( int x1, int cal_bins[2], int capture_bins );
+float PlotCalSpectrumFreq( int x1, int cal_bins[2], int capture_bins );
+void ProcessIQDataBode();                                                             //Bode
 int  ProcessButtonPress( int valPin );
 void ProcessEqualizerChoices( int EQType, char *title );
 void ProcessIQData();
 void ProcessIQData2();
-
+void ProcessIQDataFreq();
 uint16_t read16( File &f );
 uint32_t read32( File &f );
 int  ReadSelectedPushButton();
@@ -2504,6 +2394,9 @@ void SetCompressionLevel();
 void SetCompressionRatio();
 void SetCompressionAttack();
 void SetCompressionRelease();
+void SetDDSFreqBode();
+void SetDefaultBandLimits();
+void SetFreqBode();                                                                   //Bode
 int  SetPrimaryMenuIndex();
 
 void SaveAnalogSwitchValues();
@@ -2558,6 +2451,7 @@ void ShowName();
 void ShowNotch();
 void ShowSpectrum();
 float ShowSpectrum2();
+float ShowSpectrumFreq();
 void ShowSpectrumdBScale();
 void ShowTempAndLoad();
 void ShowTransmitReceiveStatus();
@@ -2572,7 +2466,9 @@ int  SubmenuSelect( const char *options[], int numberOfChoices, int defaultStart
 
 void T4_rtc_set( unsigned long t );
 float TGetTemp();
-
+extern int ButtonPressed ;
+void FrontPanelInit();
+void FrontPanelCheck();
 int  Unused1();                            // Placeholders for array of pointers to function
 int  Unused2();
 int  Unused3();
@@ -2609,8 +2505,10 @@ void ZoomFFTPrep();
 void ZoomFFTPrep2();
 void ZoomFFTExe( uint32_t blockSize );
 void ZoomFFTExeCal( uint32_t blockSize );
+void setup_cw_transmit_mode();
+void ProcessIQDataTXCal();
 
-#if defined(G0ORX_AUDIO_DISPLAY)
+#if defined(V12_AUDIO_DISPLAY)
 extern float32_t mic_audio_buffer[];
 void ShowTXAudio();
 void ClearTXAudio();

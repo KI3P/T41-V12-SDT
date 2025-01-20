@@ -366,74 +366,7 @@ void SetKeyPowerUp() {
 void SetSideToneVolume() 
 {
   int val, sidetoneDisplay;
-/*
-  bool keyDown;                             // Provided by Greg KF5N
 
-  //SetAudioOperatingState(CW_TRANSMIT_STRAIGHT_STATE);
-  tft.setFontScale((enum RA8875tsize)1);
-  tft.fillRect(SECONDARY_MENU_X - 50, MENUS_Y, EACH_MENU_WIDTH + 60, CHAR_HEIGHT, RA8875_MAGENTA);
-  tft.setTextColor(RA8875_WHITE);
-  tft.setCursor(SECONDARY_MENU_X - 48, MENUS_Y + 1);
-  tft.print("Sidetone Volume:");
-  tft.setCursor(SECONDARY_MENU_X + 220, MENUS_Y + 1);
-  sidetoneDisplay = (int)(EEPROMData.sidetoneVolume);
-  keyDown = false;
-  tft.print(sidetoneDisplay);  // Display in range of 0 to 100.
-  modeSelectInR.gain(0, 0);
-  modeSelectInL.gain(0, 0);
-  modeSelectInExR.gain(0, 0);
-  modeSelectOutL.gain(0, 0);
-  modeSelectOutR.gain(0, 0);
-  modeSelectOutExL.gain(0, 0);
-  modeSelectOutExR.gain(0, 0);
-  #if !defined(V12HWR)
-  digitalWrite(MUTE, LOW);      // KI3P, no MUTE function in V12
-  #endif
-  modeSelectOutL.gain(1, 0.0);  // Sidetone  AFP 10-01-22
-  modeSelectOutR.gain(1, 0.0);  // Sidetone  AFP 10-01-22
-
-  while (true) {
-    if (digitalRead(EEPROMData.paddleDit) == LOW || digitalRead(EEPROMData.paddleDah) == LOW) {
-      if (keyDown) {
-        CW_ExciterIQData(CW_SHAPING_NONE);
-      } else {
-        CW_ExciterIQData(CW_SHAPING_RISE);
-        keyDown = true;
-      }
-    } else {
-      if (keyDown) {
-        CW_ExciterIQData(CW_SHAPING_FALL);
-        keyDown = false;
-      }
-    }
-
-    if (filterEncoderMove != 0) {
-      //      EEPROMData.sidetoneVolume = EEPROMData.sidetoneVolume + (float)filterEncoderMove * 0.001;  // EEPROMData.sidetoneVolume range is 0.0 to 1.0 in 0.001 steps.  KF5N August 29, 2023
-      sidetoneDisplay = sidetoneDisplay + filterEncoderMove;  // * 0.001;  // EEPROMData.sidetoneVolume range is 0.0 to 1.0 in 0.001 steps.  KF5N August 29, 2023
-      if (sidetoneDisplay < 0)
-        sidetoneDisplay = 0;
-      else if (sidetoneDisplay > 100)  // 100% max
-        sidetoneDisplay = 100;
-      tft.fillRect(SECONDARY_MENU_X + 200, MENUS_Y, 70, CHAR_HEIGHT, RA8875_MAGENTA);
-      tft.setCursor(SECONDARY_MENU_X + 220, MENUS_Y + 1);
-      EEPROMData.sidetoneVolume = (float32_t)sidetoneDisplay;
-      tft.setTextColor(RA8875_WHITE);
-      tft.print(sidetoneDisplay);
-      filterEncoderMove = 0;
-    }
-    modeSelectOutL.gain(0, volumeLog[(int)EEPROMData.sidetoneVolume]);  // Sidetone  AFP 10-01-22
-                                                                        //    modeSelectOutR.gain(1, volumeLog[(int)EEPROMData.sidetoneVolume]);  // Right side not used.  KF5N September 1, 2023
-    val = ReadSelectedPushButton();                                     // Read pin that controls all switches
-    val = ProcessButtonPress(val);
-    if (val == MENU_OPTION_SELECT) {  // Make a choice??
-                                      // EEPROMData.EEPROMData.sidetoneVolume = EEPROMData.sidetoneVolume;
-      EEPROMWrite();
-      break;
-    }
-  }
-  EraseMenus();
-  lastState = 1111;  // This is required due to the function deactivating the receiver.  This forces a pass through the receiver set-up code.  KF5N October 7, 2023
-*/
 
   Q_in_L.clear();  // Clear other buffers too?
   Q_in_R.clear();
@@ -452,9 +385,7 @@ void SetSideToneVolume()
   modeSelectOutR.gain(0, 0);
   modeSelectOutExL.gain(0, 0);
   modeSelectOutExR.gain(0, 0);
-  #if !defined(V12HWR)
-  digitalWrite(MUTE, LOW);      // KI3P, no MUTE function in V12
-  #endif
+
   modeSelectOutL.gain(1, 0.0);  // Sidetone  AFP 10-01-22
   modeSelectOutR.gain(1, 0.0);  // Sidetone  AFP 10-01-22
 

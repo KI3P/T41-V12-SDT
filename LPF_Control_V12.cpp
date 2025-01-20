@@ -1,19 +1,19 @@
-// K9HZ LPF Board MCP23017 control (added by KI3P)
+// V12 LPF Board MCP23017 control (added by KI3P)
 
 #ifndef BEENHERE
 #include "SDT.h"
 #endif
 
-#include "K9HZ_LPF_Control.h"
+#include "LPF_Control_V12.h"
 
 static Adafruit_MCP23X17 mcpLPF; // connected to Wire2
-static AD7991 swrADC; // on K9HZ LPF board
+static AD7991 swrADC; // on V12 LPF board
 static uint8_t LPF_GPB_state;
 static uint8_t LPF_GPA_state;
 static char strBuf[100];
   
 /*****
-  Purpose: Initialize the K9HZ LPF control board: begin I2C and set 
+  Purpose: Initialize the V12 LPF control board: begin I2C and set 
   registers to default states.
 
   Parameter list:
@@ -21,12 +21,12 @@ static char strBuf[100];
   Return value;
     None
 *****/
-void K9HZLPFControlInit() {
+void V12_LPFControlInit() {
   /******************************************************************
-   * Set up the K9HZ LPF which is connected via the BANDS connector *
+   * Set up the V12 LPF which is connected via the BANDS connector *
    ******************************************************************/
-  if (mcpLPF.begin_I2C(K9HZ_LPF_MCP23017_ADDR,&Wire2)){
-    Debug("Initializing K9HZ LPF board");
+  if (mcpLPF.begin_I2C(V12_LPF_MCP23017_ADDR,&Wire2)){
+    Debug("Initializing V12 LPF board");
     mcpLPF.enableAddrPins();
     // Set all pins to be outputs
     for (int i=0;i<16;i++){
@@ -37,26 +37,26 @@ void K9HZLPFControlInit() {
     LPF_GPB_state = LPF_STARTUP_STATE_B;
     mcpLPF.writeGPIOB(LPF_GPB_state); 
     Debug("Startup LPF GPB state: "+String(LPF_GPB_state,DEC));
-    bit_results.K9HZ_LPF_I2C_present = true;
+    bit_results.V12_LPF_I2C_present = true;
   } else {
-    Debug("LPF MCP23017 not found at 0x"+String(K9HZ_LPF_MCP23017_ADDR,HEX));
-    bit_results.K9HZ_LPF_I2C_present = false;
-    //ShowMessageOnWaterfall("LPF MCP23017 not found at 0x"+String(K9HZ_LPF_MCP23017_ADDR,HEX));
+    Debug("LPF MCP23017 not found at 0x"+String(V12_LPF_MCP23017_ADDR,HEX));
+    bit_results.V12_LPF_I2C_present = false;
+    //ShowMessageOnWaterfall("LPF MCP23017 not found at 0x"+String(V12_LPF_MCP23017_ADDR,HEX));
   }
   // This is the ADC module for the SWR meter
   if (!swrADC.begin(AD7991_I2C_ADDR1,&Wire2)){
-    bit_results.K9HZ_LPF_AD7991_present = false;
+    bit_results.V12_LPF_AD7991_present = false;
     Debug("AD7991 not found at 0x"+String(AD7991_I2C_ADDR1,HEX));
     //ShowMessageOnWaterfall("AD7991 not found at 0x"+String(AD7991_I2C_ADDR1,HEX));
 
-    if (swrADC.begin(AD7991_I2C_ADDR2,&Wire2)){
-      bit_results.K9HZ_LPF_AD7991_present = true;
+    if (!swrADC.begin(AD7991_I2C_ADDR2,&Wire2)){
+      bit_results.V12_LPF_AD7991_present = true;
       bit_results.AD7991_I2C_ADDR = AD7991_I2C_ADDR2;
       Debug("AD7991 found at alternative 0x"+String(AD7991_I2C_ADDR2,HEX));
       //ShowMessageOnWaterfall("AD7991 found at alternative 0x"+String(AD7991_I2C_ADDR2,HEX));
     }
   } else {
-    bit_results.K9HZ_LPF_AD7991_present = true;
+    bit_results.V12_LPF_AD7991_present = true;
     bit_results.AD7991_I2C_ADDR = AD7991_I2C_ADDR1;
   }
 }
@@ -71,17 +71,17 @@ void K9HZLPFControlInit() {
 *****/
 void setLPFBand(int currentBand) {
   switch (currentBand){
-    case BAND_160M:
-      LPF_GPB_state = LPF_GPB_state & 0b11110000;
-      LPF_GPB_state = LPF_GPB_state | LPF_BAND_160M;
-      break;
+   // case BAND_160M:
+   //   LPF_GPB_state = LPF_GPB_state & 0b11110000;
+    //  LPF_GPB_state = LPF_GPB_state | LPF_BAND_160M;
+    //  break;
     case BAND_80M:
       LPF_GPB_state = LPF_GPB_state & 0b11110000;
       LPF_GPB_state = LPF_GPB_state | LPF_BAND_80M;
       break;
     case BAND_60M:
       LPF_GPB_state = LPF_GPB_state & 0b11110000;
-      LPF_GPB_state = LPF_GPB_state | LPF_BAND_60M;
+     LPF_GPB_state = LPF_GPB_state | LPF_BAND_60M;
       break;   
     case BAND_40M:
       LPF_GPB_state = LPF_GPB_state & 0b11110000;
@@ -114,7 +114,7 @@ void setLPFBand(int currentBand) {
     case BAND_6M:
       LPF_GPB_state = LPF_GPB_state & 0b11110000;
       LPF_GPB_state = LPF_GPB_state | LPF_BAND_6M;
-      break;
+     break;
     default:
       LPF_GPB_state = LPF_GPB_state & 0b11110000;
       LPF_GPB_state = LPF_GPB_state | LPF_BAND_NF;
@@ -148,7 +148,7 @@ void setBPFPath(int pathSelection){
       LPF_GPA_state = (LPF_GPA_state & 0b11111100) | 0b00000000;
       break;
     default:
-      sprintf(strBuf, "K9HZ LPF Control: Invalid BPF path selection! %d [0,2]",pathSelection);
+      sprintf(strBuf, "V12 LPF Control: Invalid BPF path selection! %d [0,2]",pathSelection);
       Debug(strBuf);
       break;
   }
@@ -164,14 +164,15 @@ void setBPFPath(int pathSelection){
     None
 *****/
 void selectAntenna(int antennaNum){
-  // GPB4   Antenna BIT0    0
-  // GPB5   Antenna BIT1    0
+  //antennaNum=0;
+  // GPB4   Antenna I2C0    0
+  // GPB5   Antenna I2C1    0
   if ((antennaNum >= 0) & (antennaNum <=3)){
     LPF_GPB_state = LPF_GPB_state & 0b11001111;
     LPF_GPB_state = LPF_GPB_state | (antennaNum << 4);
     mcpLPF.writeGPIOB(LPF_GPB_state);
   } else {
-    sprintf(strBuf, "K9HZ LPF Control: Invalid antenna selection! %d [0,3]",antennaNum);
+    sprintf(strBuf, "V12 LPF Control: Invalid antenna selection! %d [0,3]",antennaNum);
     Debug(strBuf);
   }
 }

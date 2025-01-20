@@ -31,7 +31,9 @@ int NROptions() //AFP 09-19-22 Moved here from Menu Proc Revised
       break;
 
     default:
+#ifdef DEBUG    
       Serial.print("Error in NROptions");
+#endif      
       NR_Index = -1;                        // Force hard error
       break;
   } 

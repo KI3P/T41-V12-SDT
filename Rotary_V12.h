@@ -2,10 +2,10 @@
  * Rotary encoder library for Arduino.
  */
 
-#if defined(G0ORX_FRONTPANEL)
 
-#ifndef G0ORX_ROTARY_H
-#define G0ORX_ROTARY_H
+
+#ifndef Rotary_V12_H
+#define Rotary_V12_H
 
 /*
  * Note: BOURN encoders have their A/B pins reversed compared to cheaper encoders.
@@ -29,20 +29,19 @@
 #define DIR_CCW 2
 
 
-class G0ORX_Rotary
-{
-  public:
-    G0ORX_Rotary(bool reversed);
-    void updateA(unsigned char aState);
-    void updateB(unsigned char bState);
-    int process();
+class Rotary_V12 {
+public:
+  Rotary_V12(bool reversed);
+  void updateA(unsigned char aState);
+  void updateB(unsigned char bState);
+  int process();
 
-  private:
-    int aLastState;
-    int bLastState;
-    int value;
-    bool _reversed;
+private:
+  int aLastState;
+  int bLastState;
+  int value;
+  bool _reversed;
 };
 
-#endif
+
 #endif
