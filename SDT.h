@@ -2366,6 +2366,10 @@ int  CWOptions();
 void CW_DecodeLevelDisplay();
 void CW_ExciterIQData();  // AFP 08-18-22
 
+extern int iDCoffset;
+extern int qDCoffset;
+extern int iqDCoffsetConst;
+
 void Dah();
 void start_sending_cw();
 void stop_sending_cw();
@@ -2387,6 +2391,7 @@ int  DoSplitVFO();
 void DoPaddleFlip();
 void DoXmitCalibrate();
 void DoReceiveCalibrate();
+void DoCarrierNullingCalibrate();
 void DrawActiveLetter( int row, int horizontalSpacer, int whichLetterIndex, int keyWidth, int keyHeight );
 void DrawBandWidthIndicatorBar(); // AFP 03-27-22 Layers
 void DrawFrequencyBarValue();

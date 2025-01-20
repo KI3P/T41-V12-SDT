@@ -56,9 +56,9 @@ int CalibrateOptions( int IQChoice )
 					EEPROMWrite();
 					calibrateFlag = 0;
 #ifdef QUADFFT
-					IQChoice = 6;
+					IQChoice = 7;
 #else
-					IQChoice = 5;
+					IQChoice = 6;
 #endif
 					return IQChoice;
 					}
@@ -136,17 +136,17 @@ int CalibrateOptions( int IQChoice )
 		case 2:                  // IQ Receive Cal - Gain and Phase
 			DoReceiveCalibrate();  // This function was significantly revised.  KF5N August 16, 2023
 #ifdef QUADFFT
-			IQChoice = 6;
+			IQChoice = 7;
 #else
-			IQChoice = 5;
+			IQChoice = 6;
 #endif
 			break;
 		case 3:               // IQ Transmit Cal - Gain and Phase  //AFP 2-21-23
 			DoXmitCalibrate();  // This function was significantly revised.  KF5N August 16, 2023
 #ifdef QUADFFT
-			IQChoice = 6;
+			IQChoice = 7;
 #else
-			IQChoice = 5;
+			IQChoice = 6;
 #endif
 			break;
 		case 4:  // SSB PA Cal
@@ -174,25 +174,34 @@ int CalibrateOptions( int IQChoice )
 					EEPROMWrite();
 					calibrateFlag = 0;
 #ifdef QUADFFT
-					IQChoice = 6;
+					IQChoice = 7;
 #else
-					IQChoice = 5;
+					IQChoice = 6;
 #endif
 					return IQChoice;
 					}
 				}
 			break;  // Missing break.  KF5N August 12, 2023
-
-#ifdef QUADFFT
 		case 5:
+		{
+			DoCarrierNullingCalibrate();
+			#ifdef QUADFFT
+			IQChoice = 7;
+			#else
+			IQChoice = 6;
+			#endif
+			break;
+		}
+#ifdef QUADFFT
+		case 6:
 			{
 			DoIQCalibrate();
-			IQChoice = 6;
+			IQChoice = 7;
 			break;
 			}
-		case 6:
+		case 7:
 #else
-		case 5:
+		case 6:
 #endif
 			//EraseMenus();
 			RedrawDisplayScreen();

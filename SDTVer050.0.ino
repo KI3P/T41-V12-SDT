@@ -738,9 +738,9 @@ const char *secondaryChoices[][14] =
 		{ "On", "Off", "EQRcSet", "Cancel" },                                                                                     // index = 9                                                                                // EQ Rec         9
 		{ "On", "Off", "EQTxSet", "Cancel" },                                                           // EQ Trx         10
 #ifdef QUADFFT
-		{ "Freq Cal", "CW PA Cal", "Rec Cal", "Xmit Cal", "SSB PA Cal", "IQ Balance", "Cancel" },                                               // Calibrate      11
+		{ "Freq Cal", "CW PA Cal", "Rec Cal", "Xmit Cal", "SSB PA Cal", "Carrier Null", "IQ Balance", "Cancel" },                                               // Calibrate      11
 #else
-		{ "Freq Cal", "CW PA Cal", "Rec Cal", "Xmit Cal", "SSB PA Cal", "Cancel" },                                               // Calibrate      11
+		{ "Freq Cal", "CW PA Cal", "Rec Cal", "Xmit Cal", "SSB PA Cal", "Carrier Null", "Cancel" },                                               // Calibrate      11
 #endif
 #if !defined(EXCLUDE_BEARING)
 		{ "Set Prefix", "Cancel" },

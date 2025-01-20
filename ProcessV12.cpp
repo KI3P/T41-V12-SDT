@@ -34,6 +34,10 @@ static long userTxRxFreq;
 static long userNCOFreq;
 static float adjdB;
 
+static int iDCoffset;
+static int qDCoffset;
+static int iqDCoffsetConst;
+
 #ifdef QUADFFT
 /*****
   Purpose: DrawIQBalancePlotContainer
@@ -711,6 +715,109 @@ void DoXmitCalibrate() {
   // Clean up and exit to normal operation.
 }
 
+/*****
+  Purpose: Perform nulling of the carrier for transmit calibration
+
+   Parameter List:
+      void
+
+   Return value:
+      void
+
+ *****/
+void DoCarrierNullingCalibrate() {
+  iDCoffset = 0;
+  qDCoffset = 0;
+  int task = -1;
+  int lastUsedTask = -2;
+  // Set the frequency of the transmit: remove the IF offset
+  CalibratePreamble(4); //16x zoom
+  centerFreq = centerFreq - IFFreq;
+  SetFreq();
+  corrChange = 0;
+  tft.setFontScale((enum RA8875tsize)1);
+  tft.setTextColor(RA8875_CYAN);
+  tft.setCursor(550, 300);
+  tft.print("Transmit I/Q ");
+  tft.setCursor(550, 350);
+  tft.print("Carrier Null");
+  IQChoice = 3;
+  uint8_t out_atten = 60;
+  uint8_t previous_atten = out_atten;
+  calTypeFlag = 1;
+  IQEXChoice = 0;
+  bool calState = true;
+  updateDisplayFlag = 1;
+  out_atten = 40;
+  SetRF_InAtten(30);
+  SetRF_OutAtten(out_atten);
+  digitalWrite(XMIT_MODE, XMIT_SSB);
+  digitalWrite(CW_ON_OFF, CW_OFF);
+  si5351.output_enable(SI5351_CLK2, 0);
+  digitalWrite(CAL, CAL_OFF);
+  ShowTransmitReceiveStatus();
+  iqDCoffsetConst = -1750;
+  correctionIncrement = 10.0;
+  // Switch to transmit path cal upon entering loop
+  stateMachine = TX_STATE_TX_PHASE;
+  task = BOGUS_PIN_READ;
+  while (true) {
+    adjdB = ShowSpectrum2();
+    val = ReadSelectedPushButton();
+    if (val != BOGUS_PIN_READ) {
+      val = ProcessButtonPress(val);
+      if (val != lastUsedTask && task == -100) task = val;
+      else task = BOGUS_PIN_READ;
+    }
+    switch (task) {
+      case (CAL_CHANGE_TYPE):{
+        IQEXChoice = !IQEXChoice;  //IQEXChoice=0, I offset  IQEXChoice=1, Q offset
+        break;}
+      // Toggle increment value
+      case (CAL_CHANGE_INC):{  //
+        corrChange = !corrChange;
+        if (corrChange == 1) {          // Toggle increment value
+          correctionIncrement = 1.0;
+        } else {
+          correctionIncrement = 10.0;
+        }
+        tft.setFontScale((enum RA8875tsize)0);
+        tft.fillRect(400, 110, 50, tft.getFontHeight(), RA8875_BLACK);
+        tft.setCursor(400, 110);
+        tft.print(correctionIncrement, 1);
+        break;}
+      case (MENU_OPTION_SELECT):{  // Save values and exit calibration.
+        tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
+        tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
+        IQChoice = 7;  // AFP 2-11-23
+        break;}
+      default:
+        break;
+    }  // end switch
+    //  Need to remember the last used task;
+    if (task != -1) lastUsedTask = task;  //  Save the last used task.
+    task = -100;                          // Reset task after it is used.
+    //  Read encoder and update values.
+    if (IQEXChoice == 0) { // I offset changes
+      iDCoffset = (int) GetEncoderValueLive(-3000, 1000, (float) iDCoffset, correctionIncrement, (char *)"I DC off", 0);
+    } else { // Q offset changes
+      qDCoffset = (int) GetEncoderValueLive(-3000, 1000, (float) qDCoffset, correctionIncrement, (char *)"Q DC off", 0);
+    }
+    // Adjust the value of the TX attenuator:
+    out_atten = GetFineTuneValueLive(0,63,out_atten,1,(char *)"Out Atten");
+    // Update via I2C if the attenuation value changed
+    if (out_atten != previous_atten){
+        SetRF_OutAtten(out_atten);
+        previous_atten = out_atten;
+    }
+    if (val == MENU_OPTION_SELECT) {
+      break;
+    }
+  }  // end while
+  CalibratePost();
+  // Clean up and exit to normal operation.
+}
+
 #ifdef QUADFFT
 void DoIQCalibrate() {
   CalibratePreamble(0);
@@ -848,6 +955,10 @@ void ProcessIQData2() {
       Q_out_R_Ex.setBehaviour(AudioPlayQueue::NON_STALLING);
       arm_float_to_q15(float_buffer_L_EX, q15_buffer_LTemp, 2048);
       arm_float_to_q15(float_buffer_R_EX, q15_buffer_RTemp, 2048);
+
+      arm_offset_q15(q15_buffer_LTemp, (int16_t) (iDCoffset+iqDCoffsetConst), q15_buffer_LTemp, 2048);
+      arm_offset_q15(q15_buffer_RTemp, (int16_t) (qDCoffset+iqDCoffsetConst), q15_buffer_RTemp, 2048);
+      
       Q_out_L_Ex.play(q15_buffer_LTemp, 2048);
       Q_out_R_Ex.play(q15_buffer_RTemp, 2048);
       Q_out_L_Ex.setBehaviour(AudioPlayQueue::ORIGINAL);
