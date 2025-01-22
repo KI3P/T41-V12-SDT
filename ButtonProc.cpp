@@ -618,6 +618,7 @@ void ButtonFrequencyEntry() {
     }
   }
 
+  key = 0;
   while (doneFE == false) {
     valPin = ReadSelectedPushButton();                     // Poll UI push buttons
     if (valPin != BOGUS_PIN_READ) {                        // If a button was pushed...

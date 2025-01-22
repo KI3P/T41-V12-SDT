@@ -700,7 +700,7 @@ FASTRUN void ShowFrequency()
 
     tft.setFont(&FreeSansBold18pt7b);
     tft.setTextColor(RA8875_LIGHT_GREY);
-//    tft.fillRect(280, FREQUENCY_Y - 20, 260, 40, RA8875_BLACK);  // Erase old frequency
+    tft.fillRect(280, FREQUENCY_Y - 20, 260, 40, RA8875_BLACK);  // Erase old frequency
     tft.setCursor(FREQUENCY_X_SPLIT + pixelOffset, FREQUENCY_Y - 15);
     FormatFrequency(currentFreqB, freqBuffer);
     tft.print(freqBuffer);  // Show VFO_B
