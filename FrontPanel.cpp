@@ -39,9 +39,9 @@ int my_ptt=HIGH;  // active LOW
 #define DEBOUNCE_DELAY 250
 
 #define e1 volumeEncoder
-#define e2 filterEncoder
+#define e4 filterEncoder
 #define e3 tuneEncoder
-#define e4 fineTuneEncoder
+#define e2 fineTuneEncoder
 
 Rotary_V12 volumeEncoder( VOLUME_REVERSED );
 Rotary_V12 filterEncoder( FILTER_REVERSED );
@@ -136,11 +136,11 @@ static void interrupt2() {
       break;
     case 10:
       e2.updateA(state);
-      EncoderFilter();
+      EncoderFineTune();
       break;
     case 11:
       e2.updateB(state);
-      EncoderFilter();
+      EncoderFineTune();
       break;
     case 12:
       e3.updateA(state);
@@ -150,11 +150,11 @@ static void interrupt2() {
       break;
     case 14:
       e4.updateA(state);
-      EncoderFineTune();
+      EncoderFilter();
       break;
     case 15:
       e4.updateB(state);
-      EncoderFineTune();
+      EncoderFilter();
       break;
     case 0:
     case 1:

@@ -16,7 +16,7 @@
 #define BPF_BAND_40M    0x0800
 #define BPF_BAND_60M    0x0100
 #define BPF_BAND_80M    0x0400
-//#define BPF_BAND_160M   0x0200
+#define BPF_BAND_160M   0x0200
 
 void BPFControlInit();
 void setBPFBand(int currentBand);

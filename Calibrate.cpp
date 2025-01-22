@@ -337,11 +337,11 @@ void CalibrateFrequency() {
       } else {
         task = val;
         switch (task) {
-          case (DECODER_TOGGLE):  //13 Decode
+          //case (DECODER_TOGGLE):  //13 Decode
 
 
 
-            break;
+            //break;
 
           case (CAL_CHANGE_INC):  //CAL_CHANGE_INC=17 User3
             {                     //
@@ -378,7 +378,7 @@ void CalibrateFrequency() {
               task = -1;
               break;
             }
-          case (CAL_CHANGE_TYPE):  //User2 Auto Plot
+          case (DECODER_TOGGLE):  //User2 Auto Plot
             freqAutoPlotFlag = !freqAutoPlotFlag;
             if (freqAutoPlotFlag == 1) {
               freqCalType = 1;
@@ -387,7 +387,7 @@ void CalibrateFrequency() {
             }
             break;
 
-          case (BEARING):  //User2Time Plot
+          case (DDE):  //User2Time Plot
             freqTimePlotFlag = !freqTimePlotFlag;
             freqCalType = 2;
             timeIncrement = 0;
@@ -410,7 +410,7 @@ void CalibrateFrequency() {
             tft.print(" 0");
             break;
 
-          case (DDE):  //User1 time plot
+          case (RESET_TUNING):  //User1 time plot
             freqDescrptFlag = !freqDescrptFlag;
 
             break;

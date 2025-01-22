@@ -32,7 +32,7 @@
 
 // Uncomment the line below if your main board is populated with 
 // the ATTiny shutdown routine activation hardware
-// #define MAIN_BOARD_ATTINY_SHUTDOWN
+#define MAIN_BOARD_ATTINY_SHUTDOWN
 
 // Set the I2C addresses of the LPF, BPF, and RF boards
 #define V12_LPF_MCP23017_ADDR 0x25
@@ -58,10 +58,10 @@
 #define V12_PANEL_MCP23017_ADDR_2 0x21
 
 // Change to true if the corresponding rotary encoder is reversed
-#define VOLUME_REVERSED false
-#define FILTER_REVERSED false
-#define MAIN_TUNE_REVERSED false
-#define FINE_TUNE_REVERSED false
+#define VOLUME_REVERSED true
+#define FILTER_REVERSED true
+#define MAIN_TUNE_REVERSED true
+#define FINE_TUNE_REVERSED true
 
 // Pick one of the following encoder configurations
 #define NORM_ENCODER  // Leave as is UNLESS...
@@ -86,16 +86,16 @@
 #define DECODER_STATE 0                 // 0 = off, 1 = on
 #define DEFAULT_KEYER_WPM 15            // Startup value for keyer wpm
 #define FREQ_SEP_CHARACTER '.'          // Some may prefer period, space, or combo
-#define MAP_FILE_NAME "Cincinnati.bmp"  // Name you gave to BMP map file. Max is 50 chars
-#define MY_LAT 39.07466                 // Coordinates for QTH
-#define MY_LON -84.42677
-#define MY_CALL "W8TEE"      // Default max is 10 chars
-#define MY_TIMEZONE "EST: "  // Default max is 10 chars
+#define MAP_FILE_NAME   					"Reston.bmp"                          // Name you gave to BMP map file. Max is 50 chars
+#define MY_LAT										38.942                                  // Coordinates for QTH
+#define MY_LON										-77.347
+#define MY_CALL										"KI3P"                                   // Default max is 10 chars
+#define MY_TIMEZONE          			"EST: "                                   // Default max is 10 chars
 //DB2OO, 29-AUG-23: TIME_24H to display 24 hour times (Utility.cpp). If this is not defined 12h display will be used
-#define TIME_24H 1
+#define TIME_24H                  1
 //DB2OO, 29-AUG-23: ITU_REGION to determine band borders: Upper band limits on 80m (3.8MHz vs 4.0MhHz) and 40m (7.2MHz vs. 7.3MHz)
 //#define ITU_REGION                1 //for Europe
-#define ITU_REGION 2  // for USA
+#define ITU_REGION                  2   // for USA
 //#define ITU_REGION    3   // Asia/Oceania
 // DB2OO, 29.823:. Analog Signal on this pin will be used for an analog S-Meter (250uA full scale) connected via 10kOhm to this output. 1uF capacitor paralle to the S-Meter. --> Display.cpp.
 // This might conflict with other hardware modifications, that might use Pin 33 for a different purpose --> please check, before defining this
