@@ -3157,6 +3157,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
   //if(IQCalFlag != 1) radioState = SSB_RECEIVE_STATE;
   if (lastState != radioState) {
     SetFreq();  // Update frequencies if the radio state has changed.
+	ShowTransmitReceiveStatus();
   }
 
 //                                                                      Begin radio state machines
@@ -3164,7 +3165,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
     //================  SSB  Receive State =============
     case (SSB_RECEIVE_STATE):
       {
-        ShowTransmitReceiveStatus();
+        //ShowTransmitReceiveStatus();
         if (lastState != radioState) {  // G0ORX 01092023
           //Serial.print("Radio State ssb= ");
           //Serial.println(radioState);
@@ -3235,7 +3236,7 @@ if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_
         modeSelectOutR.gain(0, 0);
         modeSelectOutExL.gain(0, powerOutSSB[currentBand]);  //AFP 10-21-22
         modeSelectOutExR.gain(0, powerOutSSB[currentBand]);  //AFP 10-21-22
-        ShowTransmitReceiveStatus();
+        //ShowTransmitReceiveStatus();
 
         while (digitalRead(PTT) == LOW) {
           //ShowTXAudio();
@@ -3258,7 +3259,7 @@ if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_
         Q_in_R.begin();
         xrState = RECEIVE_STATE;
 
-        ShowTransmitReceiveStatus();
+        //ShowTransmitReceiveStatus();
 
 
         radioState = SSB_RECEIVE_STATE;
@@ -3267,7 +3268,7 @@ if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_
          //================  CW Receive State =============
     case CW_RECEIVE_STATE:
       {
-        ShowTransmitReceiveStatus();
+        //ShowTransmitReceiveStatus();
 
         if (lastState != radioState) {  // G0ORX 01092023
           setup_cw_receive_mode();
@@ -3280,7 +3281,7 @@ if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_
       //================  CW Straight Key Transmit State =============
     case CW_TRANSMIT_STRAIGHT_STATE:
       {
-        ShowTransmitReceiveStatus();
+        //ShowTransmitReceiveStatus();
         sidetone_oscillator.amplitude(-10);
         setup_cw_transmit_mode();
         // Route signal to RX input via cal here to ensure that the transmit power is even lower when off.
@@ -3298,7 +3299,7 @@ if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_
               keyPressedOn = 0;
               stop_sending_cw();
               xrState = RECEIVE_STATE;
-              ShowTransmitReceiveStatus();
+              //ShowTransmitReceiveStatus();
             }
           }
         }
@@ -3306,7 +3307,7 @@ if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_
         digitalWrite(CAL, CAL_OFF);
         lastState = CW_TRANSMIT_STRAIGHT_STATE;
         sidetone_oscillator.amplitude(0.0);
-        ShowTransmitReceiveStatus();
+        //ShowTransmitReceiveStatus();
         break;
       }
       //================  CW Keyer Transmit State =============
