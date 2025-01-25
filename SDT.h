@@ -69,7 +69,7 @@ extern struct maps myMapFiles[];
 
 //======================================== Symbolic Constants for the T41 ===================================================
 #define RIGNAME                     "T41-EP SDT"
-#define VERSION                     "V063-0"
+#define VERSION                     "V063-1"
 #define RIGNAME_X_OFFSET            530
 #define TIME_X                      530             // Pixel count to rig name field                                       // Says we are using a Teensy 4 or 4.1
 #define TIME_Y                      30
@@ -341,7 +341,8 @@ extern struct maps myMapFiles[];
 #define  PURPLE                   0x780F      /* 128,   0, 128 */
 #define  OLIVE                    0x7BE0      /* 128, 128,   0 */
 #define  RA8875_LIGHT_GREY        0xC618      /* 192, 192, 192 */
-
+#define  BRIGHT_BLUE               0x001F
+#define  LIGHT_BLUE                tft.Color565(64,64,192)
 #define  DARK_RED                 tft.Color565(64,0,0)
 #define  DARKGREY                 0x7BEF      /* 128, 128, 128 */
 #define  BLUE                     0x001F      /*   0,   0, 255 */
@@ -886,6 +887,8 @@ extern long notchFreq;
 extern long notchPosOld;
 extern long filter_pos;
 extern long last_filter_pos;
+extern long plotIntervalValues[]; //AFP01-24-25
+extern float plotScaleValues[];  //AFP01-24-25
 
 //================== Global Excite Variables =================
 
@@ -1067,8 +1070,6 @@ extern arm_biquad_cascade_df2T_instance_f32 S14_EXcite ;
 
 //static uint32_t filtBlockSize = BUFFER_SIZE;
 extern float volTimer;
-extern float SAMTimer;
-extern float SAMTimer2;
 extern int SAMPrintFlag;
 extern float32_t float_buffer_L1_EX [];
 extern float32_t float_buffer_L2_EX [];
@@ -1801,7 +1802,6 @@ extern long long Clk1SetFreq;             // AFP 09-27-22
 float32_t arm_atan2_f32( float32_t y, float32_t x );
 float ApproxAtan( float z );
 float ApproxAtan2( float y, float x );
-extern float SamTimer;
 extern float dcfRefLevel;
 extern float DD4WH_RF_gain;
 extern float s_hotT_ROOM;     /*!< The value of s_hotTemp minus room temperature(25¡æ).*/

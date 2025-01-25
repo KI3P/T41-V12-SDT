@@ -3,9 +3,9 @@
 #endif
 
 // changes are so extensive for calibration in V12, this file supports only V12
-//#include <Timer.h>
-//#include <Chrono.h>
-//#include <LinearRegression.h>
+#include <Timer.h>
+#include <Chrono.h>
+#include <LinearRegression.h>
 #define GAIN_COARSE_MAX 1.3
 #define GAIN_COARSE_MIN 0.7
 #define PHASE_COARSE_MAX 0.2
@@ -21,19 +21,19 @@ int corrChange = 0;
 //AFP 2-7-23
 static int userScale, userZoomIndex, userXmtMode;
 static int transmitPowerLevelTemp;
-
+static char strBuf[100];
 static long userCurrentFreq;
 static long userCenterFreq;
 static long userTxRxFreq;
 static long userNCOFreq;
 //static float adjdB;
 float corrPlotXValue = 300;
-//Timer CalTimer;
+Timer CalTimer;
 Chrono calChrono;
-Chrono calChrono2;
+Chrono calChrono2;  //default milliseconds other usage - Chrono calChrono2(Chrono::SECONDS);
 Metro calMetro = Metro(15000);
 LinearRegression lr = LinearRegression();
-//#include <Linear2DRegression.hpp>
+#include <Linear2DRegression.hpp>
 double values[2];
 /*****
   Purpose: Set up prior to IQ calibrations.  Revised function. AFP 07-13-24
@@ -49,10 +49,12 @@ double values[2];
  *****/
 void CalibrateFrequency() {
 
+  //int currentValue;
+
   tft.clearScreen(RA8875_BLACK);
   freqCalFlag = 1;
   int setZoom = 0;
-
+  //int valuex;
   //IQCalType = 0;
   digitalWrite(RXTX, LOW);
   radioState = SSB_RECEIVE_STATE;  //
@@ -64,32 +66,33 @@ void CalibrateFrequency() {
   userTxRxFreq = TxRxFreq;
   userNCOFreq = NCOFreq;
   userCenterFreq = centerFreq;
-
+  //int freqCorrectionFactor2;
   int corrPlotXValue4;
   int freqAutoPlotFlag = 0;
   int freqTimePlotFlag = 0;
-  int freqDescrptFlag = 0;
+  int updateTimeDisplayFlag = 0;
+  //int freqDescrptFlag = 0;
   int timeIncrement = 0;
   int freqCalType = 0;
   int corrPlotYValue4;
+  int corrPlotYValue5;
+  int corrPlotYValue6;
   float plotElapsedTimeStart = 0;
-  float32_t frequencyDiffValue[1000];
-  float32_t frequencyDiffValueTen[20];        // Was 10 JJP 1/14/2025
+  float32_t frequencyDiffValue[1250];
+  float32_t frequencyDiffValueTen[20];
   float32_t corrFactorStdDev;
   float32_t corrFactorMean;
-//  float32_t corrFactorMeanNew;
+  float32_t corrFactorAveMean;
+  //float32_t corrFactorMean2;
+  //float32_t corrFactorMeanNew;
+  //float32_t corrFactorMeanOld;
   float32_t corrFactorCalc;
   float32_t corrFactorStdDevAve = 0;
   calChrono.restart(0);
   Linear2DRegression *linear2DRegression = new Linear2DRegression();
-  // transmitPowerLevelTemp = transmitPowerLevel;
   TxRxFreq = centerFreq;
   currentFreq = TxRxFreq;
   NCOFreq = 0L;
-  //AFP07-13-24
-  //ButtonZoom();
-  //SetFreq();
-  //tft.clearScreen(RA8875_BLACK);  // must call ButtonZoom because it configures the FFT!
 
   tft.writeTo(L2);  // Erase the bandwidth bar.   August 16, 2023
   tft.clearMemory();
@@ -99,6 +102,7 @@ void CalibrateFrequency() {
   userScale = currentScale;  //  Remember user preference so it can be reset when done.
   currentScale = 1;          //  Set vertical scale to 10 dB during calibration.
   updateDisplayFlag = 0;
+
   xrState = RECEIVE_STATE;
   T41State = SSB_RECEIVE;
   modeSelectInR.gain(0, 1);
@@ -109,17 +113,22 @@ void CalibrateFrequency() {
   modeSelectOutR.gain(0, 1);
   modeSelectOutL.gain(1, 0);
   modeSelectOutR.gain(1, 0);
-
+  int plotTimeInterval;
   freqCalmode = DEMOD_SAM;
   stateMachine = RX_STATE;  // what calibration step are we in
   int task = -1;            // captures the button presses
-//  int lastUsedTask = -2;
-//  int recCalDirections = 0;
-
+  //int lastUsedTask = -2;
+  //int lastUsedTask4 = -2;
+  //int recCalDirections = 0;
+  //int task4 = -1;
+  //int val4;
+  int freqAutoLowSet = -400;
+  int freqAutoIncrementSet = 50;
+  int freqCalFactorStart = 0;
+  //float ErrorZeroPoint;
   adjdB = 0;
 
-  //tft.drawRect(300, 200, 480, 270, RA8875_GREEN);
-  tft.drawRect(475, 55, 310, 110, RA8875_GREEN);
+  tft.drawRect(470, 55, 310, 110, RA8875_GREEN);
   tft.setFontScale((enum RA8875tsize)1);
   tft.setTextColor(RA8875_WHITE);
 
@@ -129,52 +138,60 @@ void CalibrateFrequency() {
   digitalWrite(CAL, CAL_OFF);
   uint8_t out_Atten = 60;
   uint8_t in_atten = 20;
-//  uint8_t previous_out_Atten = out_Atten;
-//  uint8_t previous_in_atten = in_atten;
+  //uint8_t previous_out_Atten = out_Atten;
+  //uint8_t previous_in_atten = in_atten;
   SetRF_InAtten(in_atten);
   SetRF_OutAtten(out_Atten);
   zoomIndex = 0;
   // let's you change in_atten when false
   int val;
   int32_t incrementSAM = 10L;
-
+  int plotIntervalIndex = 0;
+  int plotScaleIndex = 0;
+  int freqCalDirections = 0;
+  float plotScaleNumber = 0.;
   // SetFreq();
   tft.fillRect(670, 60, 100, CHAR_HEIGHT, RA8875_BLACK);  //
   tft.setFontScale((enum RA8875tsize)1);
   tft.setCursor(670, 60);
-  tft.print(EEPROMData.freqCorrectionFactor);
+  tft.print(EEPROMData.freqCorrectionFactor, 0);
   tft.drawRect(300, 200, 480, 270, RA8875_GREEN);
   tft.drawFastHLine(340, 440, 400, RA8875_GREEN);
   tft.drawFastVLine(340, 210, 230, RA8875_GREEN);
+  tft.setTextColor(RA8875_YELLOW);
   tft.setFontScale((enum RA8875tsize)0);
-  tft.setCursor(313, 285);
-  tft.print("Hz");
-  tft.setCursor(480, 446);
-  tft.print("Corr.");
-  tft.drawFastHLine(340, 210 + 2 * 57.5, 400, RA8875_CYAN);
-  for (int k = 0; k < 5; k++) {
-    tft.drawFastVLine(340 + k * 100, 440, 7, RA8875_GREEN);
-    tft.setCursor(330 + k * 100, 448);
-    tft.print(-500 + 250 * k);
-    tft.setCursor(310, 200 + k * 57.5);
-    tft.print(4 - 2 * k);
-    tft.drawFastHLine(333, 210 + k * 57.5, 7, RA8875_GREEN);
-    //480, 60
-    tft.fillRect(390, 20, 159, CHAR_HEIGHT, RA8875_BLACK);
-    tft.fillRect(400, 60, 75, CHAR_HEIGHT, RA8875_BLACK);
-  }
+  tft.setCursor(20, 240);
+  tft.print("User2 - Auto");
+  tft.setCursor(20, 255);
+  tft.print("User2 - Time Plot");
+  tft.setCursor(20, 270);
+  tft.print("User3 - Corr Factor Increment");
+  tft.setCursor(20, 285);
+  tft.print("Select - Save/Exit");
+  tft.setCursor(20, 320);
+  tft.print("For Time Plot only:");
+  tft.setCursor(20, 335);
+  tft.print("Filter - Time Plot Error Scale");
+  tft.setCursor(20, 350);
+  tft.print("F Tune Incr - Time Plot Duration");
+  tft.setCursor(20, 380);
+  tft.print("Dir Freq - Directions");
+
   AMDecodeSAM();
   freqAutoPlotFlag = 0;
   //==============
   currentFreq = centerFreq + NCOFreq;  // Changed currentFreqA to currentFreq.  KF5N August 5, 2023
   NCOFreq = 0L;
   centerFreq = TxRxFreq = currentFreq;
-  EEPROMData.freqCorrectionFactor = 0.0;
+  //EEPROMData.freqCorrectionFactor = 0.0;
   int autoCount = 0;
   freqAutoPlotFlag = 0;
   freqTimePlotFlag = 0;
-
+  updateTimeDisplayFlag = 0;
+  plotTimeInterval = 1200;
+  long remainTimeUpdate = 0;
   while (1) {
+
     if (freqCalType != 1) {
       freqCorrectionFactorOld = EEPROMData.freqCorrectionFactor;
       EEPROMData.freqCorrectionFactor = (int)GetEncoderValueLiveFreq(-200000, 200000, EEPROMData.freqCorrectionFactor, incrementSAM, (char *)"Freq Cal: ", 3);
@@ -188,7 +205,8 @@ void CalibrateFrequency() {
       si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_CURRENT);                                // KI3P July 27 2024, updated to mirror Setup()
       si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_CURRENT);                                // KF5N July 10 2023
       si5351.set_ms_source(SI5351_CLK0, SI5351_PLLA);                                          // KI3P July 27 2024, updated to mirror Setup()
-      si5351.set_ms_source(SI5351_CLK1, SI5351_PLLA);                                          // KI3P July 27 2024, updated to mirror Setup()
+      si5351.set_ms_source(SI5351_CLK1, SI5351_PLLA);
+      si5351.output_enable(SI5351_CLK2, 0);  // KI3P July 27 2024, updated to mirror Setup()
       oldMultiple = 0;
       SetFreq();
       MyDelay(10L);
@@ -197,12 +215,12 @@ void CalibrateFrequency() {
     freqError = (0.20000012146 * SAM_carrier_freq_offset);
     tft.setFontScale((enum RA8875tsize)1);
     tft.setCursor(480, 95);
-    tft.print("Freq Cal");
+    tft.print("Freq Error");
     tft.fillRect(670, 60, 100, CHAR_HEIGHT, RA8875_BLACK);
     tft.setCursor(670, 60);
-    tft.print(EEPROMData.freqCorrectionFactor);
+    tft.print(EEPROMData.freqCorrectionFactor, 0);
     tft.setCursor(480, 60);
-    tft.print("Freq Error");
+    tft.print("Freq Cal");
     tft.setCursor(480, 130);
     tft.print("Corr Factor");
 
@@ -211,20 +229,20 @@ void CalibrateFrequency() {
       tft.setCursor(670, 95);
       tft.fillRect(670, 95, 100, CHAR_HEIGHT, RA8875_BLACK);
       tft.print(freqError, 3);
-      //tft.fillRect(670, 130, 100, CHAR_HEIGHT, RA8875_BLACK);
-      //tft.setCursor(670, 130);
-      // tft.print(linear2DRegression->calculate(0));
-      corrPlotXValue4 = map(EEPROMData.freqCorrectionFactor, -500, 500, 340, 740);
-      corrPlotYValue4 = map((100 * 0.20000012146 * SAM_carrier_freq_offset), -400, 400, 440, 210);
-      tft.fillCircle(corrPlotXValue4, corrPlotYValue4, 2, RA8875_YELLOW);
+
+      corrPlotXValue4 = map(-(freqCalFactorStart - EEPROMData.freqCorrectionFactor), -freqAutoLowSet, freqAutoLowSet, 340, 740);
+
+      corrPlotYValue4 = map((100 * 0.20000012146 * SAM_carrier_freq_offset), -500, 500, 440, 210);
+      // tft.fillCircle(corrPlotXValue4, corrPlotYValue4, 2, RA8875_YELLOW);
       //linear2DRegression->addPoint(0.20024 * SAM_carrier_freq_offset, EEPROMData.freqCorrectionFactor);
       updateDisplayFlag = 0;
       calChrono.restart(0);
       if (freqAutoPlotFlag == 1) {
+        tft.fillCircle(corrPlotXValue4, corrPlotYValue4, 2, RA8875_YELLOW);
         linear2DRegression->addPoint(0.20000012146 * SAM_carrier_freq_offset, EEPROMData.freqCorrectionFactor);
         tft.fillRect(670, 130, 100, CHAR_HEIGHT, RA8875_BLACK);
         tft.setCursor(670, 130);
-        tft.print(linear2DRegression->calculate(0));
+        tft.print(linear2DRegression->calculate(0), 0);
         corrFactorCalc = linear2DRegression->calculate(0);
         autoCount++;
         freqCalType = 1;
@@ -232,93 +250,168 @@ void CalibrateFrequency() {
     }
     // Serial.print("freqCalType= ");Serial.println(freqCalType);
     //=========
-    switch (freqCalType) {
-      case (0):  //Manual Plot
+    switch (freqCalType) {  //Select the Trequency Cal Function
+      case (0):             //Manual Plot
 
         break;
-      case (1):  //Auto
-                 // Serial.println("Auto ");
-                 //Serial.println(freqCalType);
+      case (1):  //Auto Plot Run
+
         Serial.print("autoCount= ");
         Serial.println(autoCount);
         updateDisplayFlag = 1;
         freqAutoPlotFlag = 1;
+
+#ifdef TCXO_25MHZ
+        freqAutoLowSet = 400;
+        freqAutoIncrementSet = 50;
+#else
+        freqAutoLowSet = 500;
+        freqAutoIncrementSet = 150;
+#endif
+        tft.setFontScale((enum RA8875tsize)0);
+        tft.setCursor(310, 200);
+        tft.print("5");
+        tft.setCursor(310, 440);
+        tft.print("-5");
         //if (freqAutoPlotFlag == 1) {
         freqCorrectionFactorOld = EEPROMData.freqCorrectionFactor;
-        EEPROMData.freqCorrectionFactor = -200 + autoCount * 100;
+        tft.fillRect(340, 165, 250, CHAR_HEIGHT, RA8875_BLACK);
+        tft.setFontScale((enum RA8875tsize)1);
+        tft.setCursor(340, 165);
+        tft.print("Auto Tune On");
+        EEPROMData.freqCorrectionFactor = freqCalFactorStart - freqAutoLowSet + autoCount * freqAutoIncrementSet;
         //calChrono.restart(0);
-        if (autoCount == 7) {
-          tft.fillRect(420, 165, 150, CHAR_HEIGHT, RA8875_BLACK);
+        if (autoCount >= 10) {
+          tft.fillRect(340, 165, 250, CHAR_HEIGHT, RA8875_BLACK);
           tft.setFontScale((enum RA8875tsize)1);
           tft.setCursor(340, 165);
           tft.print("Auto Tune Off");
+          MyDelay(3000);
+          tft.fillRect(340, 165, 250, CHAR_HEIGHT, RA8875_BLACK);
           freqAutoPlotFlag = 0;
           autoCount = 0;
           freqCalType = -1;
           EEPROMData.freqCorrectionFactor = corrFactorCalc;
         }
 
-        tft.fillRect(420, 165, 150, CHAR_HEIGHT, RA8875_BLACK);
+        /*tft.fillRect(340, 165, 250, CHAR_HEIGHT, RA8875_BLACK);
         tft.setFontScale((enum RA8875tsize)1);
         tft.setCursor(340, 165);
-        tft.print("Auto Tune On");
+        tft.print("Auto Tune On");*/
         break;
 
-      case (2):  //Time plot
-        updateDisplayFlag = 0;
+      case (2):  //Time plot Run
+        tft.setTextColor(RA8875_YELLOW);
+        tft.setFontScale((enum RA8875tsize)0);
+        tft.setCursor(10, 50);
+        tft.print("Plot Time hrs.");
+
+        updateTimeDisplayFlag = 1;
         tft.setFontScale((enum RA8875tsize)1);
-        tft.setCursor(10, 120);
+        tft.setCursor(5, 160);
+        tft.setTextColor(LIGHT_BLUE);
+        tft.print("Ave Mean");
+        tft.setTextColor(RA8875_RED);
+        tft.setCursor(5, 125);
+        tft.print("Run Mean");
+        tft.setTextColor(RA8875_WHITE);
+        tft.setCursor(10, 90);
         tft.print("#");
-        tft.setCursor(350, 120);
-        tft.print("ms");
-        tft.setCursor(10, 150);
-        tft.print("Mean");
-        tft.setCursor(240, 150);
+        tft.setCursor(350, 90);
+        tft.print("Sec");
+
+        tft.setCursor(265, 160);
         tft.print("StdDev");
 
-        if (calChrono2.elapsed() >= 5000) {
-          tft.setCursor(60, 120);
-          tft.fillRect(60, 120, 100, CHAR_HEIGHT, RA8875_BLACK);
+        tft.setFontScale((enum RA8875tsize)0);
+        tft.setTextColor(RA8875_YELLOW);
+        tft.setFontScale((enum RA8875tsize)0);
+        if (millis() - remainTimeUpdate > 1000) {  // 1 second
+          tft.fillRect(287, 50, 180, tft.getFontHeight(), RA8875_BLACK);
+          if ((float)(plotTimeInterval - timeIncrement * plotTimeInterval / 1200) <= 3600.) {
+            tft.setCursor(190, 50);
+            tft.print("Remain Time min.");
+            tft.setCursor(330, 50);
+            tft.print((float)(plotTimeInterval - (float)(timeIncrement * plotTimeInterval / 1200)) / 60, 1);
+            /*  Serial.print("(float)(plotTimeInterval - (float)(timeIncrement*plotTimeInterval/1200))/60000  ");
+            Serial.println((float)(plotTimeInterval - (float)(timeIncrement * plotTimeInterval / 1200)) / 60);
+            Serial.print("plotTimeInterval  ");
+            Serial.println(plotTimeInterval);
+            Serial.print("timeIncrement ");
+            Serial.println(timeIncrement);*/
+          } else {
+            if ((float)(plotTimeInterval - (float)(timeIncrement * plotTimeInterval / 1200)) > 3600) {
+              //tft.fillRect(300, 50, 200, CHAR_HEIGHT, RA8875_BLACK);
+              tft.setCursor(190, 50);
+              tft.print("Remain Time hrs.");
+              tft.setCursor(330, 50);
+              tft.print((float)(plotTimeInterval - (timeIncrement * plotTimeInterval / 1200)) / 3600, 2);
+            }
+          }
+          remainTimeUpdate = millis();
+        }
+        if (calChrono2.elapsed() >= plotTimeInterval) {  //next point is 1.2 sec, 3.6 sec, 10.8 sec or 36 sec Chrono counts in MS
+          tft.setFontScale((enum RA8875tsize)1);
+          tft.setTextColor(RA8875_WHITE);
+          tft.setCursor(60, 90);
+          tft.fillRect(60, 90, 100, CHAR_HEIGHT, RA8875_BLACK);
           tft.print(timeIncrement);
-          tft.setCursor(250, 120);
-          tft.fillRect(250, 120, 100, CHAR_HEIGHT, RA8875_BLACK);
+          tft.setCursor(250, 90);
+          tft.fillRect(250, 90, 100, CHAR_HEIGHT, RA8875_BLACK);
           tft.print((millis() - plotElapsedTimeStart) / 1000, 0);
 
-          corrPlotXValue4 = map(timeIncrement, 0, 1000, 60, 760);
-          corrPlotYValue4 = map(1000 * ((0.20000012146 * SAM_carrier_freq_offset)), -200, 200, 440, 210);
+          corrPlotXValue4 = map(timeIncrement, 0, 1200, 60, 760);
+          corrPlotYValue4 = map(1000 * ((0.20000012146 * SAM_carrier_freq_offset)), -plotScaleNumber * 1000, plotScaleNumber * 1000, 440, 210);
+          if (corrPlotYValue4 >= 400) corrPlotYValue4 = 439;
+          if (corrPlotYValue4 <= 210) corrPlotYValue4 = 211;
           tft.fillCircle(corrPlotXValue4, corrPlotYValue4, 2, RA8875_YELLOW);
 
           frequencyDiffValue[timeIncrement] = 0.20000012146 * SAM_carrier_freq_offset;
 
-          if (timeIncrement >= 20) {
+          arm_mean_f32(frequencyDiffValue, timeIncrement, &corrFactorAveMean);
+          tft.setCursor(150, 160);
+          tft.fillRect(150, 160, 95, CHAR_HEIGHT, RA8875_BLACK);
+          tft.print(corrFactorAveMean, 3);
+
+          if (timeIncrement >= 20) {  //Running Average reading for plot timencrement = 1.2, 3.6, 10.8 or 36 sec
             for (int i = 0; i < 20; i++) {
               frequencyDiffValueTen[i] = frequencyDiffValue[timeIncrement - (20 - i)];
             }
             arm_std_f32(frequencyDiffValueTen, 20, &corrFactorStdDev);
             arm_mean_f32(frequencyDiffValueTen, 20, &corrFactorMean);
-            tft.setCursor(100, 150);
-            tft.fillRect(100, 150, 120, CHAR_HEIGHT, RA8875_BLACK);
+            tft.setCursor(150, 125);
+            tft.fillRect(150, 125, 120, CHAR_HEIGHT, RA8875_BLACK);
             tft.print(corrFactorMean, 3);
-            corrPlotXValue4 = map(timeIncrement, 0, 1000, 60, 760);
-            corrPlotYValue4 = map(1000 * ((corrFactorMean)), -200, 200, 440, 210);
+            corrPlotXValue4 = map(timeIncrement, 0, 1200, 60, 760);
+            corrPlotYValue6 = map(1000 * ((corrFactorMean)), -plotScaleNumber * 1000, plotScaleNumber * 1000, 440, 210);
+            corrPlotYValue5 = map(1000 * ((corrFactorAveMean)), -plotScaleNumber * 1000, plotScaleNumber * 1000, 440, 210);
+            if (corrPlotYValue5 >= 400) corrPlotYValue5 = 439;
+            if (corrPlotYValue5 <= 210) corrPlotYValue5 = 211;
+            if (corrPlotYValue6 >= 400) corrPlotYValue6 = 439;
+            if (corrPlotYValue6 <= 210) corrPlotYValue6 = 211;
             //corrPlotYValue4 = map((int)1000 * 0.05, -100, 100, 440, 210);
-            tft.fillCircle(corrPlotXValue4, corrPlotYValue4, 3, RA8875_RED);
-            
+            tft.fillCircle(corrPlotXValue4, corrPlotYValue5, 3, RA8875_RED);
+            tft.fillCircle(corrPlotXValue4, corrPlotYValue6, 3, LIGHT_BLUE);
           }
-
+          // Print values to screen
           corrFactorStdDevAve = (corrFactorStdDevAve + corrFactorStdDev) / timeIncrement;
-          tft.setCursor(350, 150);
-          tft.fillRect(350, 150, 100, CHAR_HEIGHT, RA8875_BLACK);
+          tft.setCursor(375, 160);
+          tft.fillRect(375, 160, 95, CHAR_HEIGHT, RA8875_BLACK);
           tft.print(corrFactorStdDev, 3);
           tft.setCursor(670, 95);
           tft.fillRect(670, 95, 100, CHAR_HEIGHT, RA8875_BLACK);
           tft.print(freqError, 3);
           timeIncrement++;
+          if (timeIncrement >= 1200) {  //Stop the plot after 1200 points
+            timeIncrement = 0;
+            task = -1;
+            //tft.fillRect(0, 95, 799, 385, RA8875_BLACK);
+          }
           calChrono2.restart(0);
           calChrono.restart(0);
+          freqCalType = 2;
+          break;
         }
-        freqCalType = 2;
-        break;
     }
     val = ReadSelectedPushButton();
     if (val != BOGUS_PIN_READ)  // Any button press??
@@ -332,23 +425,225 @@ void CalibrateFrequency() {
         calOnFlag = 0;
         RedrawDisplayScreen();
         IQChoice = 5;
-//        return IQChoice;
         return;
+        updateTimeDisplayFlag = 0;
       } else {
         task = val;
+        updateTimeDisplayFlag = 0;
         switch (task) {
-          case (DECODER_TOGGLE):  //13 Decode
-
-
+          case (13):  //13 Decode
 
             break;
 
-          case (CAL_CHANGE_INC):  //CAL_CHANGE_INC=17 User3
+
+          case (11):  //=11 F Tune Incr button - Select Plot vertical scale
+            if (freqCalType == 2) {
+              plotScaleIndex++;
+              if (plotScaleIndex > 3) plotScaleIndex = 0;
+              plotScaleNumber = plotScaleValues[plotScaleIndex];
+              tft.setFontScale((enum RA8875tsize)0);
+              tft.fillRect(12, 210, 30, CHAR_HEIGHT, RA8875_BLACK);
+              tft.setCursor(12, 210);
+
+              tft.setTextColor(RA8875_CYAN);
+              tft.print(plotScaleNumber, 1);
+              tft.fillRect(12, 440, 30, CHAR_HEIGHT, RA8875_BLACK);
+              tft.setCursor(12, 440);
+              tft.print(-plotScaleNumber, 1);
+              tft.setCursor(12, 330);
+              tft.print("  0");
+              tft.setCursor(12, 270);
+              tft.print("Hz");
+            }
+
+
+            break;
+          case (12):  //=12 Filter Button - Select Time plot time interval
+            if (freqCalType == 2) {
+              plotIntervalIndex++;
+              if (plotIntervalIndex > 3) plotIntervalIndex = 0;
+              plotTimeInterval = plotIntervalValues[plotIntervalIndex];
+
+              tft.setFontScale((enum RA8875tsize)0);
+
+              tft.fillRect(130, 50, 80, tft.getFontHeight(), RA8875_BLACK);
+              tft.setTextColor(RA8875_YELLOW);
+              tft.setCursor(130, 50);
+              tft.print((float)plotTimeInterval / 3600.);
+            }
+            break;
+
+          case (DDE):  // 14  Direct Freq Button - Show Directions freqDescrptFlag = !freqDescrptFlag;
+
+            freqCalDirections = !freqCalDirections;
+            if (freqCalDirections != 0) {
+              tft.fillRect(11, 199, 776, 280, RA8875_BLACK);
+              tft.setFontScale((enum RA8875tsize)0);
+              tft.setTextColor(RA8875_CYAN);
+              tft.setCursor(10, 50);
+              tft.print("Freq Cal Directions");
+              tft.setCursor(25, 65);
+              tft.print("* Input Std Freq Source or tune to WWV or CHU");
+              tft.setCursor(25, 80);
+              tft.print("  Step 1 Auto Freq Cal");
+              tft.setCursor(25, 95);
+              tft.print("  Tune to Source frequency");
+              tft.setCursor(25, 110);
+              tft.print("  Set Mode to SAM");
+              tft.setCursor(25, 125);
+              tft.print("  In Menu Select: Calibration/Freq Cal");
+              tft.setCursor(25, 140);
+              tft.print("Press User2 to do Auto Tune");
+              tft.setCursor(25, 155);
+              tft.print("  For best results do Auto Tune several times");
+              tft.setCursor(25, 170);
+              tft.print("Option: Time plot");
+              tft.setCursor(25, 185);
+              tft.print(" Pres User1 for Time Plot");
+              tft.setCursor(10, 200);
+              tft.print("  Set Plot time with F Tune Button");
+              tft.setCursor(25, 215);
+              tft.print("  Select Vertical scle with Filter Button");
+              tft.setCursor(25, 230);
+              tft.print("Press User1 to restart");
+              tft.setCursor(25, 245);
+              tft.print("  When plot is finished - press Select to Sve/Exit");
+              tft.setCursor(25, 260);
+              tft.print("Press Select to Save/Exit");
+
+
+            } else {
+              tft.fillRect(0, 199, 799, 280, RA8875_BLACK);
+              tft.fillRect(0, 50, 290, 321, RA8875_BLACK);
+              tft.fillRect(288, 50, 150, 122, RA8875_BLACK);
+              val = 16;
+            }
+            break;
+
+          case (15):  //User1  Time Plot-Start/Reset
+            freqTimePlotFlag = !freqTimePlotFlag;
+              tft.fillRect(340, 165, 250, CHAR_HEIGHT, RA8875_BLACK);
+            freqCalType = 2;
+            timeIncrement = 0;
+            task = -1;
+            plotElapsedTimeStart = 0;
+            plotScaleIndex = 0;
+            plotScaleNumber = plotScaleValues[plotScaleIndex];
+            calChrono2.restart(0);
+            calChrono.restart(0);
+            plotIntervalIndex = 0;
+            plotTimeInterval = plotIntervalValues[plotIntervalIndex];
+
+            tft.setFontScale((enum RA8875tsize)0);
+
+            tft.fillRect(130, 50, 80, tft.getFontHeight(), RA8875_BLACK);
+            tft.setTextColor(RA8875_YELLOW);
+            tft.setCursor(130, 50);
+            tft.print((float)plotTimeInterval / 3600.);
+            tft.fillRect(299, 200, 500, 279, RA8875_BLACK);
+            tft.drawRect(10, 200, 778, 270, RA8875_GREEN);
+            tft.fillRect(11, 201, 776, 268, RA8875_BLACK);
+            tft.drawFastHLine(50, 450, 700, RA8875_GREEN);
+            tft.drawFastVLine(50, 220, 230, RA8875_GREEN);
+            tft.setFontScale((enum RA8875tsize)0);
+            tft.setTextColor(RA8875_CYAN);
+            tft.setCursor(12, 210);
+            tft.print(plotScaleNumber, 1);
+            tft.fillRect(12, 440, 30, CHAR_HEIGHT, RA8875_BLACK);
+            tft.setCursor(12, 440);
+            tft.print(-plotScaleNumber, 1);
+            tft.setCursor(12, 330);
+            tft.print("  0");
+            tft.setCursor(12, 270);
+            tft.print(" Hz");
+
+            tft.drawFastHLine(50, 330, 700, RA8875_CYAN);
+
+
+            tft.setCursor(400, 425);
+            tft.print("Time->");
+            break;
+
+          case (16):  //User2 Auto Plot Setup/Staret/Restart
+            freqCalFactorStart = EEPROMData.freqCorrectionFactor;
+
+            tft.fillRect(0, 50, 400, 32, RA8875_BLACK);
+            tft.fillRect(300, 200, 500, 279, RA8875_BLACK);
+            tft.fillRect(0, 200, 799, 280, RA8875_BLACK);
+            tft.fillRect(0, 98, 465, 180, RA8875_BLACK);
+            tft.fillRect(670, 60, 100, CHAR_HEIGHT, RA8875_BLACK);  //
+            tft.fillRect(340, 165, 250, CHAR_HEIGHT, RA8875_BLACK);
+
+            tft.setTextColor(RA8875_YELLOW);
+            tft.setFontScale((enum RA8875tsize)0);
+            tft.setCursor(20, 240);
+            tft.print("User2 - Auto");
+            tft.setCursor(20, 255);
+            tft.print("User2 - Time Plot");
+            tft.setCursor(20, 270);
+            tft.print("User3 - Corr Factor Increment");
+            tft.setCursor(20, 285);
+            tft.print("Select - Save/Exit");
+            tft.setCursor(20, 320);
+            tft.print("For Time Plot only:");
+            tft.setCursor(20, 335);
+            tft.print("Filter - Time Plot Error Scale");
+            tft.setCursor(20, 350);
+            tft.print("F Tune Incr - Time Plot Duration");
+            tft.setCursor(20, 380);
+            tft.print("Dir Freq - Directions");
+
+            tft.setTextColor(RA8875_WHITE);
+            tft.setFontScale((enum RA8875tsize)1);
+            tft.setCursor(670, 60);
+            tft.print(EEPROMData.freqCorrectionFactor, 0);
+            tft.drawRect(300, 200, 480, 270, RA8875_GREEN);
+            tft.drawFastHLine(340, 440, 400, RA8875_GREEN);
+            tft.drawFastVLine(340, 210, 230, RA8875_GREEN);
+            tft.setFontScale((enum RA8875tsize)0);
+            tft.setCursor(310, 200);
+            tft.print("5");
+            tft.setCursor(310, 440);
+            tft.print("-5");
+            tft.setFontScale((enum RA8875tsize)0);
+            tft.setCursor(310, 270);
+            tft.print("Hz");
+            tft.setCursor(480, 443);
+            tft.print("Corr.");
+            tft.drawFastHLine(340, 210 + 2 * 57.5, 400, RA8875_CYAN);
+            for (int k = 0; k < 5; k++) {
+              tft.drawFastVLine(340 + k * 100, 440, 7, RA8875_GREEN);
+              tft.setCursor(330 + k * 100, 448);
+              tft.print(-500 + 250 * k);
+
+              tft.drawFastHLine(333, 210 + k * 57.5, 7, RA8875_GREEN);
+              //480, 60
+              tft.fillRect(390, 20, 159, CHAR_HEIGHT, RA8875_BLACK);
+              tft.fillRect(400, 60, 55, CHAR_HEIGHT, RA8875_BLACK);
+            }
+            tft.setCursor(480, 443);
+            tft.print("Corr.");
+            tft.drawFastHLine(340, 210 + 2 * 57.5, 400, RA8875_CYAN);
+            tft.setFontScale((enum RA8875tsize)0);
+
+
+
+
+            freqAutoPlotFlag = !freqAutoPlotFlag;
+            if (freqAutoPlotFlag == 1) {
+              freqCalType = 1;
+            } else {
+              freqCalType = 0;
+            }
+            break;
+
+
+          case (CAL_CHANGE_INC):  // 17 User3 - CAL_CHANGE_INC increment17 User3
             {                     //
               corrChange = !corrChange;
               calOnFlag = 1;
               if (corrChange == 1) {  // Toggle increment value
-                incrementSAM = 10;    // AFP 2-11-23
+                incrementSAM = 100;   // AFP 2-11-23
               } else {
                 incrementSAM = 1;  // AFP 2-11-23
               }
@@ -360,60 +655,7 @@ void CalibrateFrequency() {
               tft.print(incrementSAM);
               break;
             }
-          case (19):  //    Filter Encoder SW
-            {
-              tft.setFontScale((enum RA8875tsize)1);
-              tft.fillRect(670, 95, 120, CHAR_HEIGHT, RA8875_BLACK);
-              tft.setTextColor(RA8875_YELLOW);
-              tft.setCursor(670, 100);
 
-              tft.print(0.20024 * SAM_carrier_freq_offset, 3);
-
-              corrPlotXValue4 = map(EEPROMData.freqCorrectionFactor, -500, 500, 340, 740);
-              corrPlotYValue4 = map((int)(100 * 0.20000012146 * SAM_carrier_freq_offset), -400, 400, 440, 210);
-              tft.fillCircle(corrPlotXValue4, corrPlotYValue4, 2, RA8875_YELLOW);
-
-              //linear2DRegression->addPoint(EEPROMData.freqCorrectionFactor,0.20024 * (SAM_carrier_freq_offset));
-              linear2DRegression->addPoint(0.20000012146 * SAM_carrier_freq_offset, EEPROMData.freqCorrectionFactor);
-              task = -1;
-              break;
-            }
-          case (CAL_CHANGE_TYPE):  //User2 Auto Plot
-            freqAutoPlotFlag = !freqAutoPlotFlag;
-            if (freqAutoPlotFlag == 1) {
-              freqCalType = 1;
-            } else {
-              freqCalType = 0;
-            }
-            break;
-
-          case (BEARING):  //User2Time Plot
-            freqTimePlotFlag = !freqTimePlotFlag;
-            freqCalType = 2;
-            timeIncrement = 0;
-            task = -1;
-            calChrono2.restart(0);
-            calChrono.restart(0);
-            tft.fillRect(299, 200, 500, 279, RA8875_BLACK);
-            tft.drawRect(20, 200, 779, 270, RA8875_GREEN);
-            tft.drawFastHLine(50, 450, 700, RA8875_GREEN);
-            tft.drawFastVLine(50, 220, 230, RA8875_GREEN);
-
-            tft.drawFastHLine(50, 330, 700, RA8875_CYAN);
-            tft.setCursor(10, 210);
-            tft.setFontScale((enum RA8875tsize)0);
-            tft.setTextColor(RA8875_CYAN);
-            tft.print("0.2");
-            tft.setCursor(10, 440);
-            tft.print("-0.2");
-            tft.setCursor(10, 330);
-            tft.print(" 0");
-            break;
-
-          case (DDE):  //User1 time plot
-            freqDescrptFlag = !freqDescrptFlag;
-
-            break;
 
 
 
@@ -597,7 +839,7 @@ void tuneCalParameter(int indexStart, int indexEnd, float increment, float *IQCo
   for (int i = indexStart; i < indexEnd; i++) {
     *IQCorrectionFactor = correctionFactor + i * increment;
     FFTupdated = false;
-
+    //int XmitCalDirections = 0;
     while (!FFTupdated) {
       adjdB = ShowSpectrum2();
     }
@@ -926,25 +1168,28 @@ void DoXmitCalibrate() {
   IQCalFlag = 1;
   IQChoice = 5;
   int task = -100;
+  //int task1 = -100;
+  //int directionsOn = 0;
   int lastUsedTask = -2;
   static int val;
   static int corrChange;
-//  float corrPlotYValue2;
+  //int corrIQChange = 0;
+  //float corrPlotYValue2;
   float corrPlotYValue3;
-
-  int lastCorrPlotYValue = 0;
+  //float result;
+  int lastCorrPlotYValue;
   int setCorrPlotDecimalFlag = 1;
   int XmitCalDirections = 0;
-//  float IQCorrFactorPlotData[30];
-//  float IQLevelPlotData[30];
+  float IQCorrFactorPlotData[30];
+  float IQLevelPlotData[30];
   int plotDataPointNum = 0;
-
-  float IQCorrFactorPlotValueMin = 0.0;
+  //float IQLevelPlotValuePlotOld;
+  float IQCorrFactorPlotValueMin;
   float IQLevelPlotValueMin = 20;
-//  float IQLevelPlotValue;
-//  float IQCorrFactorPlotYValue;
-
-//  float IQLevelPlotValueMinOld;
+  float IQLevelPlotValue;
+  float IQCorrFactorPlotYValue;
+  //float IQCorrFactorPlotYValueOld;
+  float IQLevelPlotValueMinOld;
 
   Q_in_L.end();  //Set up input Queues for transmit
   Q_in_R.end();
@@ -1167,15 +1412,15 @@ void DoXmitCalibrate() {
 
             corrPlotYValue3 = map((int)(10 * corrPlotYValue), 0, 200, 450, 210);
             tft.fillCircle(corrPlotXValue, corrPlotYValue3, 2, RA8875_YELLOW);
-//[plotDataPointNum] = corrPlotYValue;
-//            IQLevelPlotData[plotDataPointNum] = IQXAmpCorrectionFactor[currentBand];
-//            IQCorrFactorPlotYValue = IQXAmpCorrectionFactor[currentBand];
-//            IQCorrFactorPlotYValue = IQXAmpCorrectionFactor[currentBand];
-//            IQLevelPlotValue = corrPlotYValue;
+            IQCorrFactorPlotData[plotDataPointNum] = corrPlotYValue;
+            IQLevelPlotData[plotDataPointNum] = IQXAmpCorrectionFactor[currentBand];
+            IQCorrFactorPlotYValue = IQXAmpCorrectionFactor[currentBand];
+            IQCorrFactorPlotYValue = IQXAmpCorrectionFactor[currentBand];
+            IQLevelPlotValue = corrPlotYValue;
             if (corrPlotYValue <= IQLevelPlotValueMin) {
               IQCorrFactorPlotValueMin = IQXAmpCorrectionFactor[currentBand];
               IQLevelPlotValueMin = corrPlotYValue;
-//              IQLevelPlotValueMinOld = IQLevelPlotValueMin;
+              IQLevelPlotValueMinOld = IQLevelPlotValueMin;
             }
             tft.setFontScale((enum RA8875tsize)0);
             tft.fillRect(720, 380, 40, tft.getFontHeight(), RA8875_BLACK);
@@ -1555,6 +1800,10 @@ float PlotCalSpectrum(int x1, int cal_bins[2], int capture_bins) {
  *****/
 void ProcessIQDataFreq() {
 
+
+  //float32_t audioMaxSquared;
+
+  //uint32_t AudioMaxIndex;
   float rfGainValue;
 
 
@@ -1603,7 +1852,7 @@ void ProcessIQDataFreq() {
     }
 
     FreqShift1();
-
+    //FreqShift2();
 
     if (spectrum_zoom != SPECTRUM_ZOOM_1) {
       //AFP  Used to process Zoom>1 for display
@@ -1674,6 +1923,11 @@ void ProcessIQDataFreq() {
     arm_cmplx_mult_cmplx_f32(FFT_buffer, FIR_filter_mask, iFFT_buffer, FFT_length);
 
     arm_cfft_f32(iS, iFFT_buffer, 1, 1);
+
+    for (int k = 0; k < 1024; k++) {
+      audioSpectBuffer[1024 - k] = (iFFT_buffer[k]);
+    }
+    //==============
 
     AMDecodeSAM();
   }
