@@ -2816,7 +2816,7 @@ void setup_cw_receive_mode() {
   T41State = CW_RECEIVE;
   ShowTransmitReceiveStatus();
   xrState = RECEIVE_STATE;
-  //setBPFPath( BPF_IN_RX_PATH );
+  setBPFPath( BPF_IN_RX_PATH );
   currentRF_InAtten = RAtten[currentBand];
   SetRF_InAtten(currentRF_InAtten);
   digitalWrite(CW_ON_OFF, CW_OFF);  // LOW = CW off, HIGH = CW on
@@ -2837,7 +2837,7 @@ void setup_cw_receive_mode() {
 
 void setup_cw_transmit_mode() {
 
-  Clk2SetFreq = centerFreq * SI5351_FREQ_MULT;
+  Clk2SetFreq = (centerFreq + NCOFreq + CWToneOffsetsHz[EEPROMData.CWToneIndex])* SI5351_FREQ_MULT;
   sidetone_oscillator.amplitude(-10);
   si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
   digitalWrite(CW_ON_OFF, CW_OFF);   // LOW = CW off, HIGH = CW on
@@ -2848,7 +2848,6 @@ void setup_cw_transmit_mode() {
   if (currentRF_OutAtten < 0) currentRF_OutAtten = 0;
   SetRF_OutAtten(currentRF_OutAtten);
   setBPFPath(BPF_IN_TX_PATH);
-  //setBPFPath(BPF_NOT_IN_PATH);
   xrState = TRANSMIT_STATE;
   ShowTransmitReceiveStatus();
   modeSelectInR.gain(0, 0);
@@ -3152,8 +3151,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
   if (xmtMode == SSB_MODE && digitalRead(PTT) == LOW && IQCalFlag == 0) radioState = SSB_TRANSMIT_STATE;
 
   if (xmtMode == CW_MODE && (digitalRead(paddleDit) == HIGH && digitalRead(paddleDah) == HIGH)) radioState = CW_RECEIVE_STATE;
-  if (xmtMode == CW_MODE && (digitalRead(paddleDit) == LOW && xmtMode == CW_MODE && keyType == 0)) radioState = CW_TRANSMIT_STRAIGHT_STATE;
-  if (xmtMode == CW_MODE && (keyPressedOn == 1 && xmtMode == CW_MODE && keyType == 1)) radioState = CW_TRANSMIT_KEYER_STATE;
+  if (xmtMode == CW_MODE && (digitalRead(paddleDit) == LOW && keyType == 0)) radioState = CW_TRANSMIT_STRAIGHT_STATE;
+  if (xmtMode == CW_MODE && (keyPressedOn == 1 && keyType == 1)) radioState = CW_TRANSMIT_KEYER_STATE;
   //if(IQCalFlag != 1) radioState = SSB_RECEIVE_STATE;
   if (lastState != radioState) {
     SetFreq();  // Update frequencies if the radio state has changed.
@@ -3189,8 +3188,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
           modeSelectOutExR.gain(0, 0);
           phaseLO = 0.0;
           barGraphUpdate = 0;
-if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {                                                                   //AFP 09-01-22
-        return; 
+		  if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {                                                                   //AFP 09-01-22
+        	return; 
           }
 
         }
@@ -3239,9 +3238,13 @@ if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_
         //ShowTransmitReceiveStatus();
 
         while (digitalRead(PTT) == LOW) {
-          //ShowTXAudio();
-          ExciterIQData();
-          ExecuteButtonPress(ProcessButtonPress(ReadSelectedPushButton()));
+			//ShowTXAudio();
+			ExciterIQData();
+			ExecuteButtonPress(ProcessButtonPress(ReadSelectedPushButton()));
+			if (IQChoice == 4)
+			{
+				CalibrateOptions(IQChoice);
+			}
 
 #if defined(V12_CAT)
           CATSerialEvent();
@@ -3282,27 +3285,38 @@ if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_
     case CW_TRANSMIT_STRAIGHT_STATE:
       {
         //ShowTransmitReceiveStatus();
-        sidetone_oscillator.amplitude(-10);
+        //sidetone_oscillator.amplitude(-10);
         setup_cw_transmit_mode();
-        // Route signal to RX input via cal here to ensure that the transmit power is even lower when off.
         cwTimer = millis();
+		int cwstate = 1;
+		int cwstate_old = 0;
         while (millis() - cwTimer <= cwTransmitDelay)  //Start CW transmit timer on
         {
-          digitalWrite(RXTX, HIGH);
-          if (digitalRead(paddleDit) == LOW && keyType == 0)  // AFP 09-25-22  Turn on CW signal
-          {
-            cwTimer = millis();  //Reset timer
-            start_sending_cw();
-          } else {
-            if (digitalRead(paddleDit) == HIGH && keyType == 0)  //Turn off CW signal
-            {
-              keyPressedOn = 0;
-              stop_sending_cw();
-              xrState = RECEIVE_STATE;
-              //ShowTransmitReceiveStatus();
-            }
-          }
+			// This small state engine keeps the I2C traffic to a minimum when in CW state
+			if (digitalRead(paddleDit) == LOW)
+			{
+				cwstate = 1;
+				cwTimer = millis();
+			} else
+			{
+				cwstate = 0;
+			}
+			if (cwstate != cwstate_old)
+			{
+				if (cwstate)
+				{
+					// start transmitting
+		            start_sending_cw();
+				} else 
+				{
+					// Stop transmitting
+					keyPressedOn = 0;
+					stop_sending_cw();
+				}
+				cwstate_old = cwstate;
+			}
         }
+        xrState = RECEIVE_STATE;
         digitalWrite(RXTX, LOW);  // End Straight Key Mode
         digitalWrite(CAL, CAL_OFF);
         lastState = CW_TRANSMIT_STRAIGHT_STATE;

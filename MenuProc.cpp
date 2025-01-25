@@ -30,41 +30,10 @@ int CalibrateOptions(int IQChoice) {
   switch (IQChoice) {
 
     case 0:  // Calibrate Frequency  - uses WWV
-
-    CalibrateFrequency();
-    
-
+      CalibrateFrequency();
       break;
 
-
     case 1:  // CW PA Cal
-      if (xmtMode == CW_MODE) {
-        //================  CW Transmit Mode Straight Key ===========
-        if (digitalRead(KEYER_DIT_INPUT_TIP) == LOW && xmtMode == CW_MODE && keyType == 0)  //Straight Key
-        {
-
-          // Calibration power is
-          EEPROMData.powerLevel = CAL_POWER_LEVEL_W;  // adjustment is 0 for this power level, so don't calculate it
-          currentRF_OutAtten = XAttenCW[currentBand];
-          SetRF_OutAtten(currentRF_OutAtten);
-          Clk2SetFreq = centerFreq * SI5351_FREQ_MULT + (long long)(CWToneOffsetsHz[EEPROMData.CWToneIndex] * SI5351_FREQ_MULT);
-          si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
-          si5351.output_enable(SI5351_CLK2, 1);
-          digitalWrite(CW_ON_OFF, CW_ON);    // LOW = CW off, HIGH = CW on
-          digitalWrite(XMIT_MODE, XMIT_CW);  // KI3P, July 28, 2024
-
-          xrState = TRANSMIT_STATE;
-          ShowTransmitReceiveStatus();
-          modeSelectInR.gain(0, 0);
-          modeSelectInL.gain(0, 0);
-          modeSelectInExR.gain(0, 0);
-          modeSelectOutL.gain(0, 0);
-          modeSelectOutR.gain(0, 0);
-          modeSelectOutExL.gain(0, 0);
-          modeSelectOutExR.gain(0, 0);
-        }
-      }
-
       XAttenCW[currentBand] = GetEncoderValueLiveInt(0, 63, XAttenCW[currentBand], 1, (char *)"CW PA Att.");
       currentRF_OutAtten = XAttenCW[currentBand];
       if (currentRF_OutAtten > 63) currentRF_OutAtten = 63;
@@ -79,8 +48,6 @@ int CalibrateOptions(int IQChoice) {
         {
           digitalWrite(CW_ON_OFF, CW_OFF);
           tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
-
-          XAttenCW[currentBand] = XAttenCW[currentBand];
 
           EEPROMWrite();
           calibrateFlag = 0;

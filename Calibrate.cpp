@@ -3,9 +3,6 @@
 #endif
 
 // changes are so extensive for calibration in V12, this file supports only V12
-#include <Timer.h>
-#include <Chrono.h>
-#include <LinearRegression.h>
 #define GAIN_COARSE_MAX 1.3
 #define GAIN_COARSE_MIN 0.7
 #define PHASE_COARSE_MAX 0.2
