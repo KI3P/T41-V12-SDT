@@ -1650,13 +1650,13 @@ void ShowTransmitReceiveStatus() {
     tft.print("REC");
     FrontPanelSetLed(0, 1);
     FrontPanelSetLed(1, 0);
-    FrontPanelSetLed(0, 0);
-    FrontPanelSetLed(1, 1);
   } else {
     if (radioState == SSB_TRANSMIT_STATE || radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {
       tft.fillRect(X_R_STATUS_X, X_R_STATUS_Y, 55, 25, RA8875_RED);
       tft.setCursor(X_R_STATUS_X + 4, X_R_STATUS_Y - 5);
       tft.print("XMT");
+      FrontPanelSetLed(0, 0);
+      FrontPanelSetLed(1, 1);
     }
   }
 }
