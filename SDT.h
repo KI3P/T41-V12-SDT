@@ -18,6 +18,7 @@ extern struct maps myMapFiles[];
 #include "LPF_Control_V12.h"
 #include "BPF_Control.h"
 //======================================== New libraries needed for latest version ======================================
+#include <Timer.h> 									// https://github.com/sstaub/Timer
 #include <Chrono.h>                                 // https://github.com/SofaPirate/Chrono/
 #include <LinearRegression.h>                       // https://github.com/cubiwan/Regressino/
 #include <Linear2DRegression.hpp>                   // https://github.com/nkaaf/Arduino-Regression
