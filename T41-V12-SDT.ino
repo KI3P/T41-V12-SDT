@@ -1757,7 +1757,8 @@ long TxRxFreqOld;
 long TxRxFreqDE;
 long gapEnd, gapLength, gapStart;    // Time for noise measures
 long ditTime = 80L, dahTime = 240L;  // Assume 15wpm to start
-
+long plotIntervalValues[] = {1200, 3600, 10800, 36000 };  // AFP 01-24-25
+float plotScaleValues[]={0.2,1.0,5.0,10.0};                // AFP 01-24-25
 ulong samp_ptr;
 
 uint64_t output12khz;
@@ -1770,7 +1771,7 @@ float correctionIncrement = 0.01;
  float freqErrorOld;
 float corrChangeIQIncrement = 1.0;
 float volTimer = 0;
-float SAMTimer=0;
+
 int SAMPrintFlag=0;
 float dcfRefLevel;
 float CPU_temperature = 0.0;
@@ -1782,8 +1783,7 @@ float lastII = 0;
 float lastQQ = 0;
 float myLat = MY_LAT;
 float myLong = MY_LON;
-float SamTimer=0;
-float SAMTimer2=0;
+
 float RXbit = 0;
 float bitSampleTimer = 0;
 float Tsample = 1.0 / 12000.0;
@@ -2882,10 +2882,12 @@ void cw_keyer() {
     void
 *****/
 void setup() {
-  Serial.begin(38400);
+  Serial.begin(19200);
   //while(!Serial);
+  //Serial1.begin(115200);
+  //SerialUSB1.begin(9600);
   if (CrashReport) {
-    Serial.println(CrashReport);
+    Serial1.println(CrashReport);
   }
 
 #if defined(V12_CAT)
@@ -3045,7 +3047,6 @@ void setup() {
   Wire2.begin();
   V12_LPFControlInit();
 
-
   // Added BPF board support
 
   Wire2.begin();
@@ -3139,7 +3140,6 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
   #endif
 
   int pushButtonSwitchIndex = -1;
-
   valPin = ReadSelectedPushButton();  // Poll UI push buttons
   if (valPin != BOGUS_PIN_READ)       // If a button was pushed...
   {
@@ -3160,7 +3160,6 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
   }
 
 //                                                                      Begin radio state machines
-
   switch (radioState) {  //  Begin SSB Mode state machine
     //================  SSB  Receive State =============
     case (SSB_RECEIVE_STATE):

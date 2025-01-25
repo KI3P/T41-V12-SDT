@@ -103,7 +103,7 @@
 // DB2OO, 30-AUG-23: with TCVSDR_SMETER (TCVSDR=Teensy Convolution SDR) defined the S-Meter bar will be consistent with the dBm value and it will not go over the box for S9+40+
 #define TCVSDR_SMETER 1
 //DB2OO, 10-SEP-23: TCXO_25MHZ defined sets the default EEPROMData.freqCorrectionFactor = 0, as the TCXO is supposed to deliver 25.00000MHz
-#define TCXO_25MHZ 1
+//#define TCXO_25MHZ 1
 
 #define PADDLE_FLIP 0                // 0 = right paddle = DAH, 1 = DIT
 #define STRAIGHT_KEY_OR_PADDLES 0    // 0 = straight, 1 = paddles

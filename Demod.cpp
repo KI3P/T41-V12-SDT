@@ -22,8 +22,8 @@ void AMDecodeSAM() {
   // http://svn.tapr.org/repos_sdr_hpsdr/trunk/W5WC/PowerSDR_HPSDR_mRX_PS/Source/wdsp/
  // phzerror = 0;
   tft.setFontScale((enum RA8875tsize)0);
-  tft.fillRect(OPERATION_STATS_X + 160, FREQUENCY_Y + 30, tft.getFontWidth() * 11, tft.getFontHeight(), RA8875_BLUE);  // AFP 11-01-22 Clear top-left menu area
-  tft.setCursor(OPERATION_STATS_X + 160, FREQUENCY_Y + 30);                                                            // AFP 11-01-22
+  tft.fillRect(OPERATION_STATS_X + 150, FREQUENCY_Y + 33, tft.getFontWidth() * 11, tft.getFontHeight(), RA8875_BLUE);  // AFP 11-01-22 Clear top-left menu area
+  tft.setCursor(OPERATION_STATS_X + 150, FREQUENCY_Y + 33);                                                            // AFP 11-01-22
   tft.setTextColor(RA8875_WHITE);
   // tft.fill//Rect(OPERATION_STATS_X + 155, FREQUENCY_Y + 30, tft.getFontWidth() * 11, tft.getFontHeight(), RA8875_BLUE);
   tft.print("(SAM) ");  //AFP 11-01-22
@@ -88,25 +88,14 @@ void AMDecodeSAM() {
   SAM_carrier_freq_offset = 0.95 * SAM_carrier_freq_offsetOld + 0.05 * SAM_carrier_freq_offset;
   //            SAM_display_count = 0;
   //SAM_lowpass = SAM_carrier;
- 
-//Serial.print("SAM_carrier_freq_offset= ");Serial.println(SAM_carrier_freq_offset);
-//Serial.print("SAM_carrier_freq_offsetOld= ");Serial.println(SAM_carrier_freq_offsetOld);
 
   //if (SAM_carrier_freq_offset != SAM_carrier_freq_offsetOld) {
-    tft.setCursor(OPERATION_STATS_X + 200, FREQUENCY_Y + 30);
-    tft.fillRect(OPERATION_STATS_X + 200, FREQUENCY_Y + 30, tft.getFontWidth() * 8, tft.getFontHeight(), RA8875_BLUE);
+    tft.setCursor(OPERATION_STATS_X + 190, FREQUENCY_Y + 33);
+    tft.fillRect(OPERATION_STATS_X + 190, FREQUENCY_Y + 33, tft.getFontWidth() * 8, tft.getFontHeight(), RA8875_BLUE);
     tft.print(0.20000012146 * SAM_carrier_freq_offset, 3);  //AFP 11-01-22
  // }
  SAM_carrier_freq_offsetOld=SAM_carrier_freq_offset;
- /* SAM_carrier_freq_offsetHz=0.20024 * SAM_carrier_freq_offset;
-  if (millis() - SamTimer >= 60000) {
-    SAM_carrier_freq_offsetHz = 0.95 * SAM_carrier_freq_offsetHzOld + 0.05 * 0.20024 * SAM_carrier_freq_offsetHz;
-    //Serial.print("Frequency offset (Hz)=  ");
-    //Serial.println(SAM_carrier_freq_offsetHz, 4);
-    SamTimer = millis();
-  }*/
 
-  //SAM_carrier_freq_offsetHzOld = SAM_carrier_freq_offset;
 }
 
 /*****  AFP 11-03-22
