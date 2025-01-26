@@ -26,7 +26,6 @@ Several libraries need to be installed manually. The manual process is:
 The libraries to install using this process are:
 
 * OpenAudio: [https://github.com/chipaudette/OpenAudio_ArduinoLibrary](https://github.com/chipaudette/OpenAudio_ArduinoLibrary)
-* RA8875: [https://github.com/mjs513/RA8875/tree/RA8875_t4](https://github.com/mjs513/RA8875/tree/RA8875_t4)
 * Regressino: [https://github.com/cubiwan/Regressino/tree/master](https://github.com/cubiwan/Regressino/tree/master)
 * Arduino Regression: [https://github.com/nkaaf/Arduino-Regression](https://github.com/nkaaf/Arduino-Regression)
 
