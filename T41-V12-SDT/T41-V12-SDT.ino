@@ -831,8 +831,7 @@ AudioConnection patchCord22(modeSelectOutR, 0, i2s_quadOut, 3);
 AudioConnection patchCord23(Q_out_L_Ex, 0, modeSelectOutL, 1);  //Rec out Queue for sidetone
 AudioConnection patchCord24(Q_out_R_Ex, 0, modeSelectOutR, 1);
 AudioConnection sidetone_patchcord(sidetone_oscillator, 0, modeSelectOutL, 2);
-
-
+AudioConnection sidetone_patchcord_2( sidetone_oscillator, 0, modeSelectOutR, 2);
 
 
 //Timer calTimer;
@@ -2770,13 +2769,14 @@ void start_sending_cw() {
   MyDelay(1.5);                // Wait 1.5mS
   digitalWrite(CAL, CAL_OFF);  // Route signal to TX output
   modeSelectOutL.gain(2, .5);  //start the sidetone!
-
+  modeSelectOutR.gain(2, .5);  //on the other channel too
   cwTimer = millis();  // extern cw keyer ( in cw_keyer.c ) doesn't know about this timer
 }
 
 void stop_sending_cw() {
   digitalWrite(CW_ON_OFF, CW_OFF);
   modeSelectOutL.gain(2, 0);  // turn off the sidetone
+  modeSelectOutR.gain(2, 0);
   MyDelay(8);                 // Delay to allow CW signal to ramp down
   digitalWrite(CAL, CAL_ON);  // Route signal away from TX output
   si5351.output_enable(SI5351_CLK2, 0);
@@ -2838,7 +2838,7 @@ void setup_cw_receive_mode() {
 void setup_cw_transmit_mode() {
 
   Clk2SetFreq = (centerFreq + NCOFreq + CWToneOffsetsHz[EEPROMData.CWToneIndex])* SI5351_FREQ_MULT;
-  sidetone_oscillator.amplitude(-10);
+  sidetone_oscillator.amplitude( sidetoneVolume/500 );
   si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
   digitalWrite(CW_ON_OFF, CW_OFF);   // LOW = CW off, HIGH = CW on
   digitalWrite(XMIT_MODE, XMIT_CW);  // KI3P, July 28, 2024
@@ -2911,7 +2911,6 @@ void setup() {
   sgtl5000_2.enable();
   sgtl5000_2.inputSelect(AUDIO_INPUT_LINEIN);
   sgtl5000_2.volume(0.5);
-
   pinMode(FILTERPIN15M, OUTPUT);
   pinMode(FILTERPIN20M, OUTPUT);
   pinMode(FILTERPIN40M, OUTPUT);

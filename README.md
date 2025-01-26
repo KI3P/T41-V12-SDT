@@ -1,64 +1,70 @@
-# Introduction
+## Introduction
 
-This repository hosts the code for the T41-EP Software Defined Transceiver (SDT). Originally designed by Al Peter-AC8GY and Jack Purdum-W8TEE, the T41-EP is a 20W, HF, 7 band, CW/SSB Software Defined Transceiver (SDT) with features not even found in commercial radios costing ten times as much (e.g., up to 192kHz spectrum display bandwidth, ALP CW decoder, Bode Plots). The T41-EP is a self-contain SDT that does not require an external PC, laptop, or tablet to use. Al and Jack wrote a book, available on [Amazon](https://a.co/d/drLsJlJ), describing the theory and operation of the T41-EP.
+This repository hosts Version 63-1 of the source code for the T41-EP Software Defined Transceiver (SDT). Originally designed by Al Peter-AC8GY and Jack Purdum-W8TEE, the T41-EP is a 20W, HF, 7 band, CW/SSB Software Defined Transceiver (SDT) with features not even found in commercial radios costing ten times as much (e.g., up to 192kHz spectrum display bandwidth, ALP CW decoder, Bode Plots). The T41-EP is a self-contain SDT that does not require an external PC, laptop, or tablet to use. Al and Jack wrote a book, available on [Amazon](https://a.co/d/drLsJlJ) (note: link is to 3rd edition), describing the theory and operation of the T41-EP.
 
-### Home on the web
+## Version 63-1
+
+This version of the code corresponds to the upcoming 4th edition of "Digital Signal Processing and Software Defined Radio: Theory and Construction of the T41-EP Software Defined Transceiver" by Albert F. Peter, AC8GY and Dr Jack Purdum, W8TEE. It is a point release of the software which contains the features and capabilities described in the book and works on V12 hardware only. Ongoing development of the code base is captured in the companion repository [T41-V12-SDT](https://github.com/KI3P/T41-V12-SDT).
+
+### Configuring the IDE and libraries
+
+Use V2 of the [Arduino IDE](https://www.arduino.cc/en/software). This code has been tested with V2.3.4. Configure your Arduino IDE to use the Teensyduino library following the instructions [here](https://www.pjrc.com/teensy/td_download.html).
+
+Install the following libraries via the Arduino Library Manager:
+
+* Adafruit MCP23017 Arduino Library, by Adafruit (v2.3.2) (note: install with dependencies)
+* Adafruit GFX Library, by Adafruit (v1.11.11) (note: install with dependencies)
+* ArduinoJson, by Benoit Blanchon (v7.3.0)
+* Chrono, by Thomas O. Fredericks (v1.2.0)
+* Timer, by Stefan Staub (v1.2.1)
+
+Several libraries need to be installed manually. The manual process is:
+
+1. Go to the provided GitHub link for the library and download the library as a zip by clicking Code -> Download ZIP.
+2. Import it into the Arduino 2 IDE by clicking Sketch -> Include Library -> Add .ZIP library, and then selecting the file you just downloaded.
+
+The libraries to install using this process are:
+
+* OpenAudio: [https://github.com/chipaudette/OpenAudio_ArduinoLibrary](https://github.com/chipaudette/OpenAudio_ArduinoLibrary)
+* RA8875: [https://github.com/mjs513/RA8875/tree/RA8875_t4](https://github.com/mjs513/RA8875/tree/RA8875_t4)
+* Regressino: [https://github.com/cubiwan/Regressino/tree/master](https://github.com/cubiwan/Regressino/tree/master)
+* Arduino Regression: [https://github.com/nkaaf/Arduino-Regression](https://github.com/nkaaf/Arduino-Regression)
+
+### Compiler settings
+
+Select the Teensy 4.1 board, and select the following build configuration options: 
+
+* Tools->Optimize->Fast with LTO
+* Tools->USB Type->Dual Serial
+* Tools->CPU Speed->600 MHz
+
+The memory usage after compiling should look like this:
+
+```
+   FLASH: code:272292, data:129336, headers:8988   free for files:7715848
+   RAM1: variables:178112, code:249800, padding:12344   free for local variables:84032
+   RAM2: variables:474720  free for malloc/new:49568
+```
+
+
+## Other web resources
 
 The T41-EP is a fully open-source radio. This repository hosts the transceiver software. The hardware designs are hosted on Bill-K9HZ's [GitHub repository](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24). The primary forum for discussions on the T41-EP radio is on [Groups.io](https://groups.io/g/SoftwareControlledHamRadio/topics).
 
-### Design philosophy
-
 The EP stands for Experimenter's Platform because the T41-EP is designed around 5 small printed circuit boards (100mm x 100mm) that can be easily swapped for boards of your own design. Because the T41-EP project is completely Open Source, you have complete access to the C/C++ source code that controls the T41-EP as well as the KiCad design files, schematics, and Gerber files. 
 
-### Hardware purchase
+The hardware design files for the V12 radio modules can be found at the following links:
+
+* [Main board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24/T41_V012_KiCad/T41-main-board-V012)
+* [RF board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24/T41_V012_KiCad/T41-RF-board-V012)
+* [BPF board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24/T41_V012_KiCad/T41-BPF-filter-board)
+* [Front panel switch board](https://github.com/DRWJSCHMIDT/K9HZ/tree/main/K9HZ_Front_Panel_Boards)
+* [Front panel encoder boards](https://github.com/DRWJSCHMIDT/K9HZ/tree/main/K9HZ_Encoder_Boards)
+* [LPF module](https://github.com/DRWJSCHMIDT/K9HZ/tree/main/K9HZ_LPF_Module)
+* [20W amplifier module](https://github.com/DRWJSCHMIDT/K9HZ/tree/main/K9HZ_20W_PA)
+
+## Hardware purchase
 
 The latest version (V12.6) of the bare PCBs are available for less than $5 each on the [discussion forum](https://groups.io/g/SoftwareControlledHamRadio). If you prefer a partially-assembled kit,  Justin AI6YM sells them on his [website](https://ai6ym.radio/t41-ep-sdt/).
 
 Kits for the prior hardware version (V11) were produced and sold by the [4SQRP club](http://www.4sqrp.com/T41main.php).
-
-### Major software variants
-
-There are three primary software forks for the T41-EP radio. Greg KF5N has produced the [T41 Extreme Experimenters Edition (T41EEE)](https://github.com/Greg-R/T41EEE) which implements innovative features but currently only supports V11 hardware. [Terrance KN6ZDE](https://github.com/tmr4/T41_SDR) has a fork that implements mouse and keyboard input, a beacon monitor, and has implemented new modes like NFM and some data modes.
-
-This repository hosts the "official" vanilla fork for the [V12.6 hardware](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24). It merges the original software written by Jack and Al with the additional features written by [John Melton-G0ORX](https://github.com/g0orx/SDTVer050.0). We aspire to merge in changes and features implemented by others if they are supported by unmodified V12.6 hardware. You are encouraged to fork this repository, experiment, and submit pull requests if you develop a feature others will like! Your help tackling the list of [Issues](https://github.com/KI3P/SDTVer050.0/issues) would also be valuable.
-
-# Ver 060.3
-
-This version has the following extra software features:
-
-* Bearing plots
-* Bode plots
-* Kenwood TS-2000 CAT interface
-* Built-in-test for I2C errors
-
-The V12.6 hardware features currently supported in this version include:
-
-* Shutdown routine using the ATTiny85 on the main board
-* V12.6 BPF board
-* K9HZ LPF board (band select only)
-* G0ORX / K9HZ MCP23017 front panel and encoders
-* IQ and power amp calibration
-
-V12.6 hardware features that still need to be supported in software include:
-
-* K9HZ LPF SWR meter
-* K9HZ LPF transverter selection
-* K9HZ LPF 100W amp selection
-* K9HZ LPF antenna selection
-
-# Compiling
-
-To build this version configure Arduino IDE to use the [Teensyduino](https://www.pjrc.com/teensy/td_download.html) library, select the Teensy 4.1 board, and select the following build configuration options: 
-
-* Tools->Optimize->Faster with LTO
-* Tools->USB Type->Dual Serial
-* Tools->CPU Speed->528 MHz
-
-The memory Usage with these options set and both `G0ORX_FRONTPANEL` and `G0ORX_CAT` enabled should look something like:
-
-```
-   FLASH: code:274516, data:93624, headers:8684   free for files:7749640
-   RAM1: variables:200864, code:256936, padding:5208   free for local variables:61280
-   RAM2: variables:454272  free for malloc/new:70016
-```
-
