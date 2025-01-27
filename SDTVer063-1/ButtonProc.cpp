@@ -492,6 +492,9 @@ void ResetZoom(int zoomIndex1) {
     Base Code courtesy of Harry  GM3RVL
 *****/
 void ButtonFrequencyEntry() {
+    if (recCalOnFlag == 1) {
+    return;
+  }
   TxRxFreqOld = TxRxFreq;
 
 #define show_FEHelp
