@@ -3,22 +3,14 @@
 #endif
 
 // changes are so extensive for calibration in V12, this file supports only V12
-#define GAIN_COARSE_MAX 1.3
-#define GAIN_COARSE_MIN 0.7
-#define PHASE_COARSE_MAX 0.2
-#define PHASE_COARSE_MIN -0.2
-#define GAIN_COARSE_STEP2_N 10
-#define PHASE_COARSE_STEP2_N 10
-#define GAIN_FINE_N 5
-#define PHASE_FINE_N 5
 static int stateMachine;
 static bool FFTupdated;
-static int val;
+//static int val;
 int corrChange = 0;
 //AFP 2-7-23
-static int userScale, userZoomIndex, userXmtMode;
-static int transmitPowerLevelTemp;
-static char strBuf[100];
+static int userScale, userZoomIndex;//, userXmtMode;
+//static int transmitPowerLevelTemp;
+//static char strBuf[100];
 static long userCurrentFreq;
 static long userCenterFreq;
 static long userTxRxFreq;
@@ -30,8 +22,8 @@ Chrono calChrono;
 Chrono calChrono2;  //default milliseconds other usage - Chrono calChrono2(Chrono::SECONDS);
 Metro calMetro = Metro(15000);
 LinearRegression lr = LinearRegression();
-#include <Linear2DRegression.hpp>
 double values[2];
+
 /*****
   Purpose: Set up prior to IQ calibrations.  Revised function. AFP 07-13-24
   These things need to be saved here and restored in the prologue function:
@@ -330,12 +322,7 @@ void CalibrateFrequency() {
             tft.print("Remain Time min.");
             tft.setCursor(330, 50);
             tft.print((float)(plotTimeInterval - (float)(timeIncrement * plotTimeInterval / 1200)) / 60, 1);
-            /*  Serial.print("(float)(plotTimeInterval - (float)(timeIncrement*plotTimeInterval/1200))/60000  ");
-            Serial.println((float)(plotTimeInterval - (float)(timeIncrement * plotTimeInterval / 1200)) / 60);
-            Serial.print("plotTimeInterval  ");
-            Serial.println(plotTimeInterval);
-            Serial.print("timeIncrement ");
-            Serial.println(timeIncrement);*/
+
           } else {
             if ((float)(plotTimeInterval - (float)(timeIncrement * plotTimeInterval / 1200)) > 3600) {
               //tft.fillRect(300, 50, 200, CHAR_HEIGHT, RA8875_BLACK);
@@ -347,7 +334,7 @@ void CalibrateFrequency() {
           }
           remainTimeUpdate = millis();
         }
-        if (calChrono2.elapsed() >= plotTimeInterval) {  //next point is 1.2 sec, 3.6 sec, 10.8 sec or 36 sec Chrono counts in MS
+        if (calChrono2.elapsed() >= (long unsigned int)plotTimeInterval) {  //next point is 1.2 sec, 3.6 sec, 10.8 sec or 36 sec Chrono counts in MS
           tft.setFontScale((enum RA8875tsize)1);
           tft.setTextColor(RA8875_WHITE);
           tft.setCursor(60, 90);
@@ -519,7 +506,7 @@ void CalibrateFrequency() {
 
           case (15):  //User1  Time Plot-Start/Reset
             freqTimePlotFlag = !freqTimePlotFlag;
-              tft.fillRect(340, 165, 250, CHAR_HEIGHT, RA8875_BLACK);
+            tft.fillRect(340, 165, 250, CHAR_HEIGHT, RA8875_BLACK);
             freqCalType = 2;
             timeIncrement = 0;
             task = -1;
@@ -623,9 +610,6 @@ void CalibrateFrequency() {
             tft.drawFastHLine(340, 210 + 2 * 57.5, 400, RA8875_CYAN);
             tft.setFontScale((enum RA8875tsize)0);
 
-
-
-
             freqAutoPlotFlag = !freqAutoPlotFlag;
             if (freqAutoPlotFlag == 1) {
               freqCalType = 1;
@@ -633,7 +617,6 @@ void CalibrateFrequency() {
               freqCalType = 0;
             }
             break;
-
 
           case (CAL_CHANGE_INC):  // 17 User3 - CAL_CHANGE_INC increment17 User3
             {                     //
@@ -654,9 +637,6 @@ void CalibrateFrequency() {
             }
 
 
-
-
-            //}
             if (task == MENU_OPTION_SELECT) {
 
               break;
@@ -672,7 +652,6 @@ void CalibrateFrequency() {
 //===================
 
 
-
 /*****
   Purpose: Set up prior to IQ calibrations.  Revised function. AFP 07-13-24
   These things need to be saved here and restored in the prologue function:
@@ -686,66 +665,49 @@ void CalibrateFrequency() {
       void
  *****/
 void CalibratePreamble(int setZoom) {
-  calOnFlag = 1;
+  recCalOnFlag = 1;
   corrChange = 0;
+  updateCalDisplayFlag = 0;
   correctionIncrement = 0.01;  //AFP 2-7-23
   //IQCalType = 0;
   digitalWrite(RXTX, LOW);
-  radioState = CW_TRANSMIT_STRAIGHT_STATE;  //
-  userXmtMode = xmtMode;                    // Store the user's mode setting.   July 22, 2023
-  userZoomIndex = spectrum_zoom;            // Save the zoom index so it can be reset at the conclusion.   August 12, 2023
-  spectrum_zoom = setZoom;                  // spectrum_zoom is used in Process.cpp
-  zoomIndex = setZoom - 1;
-  userCurrentFreq = currentFreq;
-  userTxRxFreq = TxRxFreq;
-  userNCOFreq = NCOFreq;
-  userCenterFreq = centerFreq;
-  transmitPowerLevelTemp = transmitPowerLevel;
-  TxRxFreq = centerFreq;
-  currentFreq = TxRxFreq;
-  NCOFreq = 0L;
-  //AFP07-13-24
-  ButtonZoom();
-  tft.clearScreen(RA8875_BLACK);  // must call ButtonZoom because it configures the FFT!
-  //ResetTuning();
-  // tft.writeTo(L1);  // Always exit function in L1.   August 15, 2023
-  //DrawBandWidthIndicatorBar();
-  //ShowSpectrumdBScale();
-  // DrawFrequencyBarValue();
-  //ShowFrequency();
-  tft.writeTo(L2);  // Erase the bandwidth bar.   August 16, 2023
-  tft.clearMemory();
-  tft.writeTo(L1);
-  tft.setFontScale((enum RA8875tsize)0);
 
-  tft.setCursor(550, 115);
-  tft.print("IQ Image=");
-  tft.setTextColor(RA8875_GREEN);
-  tft.setCursor(550, 145);
-  tft.print("Decode - Auto");
-  tft.setCursor(550, 160);
-  tft.print("User2 - Gain/Phase");
-  tft.setCursor(550, 175);
-  tft.print("User3 - Incr");
-  tft.setCursor(550, 190);
-  tft.print("User1 - Atten");
-  tft.setCursor(550, 205);
-  tft.print("Filter - RF On/Off");
-  tft.setCursor(550, 220);
-  tft.print("Dir Freq - Directions");
-  tft.setCursor(25, 450);
+  spectrum_zoom = setZoom;  // spectrum_zoom is used in Process.cpp
+  zoomIndex = setZoom - 1;
+  ButtonZoom();
+
+  tft.fillRect(INFORMATION_WINDOW_X - 8, INFORMATION_WINDOW_Y, 250, 170, RA8875_BLACK);
+
+  tft.fillRect(550, 280, 150, tft.getFontHeight(), RA8875_BLACK);
+  tft.setFontScale((enum RA8875tsize)1);
   tft.setTextColor(RA8875_CYAN);
-  //tft.fillRect(0, 272, 517, 399, RA8875_BLACK);  // Erase waterfall.   August 14, 2023
-  tft.setCursor(550, 100);
+  tft.setCursor(550, 280);
+  tft.print("RX Calibrate");
+  tft.setTextColor(RA8875_WHITE);
+  //tft.fillRect(550, 350, 230, CHAR_HEIGHT, RA8875_BLACK);
+  tft.setCursor(550, 320);
+  tft.print("IQ Gain");
+  // tft.fillRect(550, 380, 230, CHAR_HEIGHT, RA8875_BLACK);
+  tft.setCursor(550, 360);
+  tft.print("IQ Phase");
+
+  tft.setFontScale((enum RA8875tsize)1);
+  tft.setTextColor(RA8875_YELLOW);
+  tft.fillRect(700, 320, 150, CHAR_HEIGHT, RA8875_BLACK);
+  tft.setCursor(700, 320);
+  tft.print(IQAmpCorrectionFactor[currentBand], 3);
+  IQAmpCorrectionFactorOld = IQAmpCorrectionFactor[currentBand];
+  tft.fillRect(700, 360, 150, CHAR_HEIGHT, RA8875_BLACK);
+  tft.setCursor(700, 360);
+  tft.print(IQPhaseCorrectionFactor[currentBand], 3);
+  IQPhaseCorrectionFactorOld = IQPhaseCorrectionFactor[currentBand];
+  tft.setCursor(550, 400);
+  tft.print("adjdB= ");
+  tft.setFontScale((enum RA8875tsize)0);
+  tft.setCursor(550, 450);
   tft.print("Incr= ");
-  tft.fillRect(650, 190, 50, tft.getFontHeight(), RA8875_BLACK);
-  tft.setCursor(650, 100);
-  tft.print(correctionIncrement, 3);
-  tft.setCursor(700, 100);
-  tft.print("dB");
-  userScale = currentScale;  //  Remember user preference so it can be reset when done.
-  currentScale = 1;          //  Set vertical scale to 10 dB during calibration.
-  updateDisplayFlag = 0;
+  tft.setFontScale((enum RA8875tsize)1);
+
   xrState = RECEIVE_STATE;
   T41State = CW_RECEIVE;
   modeSelectInR.gain(0, 1);
@@ -759,12 +721,6 @@ void CalibratePreamble(int setZoom) {
   modeSelectOutExL.gain(0, 1);
   modeSelectOutExR.gain(0, 1);
 
-  xrState = TRANSMIT_STATE;
-
-  //digitalWrite(RXTX, HIGH);  // Turn on transmitter.
-  BandInformation();
-  ShowTransmitReceiveStatus();
-  ShowSpectrumdBScale();
 }
 
 /*****
@@ -788,20 +744,13 @@ void CalibratePost() {
   T41State = SSB_RECEIVE;
   Q_in_L.clear();
   Q_in_R.clear();
-  currentFreq = userCurrentFreq;
-  TxRxFreq = userTxRxFreq;
-  NCOFreq = userNCOFreq;
-  centerFreq = userCenterFreq;
-  // xrState = RECEIVE_STATE;
+ 
   calibrateFlag = 0;  // this was set when the Calibration menu option was selected
   calFreqShift = 0;
-  currentScale = userScale;  //  Restore vertical scale to user preference.
-  //ShowSpectrumdBScale();
-  xmtMode = userXmtMode;                        // Restore the user's floor setting.   July 27, 2023
-  transmitPowerLevel = transmitPowerLevelTemp;  // Restore the user's transmit power level setting.   August 15, 2023
-  EEPROMWrite();                                // Save calibration numbers and configuration.   August 12, 2023
-  zoomIndex = userZoomIndex - 1;
-  spectrum_zoom = userZoomIndex;
+ 
+  EEPROMWrite();  // Save calibration numbers and configuration.   August 12, 2023
+                  // zoomIndex = userZoomIndex - 1;
+  //spectrum_zoom = userZoomIndex;
   ButtonZoom();     // Restore the user's zoom setting.  Note that this function also modifies spectrum_zoom.
   EEPROMWrite();    // Save calibration numbers and configuration.   August 12, 2023
   tft.writeTo(L2);  // Clear layer 2.   July 31, 2023
@@ -866,6 +815,7 @@ void tuneCalParameter(int indexStart, int indexEnd, float increment, float *IQCo
     tft.print(*IQCorrectionFactor, 3);
   }
   *IQCorrectionFactor = correctionFactor + adjMinIndex * increment;
+  //*IQCorrectionFactor=-*IQCorrectionFactor
   tft.fillRect(30, 20, 420, CHAR_HEIGHT, RA8875_BLACK);
 }
 /*====
@@ -928,225 +878,36 @@ void autotune(float *amp, float *phase, float gain_coarse_max, float gain_coarse
       void
  *****/
 void DoReceiveCalibrate() {
-  stateMachine = RX_STATE;  // what calibration step are we in
-  int task = -1;            // captures the button presses
-  int lastUsedTask = -2;
-  int recCalDirections = 0;
-  adjdB = 0;
-
-
-
-  tft.setTextColor(RA8875_CYAN);
-  CalibratePreamble(0);
-  DrawSpectrumDisplayContainer();
-  tft.setFontScale((enum RA8875tsize)1);
-  tft.setTextColor(RA8875_CYAN);
-  tft.setCursor(550, 300);
-  tft.print("Receive I/Q ");
-  tft.setCursor(550, 350);
-  tft.print("RX Calibrate");
-  // CLK0/1 will be set to centerFreq + IFFreq
-  SetFreq();
-
-  Clk2SetFreq = (centerFreq + 2 * IFFreq) * SI5351_FREQ_MULT;
-  si5351.output_enable(SI5351_CLK2, 1);
+  recCalOnFlag = 1;
+  updateCalDisplayFlag = 1;
+  stateMachine = RX_STATE;
+    Clk2SetFreq = (centerFreq ) * SI5351_FREQ_MULT;
+  
   si5351.set_freq(Clk2SetFreq, SI5351_CLK2);
+   si5351.drive_strength(SI5351_CLK0, SI5351_DRIVE_CURRENT);                                // KI3P July 27 2024, updated to mirror Setup()
+      si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_CURRENT);                                // KI3P July 27 2024, updated to mirror Setup()
+      si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_CURRENT);                                // KF5N July 10 2023
+      si5351.set_ms_source(SI5351_CLK0, SI5351_PLLA);                                          // KI3P July 27 2024, updated to mirror Setup()
+      si5351.set_ms_source(SI5351_CLK1, SI5351_PLLA);
+      SetFreq();
+      si5351.output_enable(SI5351_CLK2, 1);  
   digitalWrite(XMIT_MODE, XMIT_CW);
   digitalWrite(CW_ON_OFF, CW_ON);
   digitalWrite(CAL, CAL_ON);
-  uint8_t out_Atten = 60;
+  uint8_t out_Atten = 40;
   uint8_t in_atten = 60;
-  uint8_t previous_out_Atten = out_Atten;
-  uint8_t previous_in_atten = in_atten;
   SetRF_InAtten(in_atten);
   SetRF_OutAtten(out_Atten);
+
   zoomIndex = 0;
-  calTypeFlag = 0;  // RX cal
-  bool calState = true;
-  bool changeOutAtten = true;  // let's you change in_atten when false
-    //======
-    //tft.writeTo(L2);
-  /*int bignum;
-  int centerIdx;
-  int pos_help;
-  float disp_freq;
-  char txt[16];
-  float freq_calc;
-  float grat;
-  ultoa((freq_calc + (centerIdx * grat)), txt, DEC);
-  disp_freq = freq_calc + (centerIdx * grat);
-  bignum = (int)disp_freq;
-  itoa(bignum, txt, DEC);  // Make into a string
-  tft.setTextColor(RA8875_GREEN);
+  //ButtonZoom();
+  IQChoice = 5;
+  return;
 
-  tft.setCursor(centerLine - 140, 300);  //AFP 10-20-22
-  tft.print(txt);
-  DrawFrequencyBarValue();*/
+
+
   //===========
-  while (true) {
-
-    val = ReadSelectedPushButton();
-    if (val != BOGUS_PIN_READ) {
-      val = ProcessButtonPress(val);
-      if (val != lastUsedTask && task == -100) task = val;
-      else task = BOGUS_PIN_READ;
-    }
-    adjdB = ShowSpectrum2();  // this is where the IQ data processing is applied
-    val = ReadSelectedPushButton();
-    if (val != BOGUS_PIN_READ) {
-      val = ProcessButtonPress(val);
-      if (val != lastUsedTask && task == -100) task = val;
-      else task = BOGUS_PIN_READ;
-    }
-    switch (task) {
-      case (CAL_AUTOCAL):
-        {
-          // Run through the autocal routine
-          if (stateMachine == RX_STATE) {
-            correctionIncrement = 0.001,
-            autotune(&IQAmpCorrectionFactor[currentBand], &IQPhaseCorrectionFactor[currentBand],
-                     GAIN_COARSE_MAX, GAIN_COARSE_MIN,
-                     PHASE_COARSE_MAX, PHASE_COARSE_MIN,
-                     GAIN_COARSE_STEP2_N, PHASE_COARSE_STEP2_N,
-                     GAIN_FINE_N, PHASE_FINE_N, false);
-          }
-          break;
-        }
-      case (CAL_TOGGLE_OUTPUT):
-        {
-          // Toggle the transmit signal between the CAL line and the RF output
-          if (calState) {
-            calState = false;
-            digitalWrite(CAL, calState);
-            digitalWrite(CW_ON_OFF, CW_OFF);
-            radioState = SSB_RECEIVE_STATE;
-            xrState = RECEIVE_STATE;
-            T41State = SSB_RECEIVE;
-            digitalWrite(CW_ON_OFF, CW_ON);
-
-          } else {
-            calState = true;
-            digitalWrite(RXTX, LOW);
-            radioState = CW_TRANSMIT_STRAIGHT_STATE;  //
-            userXmtMode = xmtMode;
-          }
-          digitalWrite(CAL, calState);
-          break;
-        }
-        // Toggle gain and phase
-      case CAL_CHANGE_TYPE:  //CAL_CHANGE_TYPE= 16 = User2
-        {
-          IQCalType = !IQCalType;
-          break;
-        }
-      case CAL_CHANGE_INC:  //CAL_CHANGE_INC =17 =User3
-        {
-          corrChange = !corrChange;
-          if (corrChange == 1) {
-            correctionIncrement = 0.001;  //AFP 2-7-23
-          } else {                        //if (corrChange == 0)                   // corrChange is a toggle, so if not needed JJP 2/5/23
-            correctionIncrement = 0.01;   //AFP 2-7-23
-          }
-          tft.setFontScale((enum RA8875tsize)0);
-          tft.setTextColor(RA8875_CYAN);
-          tft.fillRect(650, 90, 50, tft.getFontHeight(), RA8875_BLACK);
-          tft.setCursor(650, 90);
-          tft.print(correctionIncrement, 3);
-          break;
-        }
-
-      case MENU_OPTION_SELECT:
-        {
-          tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
-          EEPROMData.IQAmpCorrectionFactor[currentBand] = IQAmpCorrectionFactor[currentBand];
-          EEPROMData.IQPhaseCorrectionFactor[currentBand] = IQPhaseCorrectionFactor[currentBand];
-          IQChoice = 6;
-          break;
-        }
-      case (CAL_TOGGLE_ATTENUATOR):  //CAL_TOGGLE_ATTENUATOR = 15 User1
-        {
-          changeOutAtten = !changeOutAtten;
-          break;
-        }
-        //case (2):  //CAL_TOGGLE_ATTENUATOR = 15 User1
-        // {
-        // ButtonBandIncrease();
-        //  break;
-        // }
-      case (CAL_DIRECTIONS):  //Filter
-        {
-          recCalDirections = !recCalDirections;
-          if (recCalDirections != 0) {
-            tft.setFontScale((enum RA8875tsize)0);
-            tft.setTextColor(RA8875_CYAN);
-            tft.setCursor(10, 270);
-            tft.print("Directions");
-            tft.setCursor(25, 285);
-            tft.print("* Jumper JP4: Cal Isolation");
-            tft.setCursor(25, 300);
-            tft.print("* Set Ref Level w Attenuators");
-            tft.setCursor(25, 315);
-            tft.setTextColor(RA8875_YELLOW);
-            tft.print("Option 1 Manual Adjust");
-            tft.setTextColor(RA8875_CYAN);
-            tft.setCursor(25, 330);
-            tft.print("* Adjust Gain (Filter Encoder) for min IQ image (Red)");
-            tft.setCursor(25, 345);
-            tft.print("* Toggle Gain Phase - User2");
-            tft.setCursor(25, 360);
-            tft.print("* Adjust Phase for minimum");
-            tft.setCursor(25, 375);
-            tft.print("* Alternate between Gain and Phase adjustment");
-            tft.setCursor(25, 390);
-            tft.setTextColor(RA8875_YELLOW);
-            tft.print("OPtion 2 - Auto IQ Tune");
-            tft.setTextColor(RA8875_CYAN);
-            tft.setCursor(25, 405);
-            tft.print("* Press Decode - Auto Tune will start");
-            tft.setCursor(25, 420);
-            tft.print("* Repeat to refine");
-
-            //tft.print("* Input S-Unit values");
-
-
-          } else {
-            tft.fillRect(0, 272, 517, 207, RA8875_BLACK);  // Erase waterfall
-          }
-          break;
-        }
-      default:
-        break;
-    }                                     // End switch
-    if (task != -1) lastUsedTask = task;  //  Save the last used task.
-    task = -100;                          // Reset task after it is used.
-    if (IQCalType == 0) {                 // AFP 2-11-23
-
-      IQAmpCorrectionFactor[currentBand] = GetEncoderValueLiveRCal(-2.0, 2.0, IQAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain", 3, 0);
-      //IQAmpCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain");
-    } else {
-      IQPhaseCorrectionFactor[currentBand] = GetEncoderValueLiveRCal(-2.0, 2.0, IQPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase", 3, 0);
-      //IQPhaseCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase");
-    }
-    // Adjust the value of the TX attenuator:
-    if (changeOutAtten) {
-      out_Atten = GetFineTuneValueLive(0, 63, out_Atten, 1, (char *)"Out Atten");
-    } else {
-      in_atten = GetFineTuneValueLive(0, 63, in_atten, 1, (char *)"In Atten");
-    }
-    // Update via I2C if the attenuation value changed
-    if (out_Atten != previous_out_Atten) {
-      SetRF_OutAtten(out_Atten);
-      previous_out_Atten = out_Atten;
-    }
-    if (in_atten != previous_in_atten) {
-      SetRF_InAtten(in_atten);
-      previous_in_atten = in_atten;
-    }
-    if (val == MENU_OPTION_SELECT) {
-      break;
-    }
-  }
-  CalibratePost();
+  
 }
 
 /*****
@@ -1341,9 +1102,7 @@ void DoXmitCalibrate() {
 
 
     tft.setFontScale((enum RA8875tsize)0);
-    // tft.setTextColor(RA8875_YELLOW);
-    //  tft.setCursor(25, 393);
-    // tft.print("Press Dir Freq for directions");
+
     tft.setTextColor(RA8875_GREEN);
     tft.setCursor(465, 123);
     tft.print("User1 - IQ level input increment");
@@ -1351,7 +1110,6 @@ void DoXmitCalibrate() {
     tft.print("User2 - Gain/Phase");
     tft.setCursor(465, 153);
     tft.print("User3 - Gain/Phase increment");
-
 
     //==============
     while (digitalRead(PTT) == LOW) {
@@ -1371,14 +1129,13 @@ void DoXmitCalibrate() {
         val = ProcessButtonPress(val);
         if (val != lastUsedTask) {
           task = val;
-          //Serial.print("task= ");
-          //Serial.println(task);
+
           lastUsedTask = val;
         } else {
           task = BOGUS_PIN_READ;
         }
       }
-      //Serial.print("task= ");Serial.println(task);
+
       switch (task) {
           // Toggle gain and phase
         case (CAL_CHANGE_TYPE):  //CAL_CHANGE_TYPE=16 User2
@@ -1508,9 +1265,12 @@ void ProcessIQData2() {
     // We only have to configure the DAC output if we're in the TX phase of the TX configuration
     // Use pre-calculated sin & cos instead of Hilbert
     // Sidetone = 750 Hz. Sampled at 24 kHz
+    //================
+
     arm_scale_f32(cosBuffer2, bandOutputFactor, float_buffer_L_EX, 256);
     arm_scale_f32(sinBuffer2, bandOutputFactor, float_buffer_R_EX, 256);
 
+    //=========
     // We apply the correction factor with a varying sign here because this is how we
     // select the sideband to be transmitted
     if (bands[currentBand].mode == DEMOD_LSB) {
@@ -1568,15 +1328,21 @@ void ProcessIQData2() {
       Q_in_L.freeBuffer();
       Q_in_R.freeBuffer();
     }
-    rfGainValue = pow(10, (float)rfGainAllBands / 20);                                   //AFP 2-11-23
+    //=============== AFP 01-25-25  IQ Test Signals
+    rfGainValue = pow(10, (float)rfGainAllBands / 20);
+//==============
+#ifdef IQ_REC_TEST
+    arm_scale_f32(sinBuffer2K, .015, float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 01-25-25
+    arm_scale_f32(cosBuffer2K, .015, float_buffer_R, BUFFER_SIZE * N_BLOCKS);
+#endif
+
+
+    //AFP 2-11-23
+    rfGainValue = pow(10, (float)rfGainAllBands / 20);
     arm_scale_f32(float_buffer_L, rfGainValue, float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
     arm_scale_f32(float_buffer_R, rfGainValue, float_buffer_R, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
 
 
-
-    /**********************************************************************************  AFP 12-31-20
-      Scale the data buffers by the RFgain value defined in bands[currentBand] structure
-    **********************************************************************************/
     arm_scale_f32(float_buffer_L, recBandFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
     arm_scale_f32(float_buffer_R, recBandFactor[currentBand], float_buffer_R, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
 
@@ -1589,7 +1355,7 @@ void ProcessIQData2() {
       arm_scale_f32(float_buffer_L, -IQAmpCorrectionFactor[currentBand], float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 04-14-22
       IQPhaseCorrection(float_buffer_L, float_buffer_R, IQPhaseCorrectionFactor[currentBand], BUFFER_SIZE * N_BLOCKS);
     }
-
+    FreqShift1();
     if (spectrum_zoom == SPECTRUM_ZOOM_1) {
       // This is executed during receive cal
       CalcZoom1Magn();
@@ -1668,12 +1434,12 @@ float ShowSpectrum2() {
   int cal_bins[2] = { 0, 0 };
   int capture_bins;  // Sets the number of bins to scan for signal peak.
   if (calTypeFlag == 0) {
-    capture_bins = 10;
+    capture_bins = 50;
     cal_bins[0] = 384;
     cal_bins[1] = 128;
   }  // Receive calibration
 
-  /******************************
+  /****************************** Transmit cal
    * The same LO clock is used for transmit and receive, so the bin tone and image are
    * found symmetric around the center of the FFT. This offset is 750 Hz (see sineTone() 
    * in Utility.cpp). We have zoom of x16, so the bin size is 375/16 = 23.4 Hz. So the 
@@ -1848,7 +1614,7 @@ void ProcessIQDataFreq() {
       return;
     }
 
-    FreqShift1();
+    //FreqShift1();
     //FreqShift2();
 
     if (spectrum_zoom != SPECTRUM_ZOOM_1) {

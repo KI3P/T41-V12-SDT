@@ -26,11 +26,14 @@ Several libraries need to be installed manually. The manual process is:
 The libraries to install using this process are:
 
 * OpenAudio: [https://github.com/chipaudette/OpenAudio_ArduinoLibrary](https://github.com/chipaudette/OpenAudio_ArduinoLibrary)
-* RA8875: [https://github.com/mjs513/RA8875/tree/RA8875_t4](https://github.com/mjs513/RA8875/tree/RA8875_t4)
 * Regressino: [https://github.com/cubiwan/Regressino/tree/master](https://github.com/cubiwan/Regressino/tree/master)
 * Arduino Regression: [https://github.com/nkaaf/Arduino-Regression](https://github.com/nkaaf/Arduino-Regression)
 
 ### Compiler settings
+
+The file `Config.h` includes several compiler options which add, subtract, or adjust parameters of some features. Please review this file prior to compilation. 
+
+Completing a FLASH erase of the Teensy is strongly recommended before uploading this new version. The instructions for performing a FLASH erase of the Teensy are at [this link](https://www.pjrc.com/store/teensy41.html#programming) under the bullet "Memory Wipe & LED Blink Restore".
 
 Select the Teensy 4.1 board, and select the following build configuration options: 
 
@@ -38,7 +41,7 @@ Select the Teensy 4.1 board, and select the following build configuration option
 * Tools->USB Type->Dual Serial
 * Tools->CPU Speed->600 MHz
 
-The memory usage after compiling should look like this:
+Some people report success running the CPU at 528 MHz. The memory usage after compiling should look like this:
 
 ```
    FLASH: code:272292, data:129336, headers:8988   free for files:7715848

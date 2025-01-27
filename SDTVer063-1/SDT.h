@@ -18,7 +18,7 @@ extern struct maps myMapFiles[];
 #include "LPF_Control_V12.h"
 #include "BPF_Control.h"
 //======================================== New libraries needed for latest version ======================================
-#include <Timer.h> 									// https://github.com/sstaub/Timer
+#include <Timer.h>									// https://github.com/sstaub/Timer
 #include <Chrono.h>                                 // https://github.com/SofaPirate/Chrono/
 #include <LinearRegression.h>                       // https://github.com/cubiwan/Regressino/
 #include <Linear2DRegression.hpp>                   // https://github.com/nkaaf/Arduino-Regression
@@ -382,7 +382,17 @@ extern struct maps myMapFiles[];
 //                                                  for other encoders or libs we use 1.0f
 #define MAX_ZOOM_ENTRIES            5
 //#define FREQ_SEP_CHARACTER          ','
+//================== Auto Cal defines AFP 01-26-25
 
+#define GAIN_COARSE_MAX 1.2
+#define GAIN_COARSE_MIN 0.8
+#define PHASE_COARSE_MAX 0.2
+#define PHASE_COARSE_MIN -0.2
+#define GAIN_COARSE_STEP2_N 5
+#define PHASE_COARSE_STEP2_N 5
+#define GAIN_FINE_N 3
+#define PHASE_FINE_N 3
+//================
 //========================================================= Pin Assignments =====================================
 //========================================= Pins 0 and 1 are usually reserved for the USB COM port communications
 //========================================= On the Teensy 4.1 board, pins GND, 0-12, and pins 13-23, 3.3V, GND, and
@@ -795,6 +805,8 @@ extern uint32_t corrResultIndex;  //AFP 02-02-22
 extern float32_t sinBuffer[];    //AFP 02-02-22
 extern float32_t sinBuffer2[];
 extern float32_t sinBuffer3[];
+extern float32_t sinBuffer2K[];
+extern float32_t cosBuffer2K[];
 extern float32_t float_Corr_Buffer[];   //AFP 02-02-22
 extern float32_t aveCorrResult;   //AFP 02-02-22
 extern float32_t magFFTResults[];
@@ -890,7 +902,10 @@ extern long filter_pos;
 extern long last_filter_pos;
 extern long plotIntervalValues[]; //AFP01-24-25
 extern float plotScaleValues[];  //AFP01-24-25
-
+extern int recIQIncrementIndex;
+extern float recIQIncrementValues[];   // AFP 01-24-25 
+extern float IQAmpCorrectionFactorOld; //AFP 01-26-25
+extern float IQPhaseCorrectionFactorOld;//AFP 01-26-25
 //================== Global Excite Variables =================
 
 #define IIR_ORDER 8
@@ -1699,6 +1714,7 @@ extern int zoom_sample_ptr;
 extern int zoomIndex;
 
 extern int updateDisplayFlag;
+extern int updateCalDisplayFlag;
 
 extern const int DEC2STATESIZE;
 extern const int INT1_STATE_SIZE;
@@ -2014,6 +2030,7 @@ extern float32_t max_gain;
 extern float32_t max_input;
 extern int calTypeFlag;
 extern int calOnFlag;
+extern int recCalOnFlag; 
 extern int freqCalFlag;
 extern int currentMicThreshold; // AFP 09-22-22
 extern float currentMicCompRatio;
@@ -2195,7 +2212,10 @@ void AltNoiseBlanking( float* insamp, int Nsam, float* E );
 void AMDemodAM();
 void AMDecodeSAM(); // AFP 11-03-22
 void AssignEEPROMObjectToVariable();
-
+void autotuneRec(float *amp, float *phase, float gain_coarse_max, float gain_coarse_min,
+              float phase_coarse_max, float phase_coarse_min,
+              int gain_coarse_step2_N, int phase_coarse_step2_N,
+              int gain_fine_N, int phase_fine_N, bool phase_first) ;
 int  BandOptions();
 #if !defined(EXCLUDE_BEARING)
 float BearingHeading( char *dxCallPrefix );
@@ -2321,6 +2341,7 @@ float GetEncoderValueLiveFreq (float minValue, float maxValue, float startValue,
 float GetEncoderValueLiveIQLevel(float minValue, float maxValue, float startValue, float increment, char prompt[]);
 float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[]);
 float GetEncoderValueLiveRCal(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals, int IQEXChoice);
+float GetEncoderValueLiveRCal2(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals, int IQEXChoice);
 float GetEncoderValueLiveXCal(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals, int IQEXChoice);
 int GetEncoderValueLiveInt( int minValue, int maxValue, int startValue, int increment, char prompt[] );
 int GetFineTuneValueLive( int minValue, int maxValue, int startValue, int increment, char prompt[] );

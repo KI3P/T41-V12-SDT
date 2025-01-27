@@ -30,6 +30,8 @@
 //#define DEBUG8
 //#define DEBUG9
 
+//#define IQ_REC_TEST
+
 // Uncomment the line below if your main board is populated with 
 // the ATTiny shutdown routine activation hardware
 #define MAIN_BOARD_ATTINY_SHUTDOWN

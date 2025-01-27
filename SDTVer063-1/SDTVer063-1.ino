@@ -1192,6 +1192,8 @@ float32_t cosBuffer3[256];
 float32_t sinBuffer[256];
 float32_t sinBuffer2[256];
 float32_t sinBuffer3[256];
+float32_t sinBuffer2K[2048];
+float32_t cosBuffer2K[2048];
 float32_t aveCorrResult;
 float32_t aveCorrResultR;
 float32_t aveCorrResultL;
@@ -1583,6 +1585,7 @@ int buttonRead = 0;
 int calibrateFlag = 0;
 int calTypeFlag = 0;
 int calOnFlag = 0;
+int recCalOnFlag = 0;
 int freqCalFlag=0;
 int chipSelect = BUILTIN_SDCARD;
 int countryIndex = -1;
@@ -1677,6 +1680,7 @@ int zoom_sample_ptr = 0;
 int zoomIndex = 1;                 //AFP 9-26-22
 int tuneIndex = DEFAULTFREQINDEX;  //AFP 2-10-21
 int updateDisplayFlag = 1;
+int updateCalDisplayFlag=0;
 int xrState;  // Is the T41 in xmit or rec state? 1 = rec, 0 = xmt
 
 const int BW_indicator_y = SPECTRUM_TOP_Y + SPECTRUM_HEIGHT + 2;
@@ -1757,7 +1761,11 @@ long TxRxFreqDE;
 long gapEnd, gapLength, gapStart;    // Time for noise measures
 long ditTime = 80L, dahTime = 240L;  // Assume 15wpm to start
 long plotIntervalValues[] = {1200, 3600, 10800, 36000 };  // AFP 01-24-25
-float plotScaleValues[]={0.2,1.0,5.0,10.0};                // AFP 01-24-25
+float plotScaleValues[]={0.2,1.0,5.0,10.0};   
+
+float recIQIncrementValues[]={0.001,0.01,0.1};   // AFP 01-24-25 
+int recIQIncrementIndex=0;
+          
 ulong samp_ptr;
 
 uint64_t output12khz;
@@ -1765,10 +1773,11 @@ uint64_t output12khz;
 
 unsigned long ditLength;
 unsigned long transmitDitLength;  // JJP 8/19/23
-
+float IQAmpCorrectionFactorOld=0; //AFP 01-26-25
+float IQPhaseCorrectionFactorOld=0;//AFP 01-26-25
 float correctionIncrement = 0.01;
  float freqErrorOld;
-float corrChangeIQIncrement = 1.0;
+float corrChangeIQIncrement = 0.01;
 float volTimer = 0;
 
 int SAMPrintFlag=0;
@@ -2911,6 +2920,7 @@ void setup() {
   sgtl5000_2.enable();
   sgtl5000_2.inputSelect(AUDIO_INPUT_LINEIN);
   sgtl5000_2.volume(0.5);
+
   pinMode(FILTERPIN15M, OUTPUT);
   pinMode(FILTERPIN20M, OUTPUT);
   pinMode(FILTERPIN40M, OUTPUT);
@@ -3072,6 +3082,17 @@ void setup() {
     theta = kf * 0.19634950849362;  // Simplify terms: theta = kf * 2 * PI * freqSideTone / 24000  JJP 6/28/23
     sinBuffer[kf] = sin(theta);
   }
+//=== AFP 01-25-25
+#ifdef IQ_REC_TEST//
+  for (int kf = 0; kf < 2048; kf++)  //Calc 2k sine cos  wave
+  {
+    theta = kf *  2 * PI *49000 / 192000;  // Simplify terms: theta = kf * 2 * PI * freqSideTone / 192000  
+    sinBuffer2K[kf] = sin(theta);
+    cosBuffer2K[kf] = cos(theta+2*PI*.006);
+     //cosBuffer2K[kf] = cos(theta);
+  }
+  #endif
+  //=======
   SetKeyPowerUp();  // Use keyType and paddleFlip to configure key GPIs.  KF5N August 27, 2023
   SetDitLength(currentWPM);
   SetTransmitDitLength(currentWPM);
@@ -3111,6 +3132,7 @@ void setup() {
   sidetone_oscillator.frequency(SIDETONE_FREQUENCY);
   Debug("Setup complete");
   IQCalType = 0;
+   decoderFlag=0;
 }
 //============================================================== END setup() =================================================================
 //===============================================================================================================================
@@ -3187,10 +3209,9 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
           modeSelectOutExR.gain(0, 0);
           phaseLO = 0.0;
           barGraphUpdate = 0;
-		  if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {                                                                   //AFP 09-01-22
-        	return; 
+          if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {                                                                   //AFP 09-01-22
+            return; 
           }
-
         }
         lastState = SSB_RECEIVE_STATE;
         ShowSpectrum();
@@ -3237,13 +3258,13 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         //ShowTransmitReceiveStatus();
 
         while (digitalRead(PTT) == LOW) {
-			//ShowTXAudio();
-			ExciterIQData();
-			ExecuteButtonPress(ProcessButtonPress(ReadSelectedPushButton()));
-			if (IQChoice == 4)
-			{
-				CalibrateOptions(IQChoice);
-			}
+          //ShowTXAudio();
+          ExciterIQData();
+          ExecuteButtonPress(ProcessButtonPress(ReadSelectedPushButton()));
+          if (IQChoice == 4)
+          {
+            CalibrateOptions(IQChoice);
+          }
 
 #if defined(V12_CAT)
           CATSerialEvent();
@@ -3287,33 +3308,33 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         //sidetone_oscillator.amplitude(-10);
         setup_cw_transmit_mode();
         cwTimer = millis();
-		int cwstate = 1;
-		int cwstate_old = 0;
+        int cwstate = 1;
+		    int cwstate_old = 0;
         while (millis() - cwTimer <= cwTransmitDelay)  //Start CW transmit timer on
         {
-			// This small state engine keeps the I2C traffic to a minimum when in CW state
-			if (digitalRead(paddleDit) == LOW)
-			{
-				cwstate = 1;
-				cwTimer = millis();
-			} else
-			{
-				cwstate = 0;
-			}
-			if (cwstate != cwstate_old)
-			{
-				if (cwstate)
-				{
-					// start transmitting
-		            start_sending_cw();
-				} else 
-				{
-					// Stop transmitting
-					keyPressedOn = 0;
-					stop_sending_cw();
-				}
-				cwstate_old = cwstate;
-			}
+          // This small state engine keeps the I2C traffic to a minimum when in CW state
+          if (digitalRead(paddleDit) == LOW)
+          {
+            cwstate = 1;
+            cwTimer = millis();
+          } else
+          {
+            cwstate = 0;
+          }
+          if (cwstate != cwstate_old)
+          {
+            if (cwstate)
+            {
+              // start transmitting
+              start_sending_cw();
+            } else 
+            {
+              // Stop transmitting
+              keyPressedOn = 0;
+              stop_sending_cw();
+            }
+            cwstate_old = cwstate;
+          }
         }
         xrState = RECEIVE_STATE;
         digitalWrite(RXTX, LOW);  // End Straight Key Mode
