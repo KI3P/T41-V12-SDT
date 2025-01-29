@@ -3185,6 +3185,10 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
     //================  SSB  Receive State =============
     case (SSB_RECEIVE_STATE):
       {
+        if (IQChoice == 4)
+        {
+          IQChoice = CalibrateOptions(IQChoice);
+        }
         //ShowTransmitReceiveStatus();
         if (lastState != radioState) {  // G0ORX 01092023
           //Serial.print("Radio State ssb= ");
@@ -3240,10 +3244,10 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         SetFreq();
         digitalWrite(XMIT_MODE, XMIT_SSB);  // KI3P, July 28, 2024
         setBPFPath(BPF_IN_TX_PATH);
-        currentRF_OutAtten = 0;
+        currentRF_OutAtten = XAttenSSB[currentBand];
         if (currentRF_OutAtten > 63) currentRF_OutAtten = 63;
         if (currentRF_OutAtten < 0) currentRF_OutAtten = 0;
-        SetRF_OutAtten(0);
+        SetRF_OutAtten(currentRF_OutAtten);
 
         digitalWrite(RXTX, HIGH);  //xmit on
         xrState = TRANSMIT_STATE;
@@ -3256,14 +3260,17 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         modeSelectOutExL.gain(0, powerOutSSB[currentBand]);  //AFP 10-21-22
         modeSelectOutExR.gain(0, powerOutSSB[currentBand]);  //AFP 10-21-22
         //ShowTransmitReceiveStatus();
-
+        if (IQChoice == 4)
+        {
+          IQChoice = CalibrateOptions(IQChoice);
+        }
         while (digitalRead(PTT) == LOW) {
           //ShowTXAudio();
           ExciterIQData();
           ExecuteButtonPress(ProcessButtonPress(ReadSelectedPushButton()));
           if (IQChoice == 4)
           {
-            CalibrateOptions(IQChoice);
+            IQChoice = CalibrateOptions(IQChoice);
           }
 
 #if defined(V12_CAT)
@@ -3292,7 +3299,10 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
     case CW_RECEIVE_STATE:
       {
         //ShowTransmitReceiveStatus();
-
+        if (IQChoice == 1)
+        {
+          CalibrateOptions(IQChoice);
+        }
         if (lastState != radioState) {  // G0ORX 01092023
           setup_cw_receive_mode();
           lastState = CW_RECEIVE_STATE;
@@ -3304,6 +3314,10 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
       //================  CW Straight Key Transmit State =============
     case CW_TRANSMIT_STRAIGHT_STATE:
       {
+        if (IQChoice == 1)
+          {
+            IQChoice = CalibrateOptions(IQChoice);
+          }
         //ShowTransmitReceiveStatus();
         //sidetone_oscillator.amplitude(-10);
         setup_cw_transmit_mode();
@@ -3312,6 +3326,10 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
 		    int cwstate_old = 0;
         while (millis() - cwTimer <= cwTransmitDelay)  //Start CW transmit timer on
         {
+          if (IQChoice == 1)
+          {
+            IQChoice = CalibrateOptions(IQChoice);
+          }
           // This small state engine keeps the I2C traffic to a minimum when in CW state
           if (digitalRead(paddleDit) == LOW)
           {

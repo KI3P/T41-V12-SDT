@@ -125,12 +125,12 @@ void CalibrateFrequency() {
 
   digitalWrite(CW_ON_OFF, CW_OFF);
   digitalWrite(CAL, CAL_OFF);
-  uint8_t out_Atten = 60;
-  uint8_t in_atten = 20;
+  //uint8_t out_Atten = 60;
+  //uint8_t in_atten = 20;
   //uint8_t previous_out_Atten = out_Atten;
   //uint8_t previous_in_atten = in_atten;
-  SetRF_InAtten(in_atten);
-  SetRF_OutAtten(out_Atten);
+  //SetRF_InAtten(in_atten);
+  //SetRF_OutAtten(out_Atten);
   zoomIndex = 0;
   // let's you change in_atten when false
   int val;
@@ -619,16 +619,33 @@ void CalibrateFrequency() {
             break;
 
           case (CAL_CHANGE_INC):  // 17 User3 - CAL_CHANGE_INC increment17 User3
-            {                     //
-              corrChange = !corrChange;
-              calOnFlag = 1;
-              if (corrChange == 1) {  // Toggle increment value
-                incrementSAM = 100;   // AFP 2-11-23
-              } else {
-                incrementSAM = 1;  // AFP 2-11-23
+            {                      //
+              switch (incrementSAM){
+                case 1:
+                  incrementSAM = 10;
+                  break;
+                case 10:
+                  incrementSAM = 100;
+                  break;
+                case 100:
+                  incrementSAM = 1000;
+                  break;
+                case 1000:
+                  incrementSAM = 1;
+                  break;
+                default:
+                  incrementSAM = 1;
+                  break;
               }
-              tft.setFontScale((enum RA8875tsize)0);
+              //corrChange = !corrChange;
+              //if (corrChange == 1) {  // increase increment value
+              //  incrementSAM = 100;   // AFP 2-11-23
+              //} else {
+              //  incrementSAM = 1;  // AFP 2-11-23
+              //}
 
+              calOnFlag = 1;
+              tft.setFontScale((enum RA8875tsize)0);
               tft.fillRect(10, 200, 50, tft.getFontHeight(), RA8875_BLACK);
               tft.setTextColor(RA8875_YELLOW);
               tft.setCursor(10, 200);

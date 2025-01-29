@@ -46,29 +46,28 @@ int CalibrateOptions(int IQChoice) {
         val = ProcessButtonPress(val);  // Use ladder value to get menu choice
         if (val == MENU_OPTION_SELECT)  // Yep. Make a choice??
         {
-          digitalWrite(CW_ON_OFF, CW_OFF);
           tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
 
           EEPROMWrite();
           calibrateFlag = 0;
 
           IQChoice = 5;
-
           return IQChoice;
         }
       }
+      return 1; // we're still in this state
       break;
     case 2:                  // IQ Receive Cal - Gain and Phase
       DoReceiveCalibrate();  // This function was significantly revised.  KF5N August 16, 2023
 
       IQChoice = 5;
-
+      return IQChoice;
       break;
     case 3:               // IQ Transmit Cal - Gain and Phase  //AFP 2-21-23
       DoXmitCalibrate();  // This function was significantly revised.  KF5N August 16, 2023
 
       IQChoice = 5;
-
+      return IQChoice;
       break;
     case 4:  // SSB PA Cal
 
@@ -97,6 +96,7 @@ int CalibrateOptions(int IQChoice) {
           return IQChoice;
         }
       }
+      return 4; // we're still in this state
       break;  // Missing break.  KF5N August 12, 2023
 
 
@@ -119,7 +119,7 @@ int CalibrateOptions(int IQChoice) {
       micChoice = -1;
       break;
   }
-  return 1;
+  return 5;
 }  //int CalibrateOptions(int IQChoice)
 // ==============  AFP 10-22-22 ==================
 /*****
