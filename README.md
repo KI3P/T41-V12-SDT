@@ -65,6 +65,7 @@ As of the time of this writing this author is running Arduino IDE 2.3.4, Teensyd
 Within the Arduino IDE configure the build as follows:
 
 - Tools -> Board -> Teensy -> Teensy 4.1
+- Tools -> Reload Board Data
 - Tools -> Optimize -> Faster with LTO
 - Tools -> USB Type -> Dual Serial
 - Tools -> CPU Speed -> 528MHz
