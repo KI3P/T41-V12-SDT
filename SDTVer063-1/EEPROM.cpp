@@ -907,7 +907,7 @@ FLASHMEM void EEPROMSaveDefaults2() {
   EEPROMData.freqCorrectionFactor = 0;  //68000;
 #else
   //Conventional crystal with freq offset needs a correction factor
-  EEPROMData.freqCorrectionFactor = 60000;
+  EEPROMData.freqCorrectionFactor = 0;
 #endif
 
   for (int i = 0; i < EQUALIZER_CELL_COUNT; i++) {
@@ -2289,7 +2289,7 @@ void ClearEEPROM() {
     void
 *****/
 void EEPROMStartup() {
- // EEPROMSaveDefaults2();
+//  EEPROMSaveDefaults2();
   EEPROMRead();                                                       // Read current stored data
                                                                       //EEPROMShow();
   if (strcmp(EEPROMData.versionSettings, EEPROMSetVersion()) == 0) {  // Are the versions the same?

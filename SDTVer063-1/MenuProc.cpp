@@ -26,10 +26,11 @@ int CalibrateOptions(int IQChoice) {
   tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 30, CHAR_HEIGHT, RA8875_BLACK);
   //  float transmitPowerLevelTemp;  //AFP 05-11-23
   tft.fillRect(0, 270, 510, 190, RA8875_BLACK);
- SAMPrintFlag=1;
+  SAMPrintFlag = 1;
   switch (IQChoice) {
 
     case 0:  // Calibrate Frequency  - uses WWV
+      freqCalFlag = 1;  //AFP 01-30-25
       CalibrateFrequency();
       break;
 

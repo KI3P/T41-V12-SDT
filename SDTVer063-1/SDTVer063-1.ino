@@ -1192,8 +1192,6 @@ float32_t cosBuffer3[256];
 float32_t sinBuffer[256];
 float32_t sinBuffer2[256];
 float32_t sinBuffer3[256];
-float32_t sinBuffer2K[2048];
-float32_t cosBuffer2K[2048];
 float32_t aveCorrResult;
 float32_t aveCorrResultR;
 float32_t aveCorrResultL;
@@ -1330,6 +1328,10 @@ int pos_left = centerLine - (int)(bands[currentBand].FLoCut / 1000.0 * pixel_per
 int centerLine = (MAX_WATERFALL_WIDTH + SPECTRUM_LEFT_X) / 2;
 int fLoCutOld;
 int fHiCutOld;
+int freqCalFlag=0; //AFP 01-30-25
+int userFilterLowCut=bands[currentBand].FLoCut;   // AFP 01-30-25
+int userFilterHiCut= bands[currentBand].FHiCut;
+int userFreqCalMode= bands[currentBand].mode;
 int filterWidth = (int)((bands[currentBand].FHiCut - bands[currentBand].FLoCut) / 1000.0 * pixel_per_khz);
 int h = SPECTRUM_HEIGHT + 3;
 int8_t first_block = 1;
@@ -1586,7 +1588,6 @@ int calibrateFlag = 0;
 int calTypeFlag = 0;
 int calOnFlag = 0;
 int recCalOnFlag = 0;
-int freqCalFlag=0;
 int chipSelect = BUILTIN_SDCARD;
 int countryIndex = -1;
 int currentBand = BAND_40M;
@@ -1777,9 +1778,10 @@ float IQAmpCorrectionFactorOld=0; //AFP 01-26-25
 float IQPhaseCorrectionFactorOld=0;//AFP 01-26-25
 float correctionIncrement = 0.01;
  float freqErrorOld;
-float corrChangeIQIncrement = 0.01;
+float corrChangeIQIncrement = 1.0;
 float volTimer = 0;
-
+float SAMTimer=0;
+float SAMTimer2=0;
 int SAMPrintFlag=0;
 float dcfRefLevel;
 float CPU_temperature = 0.0;
@@ -2618,7 +2620,7 @@ void Splash() {
 
   tft.setFont(&FreeSansBold9pt7b);  // ID the front panel used. See MyCOnfigurationFile.h
   tft.setTextColor(DARKGREY);
-
+  tft.setFontDefault();
   // while (1) ;
   // Uncomment if you want to work on the Splash() code. It will shows the Splash screen forever
   MyDelay(SPLASH_DELAY);  // This is defined in MyConfigurationFIle.h. Set to 1000L for testing. Change to longer value when done test (e.g., 4000L).
@@ -2767,10 +2769,17 @@ void I2C_display() {
   //	{
   //MyDelay(I2C_DELAY_LONG);
   //	}
-
+  tft.setFontDefault();
   tft.fillWindow(RA8875_BLACK);
 }
 
+/*****
+  Purpose: 
+  Parameter list:
+    void
+  Return value:
+    void
+*****/
 void start_sending_cw() {
 
   si5351.output_enable(SI5351_CLK2, 1);
@@ -2782,6 +2791,13 @@ void start_sending_cw() {
   cwTimer = millis();  // extern cw keyer ( in cw_keyer.c ) doesn't know about this timer
 }
 
+/*****
+  Purpose: 
+  Parameter list:
+    void
+  Return value:
+    void
+*****/
 void stop_sending_cw() {
   digitalWrite(CW_ON_OFF, CW_OFF);
   modeSelectOutL.gain(2, 0);  // turn off the sidetone
@@ -2793,6 +2809,13 @@ void stop_sending_cw() {
   ShowTransmitReceiveStatus();
 }
 
+/*****
+  Purpose: 
+  Parameter list:
+    void
+  Return value:
+    void
+*****/
 void send_cw_dit() {
   long ditTimerOff;
   cwTimer = millis();
@@ -2806,7 +2829,14 @@ void send_cw_dit() {
     ;  // JJP 8/19/23
 }
 
-// Sends a dah and an inter-element space.  Depends on all the CW transmit stuff being set up JLK 2024-12-04
+/*****
+  Purpose: Sends a dah and an inter-element space.  Depends on all the CW transmit stuff being set up 
+  JLK 2024-12-04 
+  Parameter list:
+    void
+  Return value:
+    void
+*****/
 void send_cw_dah() {
   long ditTimerOff;
   long dahTimerOn;
@@ -2821,6 +2851,13 @@ void send_cw_dah() {
     ;
 }
 
+/*****
+  Purpose: 
+  Parameter list:
+    void
+  Return value:
+    void
+*****/
 void setup_cw_receive_mode() {
   T41State = CW_RECEIVE;
   ShowTransmitReceiveStatus();
@@ -2844,6 +2881,13 @@ void setup_cw_receive_mode() {
   keyPressedOn = 0;
 }
 
+/*****
+  Purpose: 
+  Parameter list:
+    void
+  Return value:
+    void
+*****/
 void setup_cw_transmit_mode() {
 
   Clk2SetFreq = (centerFreq + NCOFreq + CWToneOffsetsHz[EEPROMData.CWToneIndex])* SI5351_FREQ_MULT;
@@ -2890,12 +2934,10 @@ void cw_keyer() {
     void
 *****/
 void setup() {
-  Serial.begin(19200);
+  Serial.begin(38400);
   //while(!Serial);
-  //Serial1.begin(115200);
-  //SerialUSB1.begin(9600);
   if (CrashReport) {
-    Serial1.println(CrashReport);
+    Serial.println(CrashReport);
   }
 
 #if defined(V12_CAT)
@@ -3082,17 +3124,7 @@ void setup() {
     theta = kf * 0.19634950849362;  // Simplify terms: theta = kf * 2 * PI * freqSideTone / 24000  JJP 6/28/23
     sinBuffer[kf] = sin(theta);
   }
-//=== AFP 01-25-25
-#ifdef IQ_REC_TEST//
-  for (int kf = 0; kf < 2048; kf++)  //Calc 2k sine cos  wave
-  {
-    theta = kf *  2 * PI *49000 / 192000;  // Simplify terms: theta = kf * 2 * PI * freqSideTone / 192000  
-    sinBuffer2K[kf] = sin(theta);
-    cosBuffer2K[kf] = cos(theta+2*PI*.006);
-     //cosBuffer2K[kf] = cos(theta);
-  }
-  #endif
-  //=======
+
   SetKeyPowerUp();  // Use keyType and paddleFlip to configure key GPIs.  KF5N August 27, 2023
   SetDitLength(currentWPM);
   SetTransmitDitLength(currentWPM);
@@ -3132,7 +3164,8 @@ void setup() {
   sidetone_oscillator.frequency(SIDETONE_FREQUENCY);
   Debug("Setup complete");
   IQCalType = 0;
-   decoderFlag=0;
+  decoderFlag=0;
+  freqCalFlag=0; //AFP 01-30-25
 }
 //============================================================== END setup() =================================================================
 //===============================================================================================================================
@@ -3177,7 +3210,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
   //if(IQCalFlag != 1) radioState = SSB_RECEIVE_STATE;
   if (lastState != radioState) {
     SetFreq();  // Update frequencies if the radio state has changed.
-	ShowTransmitReceiveStatus();
+	  ShowTransmitReceiveStatus();
   }
 
 //                                                                      Begin radio state machines
@@ -3384,12 +3417,12 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
   //======================  End radio state machine =================
 
 
-  #ifdef DEBUG1
+  //#ifdef DEBUG1
   if (elapsed_micros_idx_t > (SR[SampleRate].rate / 960)) {
     ShowTempAndLoad();
     // Used to monitor CPU temp and load factors
   }
-  #endif
+  //#endif
 
   if (volumeChangeFlag == true) {
     volumeChangeFlag = false;

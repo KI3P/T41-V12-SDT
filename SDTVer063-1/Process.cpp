@@ -5,10 +5,9 @@
 char atom, currentAtom;
 int stateMachine;
 bool FFTupdated;
-
-int16_t adjAmplitude = 0;  // Was float; cast to float in dB calculation.
-int16_t refAmplitude = 0;  // Was float; cast to float in dB calculation.
-uint32_t index_of_max;
+  int16_t adjAmplitude = 0;  // Was float; cast to float in dB calculation.
+  int16_t refAmplitude = 0;
+  uint32_t index_of_max = 0;
 /*****
   Purpose: Read audio from Teensy Audio Library
              Calculate FFT for display
@@ -40,12 +39,11 @@ void ProcessIQData() {
   float rfGainValue;
   int cal_bins[2] = { 0, 0 };
   int capture_bins;
-  int16_t adjAmplitude = 0;  // Was float; cast to float in dB calculation.
-  int16_t refAmplitude = 0;
-  int index_of_max = 0;
+
+
   int val = 0;
   int task = 0;
-  int recCalDirections = 0;
+  //int recCalDirections = 0;
   // are there at least N_BLOCKS buffers in each channel available ?
   if ((uint32_t)Q_in_L.available() > N_BLOCKS + 0 && (uint32_t)Q_in_R.available() > N_BLOCKS + 0) {
     usec = 0;
@@ -542,7 +540,11 @@ void ProcessIQData() {
       }
       arm_max_f32(audioSpectBuffer, 1024, &audioMaxSquared, &AudioMaxIndex);  // AFP 09-18-22 Max value of squared abin magnitued in audio
       audioMaxSquaredAve = .5 * audioMaxSquared + .5 * audioMaxSquaredAve;    //AFP 09-18-22Running averaged values
-      DisplaydbM();
+      if(freqCalFlag==0){ //AFP 01-30-25
+         DisplaydbM();
+      } else {
+
+      }
     }
 
     /**********************************************************************************
@@ -775,13 +777,21 @@ void ProcessIQData() {
     elapsed_micros_sum = elapsed_micros_sum + usec;
     elapsed_micros_idx_t++;
   }                         // end of if(audio blocks available)
-  if (ms_500.check() == 1)  // For clock updates AFP 10-26-22
+  if (ms_500.check() == 1 && freqCalFlag==0)  // For clock updates AFP 10-26-22
   {
     //wait_flag = 0;
     DisplayClock();
   }
 }
+/*====
+  Purpose: Auto Tune calibrate the receive IQ
 
+   Parameter List:
+      void
+
+   Return value:
+      void
+ *****/
 /*====
   Purpose: Combined input/ output for the purpose of calibrating the receive IQ
 
@@ -854,15 +864,7 @@ void tuneCalParameterRec(int indexStart, int indexEnd, float increment, float *I
   // MyDelay(3000);
   tft.fillRect(145, 160, 230, 100, RA8875_BLACK);
 }
-/*====
-  Purpose: Auto Tune calibrate the receive IQ
 
-   Parameter List:
-      void
-
-   Return value:
-      void
- *****/
 void autotuneRec(float *amp, float *phase, float gain_coarse_max, float gain_coarse_min,
                  float phase_coarse_max, float phase_coarse_min,
                  int gain_coarse_step2_N, int phase_coarse_step2_N,

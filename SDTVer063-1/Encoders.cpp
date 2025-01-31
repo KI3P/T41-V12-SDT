@@ -29,11 +29,12 @@ unsigned long FT_delay;                  // HMB
 *****/
 void FilterSetSSB() {
   long filter_change;
-  if (recCalOnFlag == 1) {
+    if (recCalOnFlag == 1) {
     //IQAmpCorrectionFactor[currentBand] = GetEncoderValueLiveRCal(-2.0, 2.0, IQAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain", 3, 0);
     //IQPhaseCorrectionFactor[currentBand] = GetEncoderValueLiveRCal(-2.0, 2.0, IQPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase", 4, 0);
     return;
   }
+  if (calOnFlag == 1) return;
   //========
   if (filterEncoderMove != 0) {
     filter_pos += filterEncoderMove;  // Bump up or down...
@@ -186,96 +187,95 @@ void EncoderVolume()  //============================== AFP 10-22-22  Begin new
     return;
   }
 
-  adjustVolEncoder = result;//AFP 1-26-25
+  adjustVolEncoder = result;
   if (recCalOnFlag == 1) {
     IQPhaseCorrectionFactor[currentBand] += (float)adjustVolEncoder * corrChangeIQIncrement;
     return;
   } else {
 
-    switch (volumeFunction) {
-      case GAIN_CAL:
-        break;
-      case AUDIO_VOLUME:
-        audioVolume += adjustVolEncoder;
+  switch (volumeFunction) {
+    case AUDIO_VOLUME:
+      audioVolume += adjustVolEncoder;
 
-        if (audioVolume > 100) {  // In range?
-          audioVolume = 100;
-        } else {
-          if (audioVolume < 0) {
-            audioVolume = 0;
-          }
+      if (audioVolume > 100) {  // In range?
+        audioVolume = 100;
+      } else {
+        if (audioVolume < 0) {
+          audioVolume = 0;
         }
-        break;
-      case AGC_GAIN:
-        bands[currentBand].AGC_thresh += adjustVolEncoder;
-        if (bands[currentBand].AGC_thresh < -20) {
-          bands[currentBand].AGC_thresh = -20;
-        } else if (bands[currentBand].AGC_thresh > 120) {
-          bands[currentBand].AGC_thresh = 120;
-        }
-        AGCLoadValues();
-        volumeChangeFlag2 = true;
-        volTimer = millis();
-        break;
-      case MIC_GAIN:
-        currentMicGain += adjustVolEncoder;
-        if (currentMicGain < -40) {
-          currentMicGain = -40;
-        } else if (currentMicGain > 30) {
-          currentMicGain = 30;
-        }
-        if (radioState == SSB_TRANSMIT_STATE) {
-          comp1.setPreGain_dB(currentMicGain);
-          comp2.setPreGain_dB(currentMicGain);
-        }
-        volumeChangeFlag2 = true;
-        volTimer = millis();
-        break;
-      case SIDETONE_VOLUME:
-        sidetoneVolume += adjustVolEncoder;
-        if (sidetoneVolume < 0.0) {
-          sidetoneVolume = 0.0;
-        } else if (sidetoneVolume > 100.0) {
-          sidetoneVolume = 100.0;
-        }
-        if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {
-          modeSelectOutL.gain(1, sidetoneVolume / 100.0);
-          modeSelectOutR.gain(1, sidetoneVolume / 100.0);
-        }
-        volumeChangeFlag2 = true;
-        volTimer = millis();
-        break;
-      case NOISE_FLOOR_LEVEL:
-        currentNoiseFloor[currentBand] += adjustVolEncoder;
-        if (currentNoiseFloor[currentBand] < 0) {
-          currentNoiseFloor[currentBand] = 0;
-        } else if (currentNoiseFloor[currentBand] > 100) {
-          currentNoiseFloor[currentBand] = 100;
-        }
-        volumeChangeFlag2 = true;
-        volTimer = millis();
-        break;
-    }
+      }
+      break;
+    case AGC_GAIN:
+      bands[currentBand].AGC_thresh += adjustVolEncoder;
+      if (bands[currentBand].AGC_thresh < -20) {
+        bands[currentBand].AGC_thresh = -20;
+      } else if (bands[currentBand].AGC_thresh > 120) {
+        bands[currentBand].AGC_thresh = 120;
+      }
+      AGCLoadValues();
+      volumeChangeFlag2 = true;
+      volTimer = millis();
+      break;
+    case MIC_GAIN:
+      currentMicGain += adjustVolEncoder;
+      if (currentMicGain < -40) {
+        currentMicGain = -40;
+      } else if (currentMicGain > 30) {
+        currentMicGain = 30;
+      }
+      if (radioState == SSB_TRANSMIT_STATE) {
+        comp1.setPreGain_dB(currentMicGain);
+        comp2.setPreGain_dB(currentMicGain);
+      }
+      volumeChangeFlag2 = true;
+      volTimer = millis();
+      break;
+    case SIDETONE_VOLUME:
+      sidetoneVolume += adjustVolEncoder;
+      if (sidetoneVolume < 0.0) {
+        sidetoneVolume = 0.0;
+      } else if (sidetoneVolume > 100.0) {
+        sidetoneVolume = 100.0;
+      }
+      if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {
+        modeSelectOutL.gain(1, sidetoneVolume / 100.0);
+        modeSelectOutR.gain(1, sidetoneVolume / 100.0);
+      }
+      volumeChangeFlag2 = true;
+      volTimer = millis();
+      break;
+    case NOISE_FLOOR_LEVEL:
+      currentNoiseFloor[currentBand] += adjustVolEncoder;
+      if (currentNoiseFloor[currentBand] < 0) {
+        currentNoiseFloor[currentBand] = 0;
+      } else if (currentNoiseFloor[currentBand] > 100) {
+        currentNoiseFloor[currentBand] = 100;
+      }
+      volumeChangeFlag2 = true;
+      volTimer = millis();
+      break;
+  }
 
 
-    //=================== AFP 04-3-24 V012 Bode Plot start
+  //=================== AFP 04-3-24 V012 Bode Plot start
 
-    if (IQCalFlag == 1) {
+  if (IQCalFlag == 1) {
 
-      corrPlotYValue += (float)adjustVolEncoder * corrChangeIQIncrement;
-    }
+    corrPlotYValue += (float)adjustVolEncoder * corrChangeIQIncrement;
+  }
 
-    if (BodePlotFlag == 1) {
-      refLevelBode += adjustVolEncoder;  //AFP 03-30-24
+  if (BodePlotFlag == 1) {
+    refLevelBode += adjustVolEncoder;  //AFP 03-30-24
 
-      levelBodeChangeFlag = 1;
-    }
-    //=================== AFP 04-3-24 V012 Bode Plot end
+    levelBodeChangeFlag = 1;
+  }
+  //=================== AFP 04-3-24 V012 Bode Plot end
 
-    volumeChangeFlag = true;  // Need this because of unknown timing in display updating.
+  volumeChangeFlag = true;  // Need this because of unknown timing in display updating.
 
-  }  
+}  //============================== AFP 10-22-22  End new
 }
+
 
 
 /*****
@@ -329,15 +329,15 @@ float GetEncoderValueLiveFreq(float minValue, float maxValue, float startValue, 
   float currentValue = startValue;
 
   if (filterEncoderMove != 0) {
-
+    
     currentValue += filterEncoderMove * increment;  // Bump up or down...
     if (currentValue < minValue)
       currentValue = minValue;
     else if (currentValue > maxValue)
       currentValue = maxValue;
-    startValue = currentValue;
-    volumeFunction = AUDIO_VOLUME;
-    volumeChangeFlag2 = false;
+     startValue= currentValue;
+      volumeFunction = AUDIO_VOLUME;
+      volumeChangeFlag2 = false;
     filterEncoderMove = 0;
   }
   return currentValue;
@@ -429,67 +429,6 @@ float GetEncoderValueLiveRCal(float minValue, float maxValue, float startValue, 
   return currentValue;
 }
 
-/*****
-  Purpose: Use the encoder to change the value of a number in some other function
-
-  Parameter list:
-    int minValue                the lowest value allowed
-    int maxValue                the largest value allowed
-    int startValue              the numeric value to begin the count
-    int increment               the amount by which each increment changes the value
-    char prompt[]               the input prompt
-  Return value;
-    int                         the new value
-*****/
-float GetEncoderValueLiveRCal2(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals, int IQEXChoice) {
-  float currentValue = startValue;
-  tft.setFontScale((enum RA8875tsize)1);
-  tft.setTextColor(RA8875_WHITE);
-  // Print Starting IQ Gain & IQ Phase
-  //if (IQCalType == 0) {
-  tft.setTextColor(RA8875_YELLOW);
-  // tft.fillRect(600, 350, 230, CHAR_HEIGHT, RA8875_BLACK);
-  // tft.setCursor(600, 350);
-  // tft.print("IQ Gain");
-  // tft.setCursor(700, 350);
-  // tft.print(IQAmpCorrectionFactor[currentBand], Ndecimals);
-  // tft.setTextColor(RA8875_WHITE);
-  tft.fillRect(600, 380, 230, CHAR_HEIGHT, RA8875_BLACK);
-  tft.setCursor(600, 380);
-  tft.print("IQ Phase");
-  tft.setCursor(700, 380);
-  tft.print(IQPhaseCorrectionFactor[currentBand], Ndecimals);
-
-
-  //Print Altered Values
-  if (filterEncoderMove != 0) {
-    currentValue += filterEncoderMove * increment;  // Bump up or down...
-    if (currentValue < minValue)
-      currentValue = minValue;
-    else if (currentValue > maxValue)
-      currentValue = maxValue;
-    tft.setFontScale((enum RA8875tsize)1);
-    tft.setTextColor(RA8875_WHITE);
-    // Print Starting IQ Gain & IQ Phase
-    //if (IQCalType == 0) {
-    tft.setTextColor(RA8875_YELLOW);
-    tft.fillRect(220, 150, 230, CHAR_HEIGHT, RA8875_BLACK);
-    tft.setCursor(170, 150);
-    tft.print("IQ Gain");
-    tft.setCursor(220, 180);
-    tft.print(IQAmpCorrectionFactor[currentBand], Ndecimals);
-    tft.setTextColor(RA8875_WHITE);
-    tft.fillRect(170, 180, 230, CHAR_HEIGHT, RA8875_BLACK);
-    tft.setCursor(170, 180);
-    tft.print("IQ Phase");
-    tft.setCursor(220, 180);
-    tft.print(IQPhaseCorrectionFactor[currentBand], Ndecimals);
-  }
-  filterEncoderMove = 0;
-
-  //tft.setTextColor(RA8875_WHITE);
-  return currentValue;
-}
 /*****
   Purpose: Use the encoder to change the value of a number in some other function
 
