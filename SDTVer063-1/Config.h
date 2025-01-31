@@ -10,6 +10,7 @@
 
 //====================== Hardware selections ===================
 // This version supports V12 hardware only
+#define DEBUG 1                         // Uncommented for debugging, comment out for normal use
 
 #ifdef DEBUG
 #define DEBUG_MESSAGES
@@ -84,7 +85,6 @@
 
 //====================== User Specific Preferences =============
 
-#define DEBUG 1                         // Uncommented for debugging, comment out for normal use
 #define DECODER_STATE 0                 // 0 = off, 1 = on
 #define DEFAULT_KEYER_WPM 15            // Startup value for keyer wpm
 #define FREQ_SEP_CHARACTER '.'          // Some may prefer period, space, or combo

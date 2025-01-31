@@ -219,6 +219,7 @@ int DoSplitVFO() {
     MyDelay(150L);
     if (val == MENU_OPTION_SELECT) {  // Make a choice??
       Clk1SetFreq += splitOffset;     // New transmit frequency // AFP 09-27-22
+      tft.setFontDefault();
       UpdateInfoWindow();
       filterEncoderMove = 0L;
       break;
