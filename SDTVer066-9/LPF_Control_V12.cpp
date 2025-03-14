@@ -6,8 +6,8 @@
 
 #include "LPF_Control_V12.h"
 
-static Adafruit_MCP23X17 mcpLPF; // connected to Wire2
-static AD7991 swrADC; // on V12 LPF board
+//static Adafruit_MCP23X17 mcpLPF; // connected to Wire2
+//static AD7991 swrADC; // on V12 LPF board
 static uint8_t LPF_GPB_state;
 static uint8_t LPF_GPA_state;
 static char strBuf[100];

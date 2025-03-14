@@ -125,7 +125,8 @@ void SetRF_OutAtten(int attenOutx2) {
   // GPB5: TX att 16
   // GPB6: unused
   // GPB7: unused
-  
+ 
+  //attenOutx2=50;
   if(!failed) {
     if (attenOutx2 < 0) attenOutx2 = 0;
     if (attenOutx2 > 63) attenOutx2 = 63;

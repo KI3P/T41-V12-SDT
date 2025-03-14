@@ -70,9 +70,11 @@ void DoReceiveEQ()  //AFP 08-09-22
 *****/
 void DoExciterEQ()  //AFP 10-02-22
 {
+  #ifdef NOTDEF                 // this messes up the equalizer settings in EEPROM
   for (int i = 0; i < 14; i++) {
     xmtEQ_Level[i] = (float)EEPROMData.equalizerXmt[i] / 100.0;
   }
+  #endif
   arm_biquad_cascade_df2T_f32(&S1_Xmt, float_buffer_L_EX, xmt_EQ1_float_buffer_L, 256);
   arm_biquad_cascade_df2T_f32(&S2_Xmt, float_buffer_L_EX, xmt_EQ2_float_buffer_L, 256);
   arm_biquad_cascade_df2T_f32(&S3_Xmt, float_buffer_L_EX, xmt_EQ3_float_buffer_L, 256);
@@ -243,8 +245,11 @@ void SetDecIntFilters() {
   }
   CalcFIRCoeffs(FIR_dec1_coeffs, n_dec1_taps, (float32_t)(LP_F_help), n_att, 0, 0.0, (float32_t)(SR[SampleRate].rate));
   CalcFIRCoeffs(FIR_dec2_coeffs, n_dec2_taps, (float32_t)(LP_F_help), n_att, 0, 0.0, (float32_t)(SR[SampleRate].rate / DF1));
+  CalcFIRCoeffs(FIR_dec3_coeffs, n_dec3_taps, (float32_t)(LP_F_help), n_att, 0, 0.0, (float32_t)(SR[SampleRate].rate / (DF1*2)));
 
   CalcFIRCoeffs(FIR_int1_coeffs, 48, (float32_t)(LP_F_help), n_att, 0, 0.0, (float32_t)(SR[SampleRate].rate / DF1));
   CalcFIRCoeffs(FIR_int2_coeffs, 32, (float32_t)(LP_F_help), n_att, 0, 0.0, (float32_t)SR[SampleRate].rate);
+  CalcFIRCoeffs(FIR_int3_coeffs, 24, (float32_t)(LP_F_help), n_att, 0, 0.0, (float32_t)SR[SampleRate].rate/(DF1*2));
+
   bin_BW = 1.0 / (DF * FFT_length) * (float32_t)SR[SampleRate].rate;
 }

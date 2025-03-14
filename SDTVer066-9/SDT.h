@@ -37,7 +37,7 @@ extern struct maps myMapFiles[];
 #include "Fonts/FreeSansBold18pt7b.h"
 #include "Fonts/FreeSansBold9pt7b.h"
 
-//#include <Audio.h>                                  //https://github.com/chipaudette/OpenAudio_ArduinoLibrary
+//https://github.com/chipaudette/OpenAudio_ArduinoLibrary
 #include <OpenAudio_ArduinoLibrary.h>  // AFP 11-01-22
 #include <TimeLib.h>                   // Part of Teensy Time library
 #include <Wire.h>
@@ -51,12 +51,11 @@ extern struct maps myMapFiles[];
 // ============ AFP 09-04-23 #include modified Si5351 library
 // == Modified Si linbrary must be included in folder with T41 code
 #include "si5351.h"
-//#include <si5351.h>                                 // https://github.com/etherkit/Si5351Arduino
 // Add define variables for drive current and load capacitance
 #define SI5351_LOAD_CAPACITANCE SI5351_CRYSTAL_LOAD_8PF
 #define SI5351_DRIVE_CURRENT SI5351_DRIVE_2MA
 
-#include <RA8875.h>  // https://github.com/mjs513/RA8875/tree/RA8875_t4
+#include <RA8875.h>  // Use the version that comes with Teensyduino
 #include "Rotary_V12.h"
 
 #include <stdio.h>
@@ -68,7 +67,7 @@ extern struct maps myMapFiles[];
 
 //======================================== Symbolic Constants for the T41 ===================================================
 #define RIGNAME "T41-EP SDT"
-#define VERSION "V063-0"
+#define VERSION "V066.9"
 #define RIGNAME_X_OFFSET 530
 #define TIME_X 530  // Pixel count to rig name field                                       // Says we are using a Teensy 4 or 4.1
 #define TIME_Y 30
@@ -422,6 +421,8 @@ void ShutdownTeensy(void);
 #define KEY1 35          // Tip for Straight key
 #define KEY2 36          // Ring
 #define PTT 37           // Transmit/Receive
+#define FOR    26
+#define REV    27
 // KI3P: added mode definitions to make programming easier (V12 hardware)
 #define XMIT_SSB 1
 #define XMIT_CW 0
@@ -504,7 +505,7 @@ void ShutdownTeensy(void);
 #define SSB_TRANSMIT_STATE 1
 #define CW_RECEIVE_STATE 2
 #define CW_TRANSMIT_STRAIGHT_STATE 3
-#define CW_TRANSMIT_KEYER_STATE 5554
+#define CW_TRANSMIT_KEYER_STATE 4
 #define CAL_TRANSMIT_STATE 5
 extern int radioState, lastState;  // Used by the loop to monitor current state.
 
@@ -741,6 +742,13 @@ extern long stopFreqBode;
 extern long stopFreqOld;
 extern long freqStartBode;
 extern long freqStopBode;
+
+extern long calFreqOffset;
+extern long calFreqOffsetValues[];
+extern int calFreqOffsetIndex;
+extern long calFreqOffsetIndexOld;
+extern int recFreqCalFlag;
+
 extern int BodePlotFlag;
 extern int numBodePoints;
 extern float refLevelBode;
@@ -785,7 +793,9 @@ extern long long Clk1SetFreq;  // AFP 09-27-22
 extern long long Clk0SetFreq;
 extern int multiple;
 extern int oldMultiple;
-
+extern int twoToneFlag;
+extern int numTwoToneCycles1;
+extern int numTwoToneCycles2;
 extern unsigned long long pll_min;
 extern unsigned long long pll_max;
 //extern unsigned long long f_pll_freq;
@@ -800,9 +810,21 @@ extern float32_t audioMaxSquaredAve;
 
 extern float32_t corrResult;      //AFP 02-02-22
 extern uint32_t corrResultIndex;  //AFP 02-02-22
-extern float32_t sinBuffer[];     //AFP 02-02-22
+
+extern float32_t sinBuffer[];  //AFP 02-02-22
 extern float32_t sinBuffer2[];
 extern float32_t sinBuffer3[];
+extern float32_t sinBuffer4[];  // AFP 01-31-25
+extern float32_t sinBuffer5[];
+extern float32_t sinBuffer6[];
+extern float32_t cosBuffer[];
+extern float32_t cosBuffer2[];  //AFP 08-18-22
+extern float32_t cosBuffer3[];  //AFP 10-31-2
+extern float32_t cosBuffer4[];  // AFP 01-31-25
+extern float32_t cosBuffer5[];  // AFP 01-31-25
+extern float32_t cosBuffer6[];
+
+
 extern float32_t float_Corr_Buffer[];  //AFP 02-02-22
 extern float32_t aveCorrResult;        //AFP 02-02-22
 extern float32_t magFFTResults[];
@@ -837,6 +859,9 @@ extern float CWLevelTimer;
 extern float CWLevelTimerOld;
 extern float32_t combinedCoeff2;
 extern float32_t combinedCoeff2Old;
+extern float swr;
+extern float Pf_W;
+extern float Pr_W;
 extern float ticMarkTimer;
 extern float ticMarkTimerOld;
 extern int CWOnState;      //AFP 05-17-22
@@ -854,6 +879,8 @@ extern int freqCalmode;
 extern const char *secondaryChoices[][14];
 extern int endDitFlag;
 extern int endGapFlag;
+
+extern int SWRCalFlag;
 extern int topDitIndex;  //AFP 02-20-22
 extern int topDitIndexOld;
 extern int topGapIndex;
@@ -900,12 +927,14 @@ extern long notchFreq;
 extern long notchPosOld;
 extern long filter_pos;
 extern long last_filter_pos;
-extern long plotIntervalValues[]; //AFP01-24-25
-extern float plotScaleValues[];  //AFP01-24-25
+extern long plotIntervalValues[];  //AFP01-24-25
+extern float plotScaleValues[];    //AFP01-24-25
 extern int recIQIncrementIndex;
-extern float recIQIncrementValues[];   // AFP 01-24-25 
-extern float IQAmpCorrectionFactorOld; //AFP 01-26-25
-extern float IQPhaseCorrectionFactorOld;//AFP 01-26-25
+extern int freqCorrIndex;
+extern int freqCorrIncrementValues[];
+extern float recIQIncrementValues[];      // AFP 01-24-25
+extern float IQAmpCorrectionFactorOld;    //AFP 01-26-25
+extern float IQPhaseCorrectionFactorOld;  //AFP 01-26-25
 
 //================== Global Excite Variables =================
 
@@ -920,6 +949,9 @@ extern float freqErrorOld;
 extern float32_t coeffs192K_10K_LPF_FIR[];
 
 extern float32_t coeffs48K_8K_LPF_FIR[];
+
+extern float32_t coeffs12K_8K_LPF_FIR[];
+//==
 extern const uint32_t N_B_EX;
 extern float32_t recEQ_Level[];
 extern float32_t recEQ_LevelScale[];
@@ -1111,7 +1143,7 @@ extern float32_t FIR_Hilbert_state_L[];
 extern float32_t FIR_Hilbert_state_R[];
 
 extern float32_t FIR_Hilbert_coeffs_45[];     //AFP 01-16-22
-extern float32_t FIR_Hilbert_coeffs_neg45[];  //AFP 01-16-22
+extern float32_t FIR_Hilbert_coeffs_neg_45[];  //AFP 01-16-22
 
 
 extern arm_fir_instance_f32 FIR_Hilbert_L;
@@ -1127,12 +1159,19 @@ extern arm_fir_decimate_instance_f32 FIR_dec1_EX_I;
 extern arm_fir_decimate_instance_f32 FIR_dec1_EX_Q;
 extern arm_fir_decimate_instance_f32 FIR_dec2_EX_I;
 extern arm_fir_decimate_instance_f32 FIR_dec2_EX_Q;
+//==
+extern arm_fir_decimate_instance_f32 FIR_dec3_EX_I;
+extern arm_fir_decimate_instance_f32 FIR_dec3_EX_Q;
+//==
 
 extern arm_fir_interpolate_instance_f32 FIR_int1_EX_I;
 extern arm_fir_interpolate_instance_f32 FIR_int1_EX_Q;
 extern arm_fir_interpolate_instance_f32 FIR_int2_EX_I;
 extern arm_fir_interpolate_instance_f32 FIR_int2_EX_Q;
-
+//==
+extern arm_fir_interpolate_instance_f32 FIR_int3_EX_I;
+extern arm_fir_interpolate_instance_f32 FIR_int3_EX_Q;
+//==
 extern float32_t FIR_dec1_EX_I_state[];  //48 + (uint16_t) BUFFER_SIZE * (uint32_t) N_B - 1
 extern float32_t FIR_dec1_EX_Q_state[];
 //extern float32_t  FIR_dec2_EX_coeffs[];    //n_dec1_taps
@@ -1140,12 +1179,18 @@ extern float32_t FIR_dec1_EX_Q_state[];
 extern float32_t FIR_dec2_EX_I_state[];  //DEC2STATESIZE
 //extern float32_t  FIR_dec2_EX_coeffs[];
 extern float32_t FIR_dec2_EX_Q_state[];
-
+//==
+extern float32_t FIR_dec3_EX_I_state[];
+extern float32_t FIR_dec3_EX_Q_state[];
+//==
 extern float32_t FIR_int2_EX_I_state[];
 extern float32_t FIR_int2_EX_Q_state[];
 extern float32_t FIR_int1_EX_coeffs[];
 extern float32_t FIR_int2_EX_coeffs[];
-
+//==
+extern float32_t FIR_int3_EX_I_state[];
+extern float32_t FIR_int3_EX_Q_state[];
+//==
 extern float32_t FIR_int1_EX_I_state[];
 extern float32_t FIR_int1_EX_Q_state[];
 
@@ -1223,7 +1268,8 @@ extern Metro ms_300000;      // Set up a Metro
 extern Metro encoder_check;  // Set up a Metro
 
 extern Si5351 si5351;
-
+extern Adafruit_MCP23X17 mcpLPF;
+extern AD7991 swrADC;
 extern RA8875 tft;
 
 //======================================== Global structure declarations ===============================================
@@ -1239,7 +1285,7 @@ extern struct config_t {
   char versionSettings[10];
   int AGCMode = 1;
   int audioVolume = 30;  // 4 bytes
-  int rfGainAllBands = 1;
+  int rfGainAllBands = 0;
   int spectrumNoiseFloor = SPECTRUM_NOISE_FLOOR;  // AFP 09-26-22
   int tuneIndex = DEFAULTFREQINCREMENT;           // JJP 7-3-23
   long stepFineTune = FAST_TUNE_INCREMENT;        // JJP 7-3-23
@@ -1299,11 +1345,12 @@ extern struct config_t {
   float IQXRecPhaseCorrectionFactor[NUMBER_OF_BANDS];
   int XAttenCW[NUMBER_OF_BANDS];   // transmit digital attenuation in CW mode
   int XAttenSSB[NUMBER_OF_BANDS];  // transmit digital attenuation in SSB mode
-  int RAtten[NUMBER_OF_BANDS];     // receive digital attenuation
+  int RAtten[NUMBER_OF_BANDS];        // receive digital attenuation
   long favoriteFreqs[MAX_FAVORITES];
   long lastFrequencies[NUMBER_OF_BANDS][2];
 
   int antennaSelection[NUMBER_OF_BANDS];
+
 
   long centerFreq = 7030000L;  // 4 bytes
 
@@ -1323,6 +1370,13 @@ extern struct config_t {
   int receiveEQFlag = 0;
   int xmitEQFlag = 0;
   int CWToneIndex = 0;
+  
+  float32_t TransmitPowerLevelCW = 0.0;  // Power level factors by mode
+  float32_t TransmitPowerLevelSSB = 0.0;
+
+float SWR_PowerAdj[NUMBER_OF_BANDS];
+float SWRSlopeAdj[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+int SWR_R_Offset[NUMBER_OF_BANDS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 } EEPROMData;  //  Total:       438 bytes
 
@@ -1410,7 +1464,7 @@ extern Menu_D Menus[];
 //======================================== Global variables declarations ===============================================
 //========================== Some are not in alpha order because of forward references =================================
 
-const float CWToneOffsetsHz[] = { 562.5, 656.5, 750.0, 843.75 };  // these correspond to the definitions in CWProcessing.cpp
+const float CWToneOffsetsHz[] = {0, 562.5, 656.5, 750.0, 843.75 };  // these correspond to the definitions in CWProcessing.cpp
 extern bool save_last_frequency;
 extern bool gEEPROM_current;  //mdrhere does the data in EEPROM match the current structure contents
 extern bool NR_gain_smooth_enable;
@@ -1482,6 +1536,7 @@ extern uint8_t hang_enable;
 extern uint8_t hour10_old;
 extern uint8_t hour1_old;
 extern uint8_t IQCalFlag;
+extern uint8_t SSB_CalModeFlag;
 extern uint8_t iFFT_flip;
 extern uint8_t IQ_state;
 extern uint8_t keyPressedOn;  //AFP 09-01-22
@@ -1576,6 +1631,7 @@ extern const uint32_t IIR_biquad_Zoom_FFT_N_stages;
 extern const uint32_t N_stages_biquad_lowpass1;
 extern const uint16_t n_dec1_taps;
 extern const uint16_t n_dec2_taps;
+extern const uint16_t n_dec3_taps;
 extern float aveAdjdB2;
 extern float adjdB2;
 extern float adjdBIQ;
@@ -1611,6 +1667,8 @@ extern int chipSelect;
 extern int countryIndex;
 extern int CWFilterIndex;
 extern int CWToneIndex;
+extern int CW_PA_CalFlag;
+extern int SSB_PA_CalFlag;
 extern int currentBand;
 extern int currentBandA;
 extern int currentBandB;
@@ -1699,16 +1757,18 @@ extern int stepFineTuneOld;
 extern int switchFilterSideband;  //AFP 1-28-21
 extern int switchThreshholds[];
 extern int syncEEPROM;
+
+extern int SWROffsetChange;
 extern int termCursorXpos;
 extern int timerFlag;
-extern float transmitPowerLevel;
+
 extern int tuneIndex;
 extern int x2;  //AFP
 extern int xrState;
 extern int zeta_help;
 extern int zoom_sample_ptr;
 extern int zoomIndex;
-
+extern float currentRF_OutAttenTemp;
 extern int updateDisplayFlag;
 extern int updateCalDisplayFlag;
 extern const int DEC2STATESIZE;
@@ -1816,7 +1876,10 @@ extern uint64_t output12khz;
 //extern unsigned long long freqCalibrationFactor;
 extern long long Clk2SetFreq;  // AFP 09-27-22
 extern long long Clk1SetFreq;  // AFP 09-27-22
-
+  extern float adcF_s;
+   extern float adcR_s;
+    extern  float adcF_sOld;
+   extern float adcR_sOld;
 float32_t arm_atan2_f32(float32_t y, float32_t x);
 float ApproxAtan(float z);
 float ApproxAtan2(float y, float x);
@@ -1938,23 +2001,30 @@ extern float32_t FFT_spec_old[];
 extern float32_t fil_out;
 extern float32_t /*DMAMEM*/ FIR_Coef_I[];
 extern float32_t /*DMAMEM*/ FIR_Coef_Q[];
+
 extern float32_t /*DMAMEM*/ FIR_dec1_I_state[];
 extern float32_t /*DMAMEM*/ FIR_dec2_I_state[];
-extern float32_t /*DMAMEM*/ FIR_dec2_coeffs[];
-extern float32_t /*DMAMEM*/ FIR_dec2_I_state[];
-extern float32_t /*DMAMEM*/ FIR_dec2_Q_state[];
-extern float32_t /*DMAMEM*/ FIR_int2_I_state[];
-extern float32_t /*DMAMEM*/ FIR_int2_Q_state[];
-extern float32_t /*DMAMEM*/ FIR_int1_coeffs[];
-extern float32_t /*DMAMEM*/ FIR_int2_coeffs[];
+extern float32_t /*DMAMEM*/ FIR_dec3_I_state[];
 extern float32_t /*DMAMEM*/ FIR_dec1_Q_state[];
+extern float32_t /*DMAMEM*/ FIR_dec2_Q_state[];
+extern float32_t /*DMAMEM*/ FIR_dec3_Q_state[];
+
+extern float32_t /*DMAMEM*/ FIR_int1_I_state[];
+extern float32_t /*DMAMEM*/ FIR_int2_I_state[];
+extern float32_t /*DMAMEM*/ FIR_int3_I_state[];
+extern float32_t /*DMAMEM*/ FIR_int1_Q_state[];
+extern float32_t /*DMAMEM*/ FIR_int2_Q_state[];
+extern float32_t /*DMAMEM*/ FIR_int3_Q_state[];
+
 extern float32_t /*DMAMEM*/ FIR_dec1_coeffs[];
 extern float32_t /*DMAMEM*/ FIR_dec2_coeffs[];
+extern float32_t /*DMAMEM*/ FIR_dec3_coeffs[];
+extern float32_t /*DMAMEM*/ FIR_int1_coeffs[];
+extern float32_t /*DMAMEM*/ FIR_int2_coeffs[];
+extern float32_t /*DMAMEM*/ FIR_int3_coeffs[];
+
 extern float32_t /*DMAMEM*/ FIR_filter_mask[];
-extern float32_t /*DMAMEM*/ FIR_int1_I_state[];
-extern float32_t /*DMAMEM*/ FIR_int1_Q_state[];
-extern float32_t /*DMAMEM*/ FIR_int2_I_state[];
-extern float32_t /*DMAMEM*/ FIR_int2_Q_state[];
+
 extern float32_t /*DMAMEM*/ Fir_Zoom_FFT_Decimate_I_state[];
 extern float32_t /*DMAMEM*/ Fir_Zoom_FFT_Decimate_Q_state[];
 extern float32_t /*DMAMEM*/ Fir_Zoom_FFT_Decimate_coeffs[];
@@ -2032,7 +2102,7 @@ extern float32_t max_gain;
 extern float32_t max_input;
 extern int calTypeFlag;
 extern int calOnFlag;
-extern int recCalOnFlag; 
+extern int recCalOnFlag;
 extern int freqCalFlag;
 extern int currentMicThreshold;  // AFP 09-22-22
 extern float currentMicCompRatio;
@@ -2123,8 +2193,15 @@ extern float32_t save_volts;
 extern float32_t sidetoneVolume;
 extern const float32_t volumeLog[101];
 extern float32_t slope_constant;
+extern float SWR_PowerAdj[];
+extern float SWRSlopeAdj[];
+extern int SWR_R_Offset[];
 extern float32_t spectrum_display_scale;  // 30.0
 extern float32_t stereo_factor;
+extern float32_t transmitPowerLevel;
+extern float32_t transmitPowerLevelCW;
+extern float32_t transmitPowerLevelSSB;
+
 extern float32_t tau_attack;
 extern float32_t tau_decay;
 extern float32_t tau_fast_backaverage;
@@ -2215,9 +2292,9 @@ void AMDemodAM();
 void AMDecodeSAM();  // AFP 11-03-22
 void AssignEEPROMObjectToVariable();
 void autotuneRec(float *amp, float *phase, float gain_coarse_max, float gain_coarse_min,
-              float phase_coarse_max, float phase_coarse_min,
-              int gain_coarse_step2_N, int phase_coarse_step2_N,
-              int gain_fine_N, int phase_fine_N, bool phase_first) ;
+                 float phase_coarse_max, float phase_coarse_min,
+                 int gain_coarse_step2_N, int phase_coarse_step2_N,
+                 int gain_fine_N, int phase_fine_N, bool phase_first);
 int BandOptions();
 #if !defined(EXCLUDE_BEARING)
 float BearingHeading(char *dxCallPrefix);
@@ -2269,6 +2346,8 @@ int CreateMapList(char ptrMaps[10][50], int *count);
 int CWOptions();
 void CW_DecodeLevelDisplay();
 void CW_ExciterIQData();  // AFP 08-18-22
+void CW_PA_Calibrate();
+void SSB_PA_Calibrate();
 
 void Dah();
 void start_sending_cw();
@@ -2288,8 +2367,9 @@ void DrawSignalPlotFrame();
 void DoSignalHistogram(long val);
 void DoSignalPlot(float val);
 int DoSplitVFO();
+void DoSWRCal();
 void DoPaddleFlip();
-void DoXmitCalibrate();
+void DoXmitIQCalibrate();
 void DoReceiveCalibrate();
 void DrawActiveLetter(int row, int horizontalSpacer, int whichLetterIndex, int keyWidth, int keyHeight);
 void DrawBandWidthIndicatorBar();  // AFP 03-27-22 Layers
@@ -2304,7 +2384,7 @@ void DrawSMeterContainer();
 void DrawSpectrumBandwidthInfo();
 void DrawSpectrumDisplayContainer();
 void DrawAudioSpectContainer();
-
+void DoSWR();
 int EEPROMOptions();
 void EEPROMRead();
 //void EEPROMSaveDefaults();
@@ -2336,16 +2416,24 @@ void FormatFrequency(long f, char *b);
 int FrequencyOptions();
 void FreqShift1();
 void FreqShift2();
+void FreqShiftEx(long freqShiftAmt);
 float goertzel_mag(int numSamples, int TARGET_FREQUENCY, int SAMPLING_RATE, float *data);
 int GetEncoderValue(int minValue, int maxValue, int startValue, int increment, char prompt[]);
+int GetEncoderValuePower(int minValue, int maxValue, int startValue, int increment, char prompt[]);
+float GetEncoderValueCW(float minValue, float maxValue, float startValue, int increment, char prompt[]);
 float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[]);  //AFP 10-22-22
 float GetEncoderValueLiveFreq(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals);
 float GetEncoderValueLiveIQLevel(float minValue, float maxValue, float startValue, float increment, char prompt[]);
 float GetEncoderValueLive(float minValue, float maxValue, float startValue, float increment, char prompt[]);
 float GetEncoderValueLiveRCal(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals, int IQEXChoice);
 float GetEncoderValueLiveXCal(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals, int IQEXChoice);
+float GetEncoderValueLiveXCal2(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals, int IQEXChoice);
+float GetEncoderValueLiveXSWRSlope(float minValue, float maxValue, float startValue, float increment);
+float GetEncoderValueLiveSWRAdj(float minValue, float maxValue, float startValue, float increment);
 int GetEncoderValueLiveInt(int minValue, int maxValue, int startValue, int increment, char prompt[]);
 int GetFineTuneValueLive(int minValue, int maxValue, int startValue, int increment, char prompt[]);
+int GetFineTuneValueLiveSWR(int minValue, int maxValue, int startValue, float increment);
+float GetEncoderValueLiveXSWROffset(float minValue, float maxValue, float startValue, float increment);
 void GetFavoriteFrequency();
 int getPowerLevelAdjustmentDB();
 
@@ -2403,6 +2491,7 @@ void ProcessIQDataFreq();
 uint16_t read16(File &f);
 uint32_t read32(File &f);
 int ReadSelectedPushButton();
+void read_SWR();
 void RedrawDisplayScreen();
 void ResetHistograms();
 void ResetTuning();  // AFP 10-11-22
@@ -2410,6 +2499,7 @@ int RFOptions();
 void ResetZoom(int zoomIndex1);  // AFP 11-06-22
 
 int SampleOptions();
+void scanner();
 void SDUpdate();
 int SDPresentCheck();
 void SelectCWToneOffset();
@@ -2450,11 +2540,15 @@ void SetTransmitDitLength(int wpm);  // JJP 8/19/23
 void SetupMode(int sideBand);
 void SetupMyCompressors(boolean use_HP_filter, float knee_dBFS, float comp_ratio, float attack_sec, float release_sec);  //AFP 11-01-22 in DSP.cpp
 int SetWPM();
+void setupSWR();
 void ShowAnalogGain();
 void ShowBandwidth();
 void ShowCurrentPowerSetting();
 void ShowDecoderMessage();
 void sineTone(int numCycles);
+void sineTone2(int numCycles);
+void sineTone3(int numCycles);
+void sineTone6(int numCycles);
 int SpectrumOptions();
 
 void TurnOffInitializingMessage();
@@ -2485,7 +2579,7 @@ void SpectralNoiseReduction(void);
 void SpectralNoiseReductionInit();
 void Splash();
 int SubmenuSelect(const char *options[], int numberOfChoices, int defaultStart);
-
+void TwoToneTest();
 void T4_rtc_set(unsigned long t);
 float TGetTemp();
 extern int ButtonPressed;

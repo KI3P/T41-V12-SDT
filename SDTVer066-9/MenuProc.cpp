@@ -22,87 +22,116 @@
 int CalibrateOptions(int IQChoice) {
   int val;
 
-
   tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 30, CHAR_HEIGHT, RA8875_BLACK);
   //  float transmitPowerLevelTemp;  //AFP 05-11-23
   tft.fillRect(0, 270, 510, 190, RA8875_BLACK);
   SAMPrintFlag = 1;
-  switch (IQChoice) {
 
-    case 0:  // Calibrate Frequency  - uses WWV
+  switch (IQChoice) {
+    case 0:             // Calibrate Frequency  - uses WWV
       freqCalFlag = 1;  //AFP 01-30-25
       CalibrateFrequency();
-      break;
-
-    case 1:  // CW PA Cal
-      XAttenCW[currentBand] = GetEncoderValueLiveInt(0, 63, XAttenCW[currentBand], 1, (char *)"CW PA Att.");
-      currentRF_OutAtten = XAttenCW[currentBand];
-      if (currentRF_OutAtten > 63) currentRF_OutAtten = 63;
-      if (currentRF_OutAtten < 0) currentRF_OutAtten = 0;
-      SetRF_OutAtten(currentRF_OutAtten);
-
-      val = ReadSelectedPushButton();
-      if (val != BOGUS_PIN_READ)  // Any button press??
-      {
-        val = ProcessButtonPress(val);  // Use ladder value to get menu choice
-        if (val == MENU_OPTION_SELECT)  // Yep. Make a choice??
-        {
-          tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
-
-          EEPROMWrite();
-          calibrateFlag = 0;
-
-          IQChoice = 5;
-          return IQChoice;
-        }
-      }
-      return 1; // we're still in this state
-      break;
-    case 2:                  // IQ Receive Cal - Gain and Phase
-      DoReceiveCalibrate();  // This function was significantly revised.  KF5N August 16, 2023
-
-      IQChoice = 5;
+      IQChoice = 8;
       return IQChoice;
       break;
-    case 3:               // IQ Transmit Cal - Gain and Phase  //AFP 2-21-23
-      DoXmitCalibrate();  // This function was significantly revised.  KF5N August 16, 2023
 
-      IQChoice = 5;
+      //=====================
+    case 1:                  // IQ Receive Cal - Gain and Phase
+      DoReceiveCalibrate();  // This function was significantly revised.
+      IQChoice = 8;
       return IQChoice;
       break;
-    case 4:  // SSB PA Cal
 
-      EEPROMData.powerLevel = CAL_POWER_LEVEL_W;  // adjustment is 0 for this power level, so don't calculate it
-      XAttenSSB[currentBand] = GetEncoderValueLiveInt(0, 63, XAttenSSB[currentBand], 1, (char *)"SSB PA Att.");
-      currentRF_OutAtten = XAttenSSB[currentBand];
-      if (currentRF_OutAtten > 63) currentRF_OutAtten = 63;
-      if (currentRF_OutAtten < 0) currentRF_OutAtten = 0;
-      SetRF_OutAtten(currentRF_OutAtten);
+    case 2:                 // IQ Transmit Cal - Gain and Phase  //AFP 2-21-23
+      DoXmitIQCalibrate();  // This function was significantly revised.
+      IQChoice = 8;
+      return IQChoice;
+      break;
 
-      val = ReadSelectedPushButton();
-      if (val != BOGUS_PIN_READ)  // Any button press??
-      {
-        val = ProcessButtonPress(val);  // Use ladder value to get menu choice
-        if (val == MENU_OPTION_SELECT)  // Yep. Make a choice??
-        {
-          tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH + 35, CHAR_HEIGHT, RA8875_BLACK);
+    case 3:  // SSB PA power out Cal
 
-          XAttenSSB[currentBand] = XAttenSSB[currentBand];
+      //tft.clearScreen(RA8875_BLACK);
 
-          EEPROMWrite();
-          calibrateFlag = 0;
+      SSB_PA_Calibrate();
+      //MyDelay(1000);
 
-          IQChoice = 5;
 
-          return IQChoice;
-        }
-      }
-      return 4; // we're still in this state
+      //IQChoice = 8;
+      //return IQChoice;
+      break;
+
+    case 4:  // CW PA power out Cal
+      calOnFlag = 1;
+      tft.clearScreen(RA8875_BLACK);
+      CW_PA_CalFlag = 1;
+      CW_PA_Calibrate();  // Do CW PA Cal
+      CW_PA_CalFlag = 0;
+      calOnFlag = 0;
+      //IQChoice = 8;
+      //return IQChoice;
+      break;
+
+    case 5:  // Two Tone
+
+      twoToneFlag = 1;
+      TwoToneTest();  // This function was significantly revised. AFP 01-31-25
+      IQChoice = 8;
+      return IQChoice;
       break;  // Missing break.  KF5N August 12, 2023
 
+    case 6:  // Change Rec frequency offset
+      recFreqCalFlag = 1;
+      tft.clearScreen(RA8875_BLACK);
+      while (true) {
+        Serial.print("calFreqOffsetIndex= ");
+        Serial.println(calFreqOffsetIndex);
+        if (calFreqOffsetIndex >= 15 || calFreqOffsetIndex <= 0) calFreqOffsetIndex = 0;
+        calFreqOffset = calFreqOffsetValues[calFreqOffsetIndex] * 1000;
+        recFreqCalFlag = 1;
+        tft.setCursor(600, 50);
+        tft.print("KHz");
+        tft.setFontScale((enum RA8875tsize)1);
+        tft.setTextColor(RA8875_CYAN);
+        tft.setCursor(50, 50);
+        tft.print("Cal Offset Frequency: ");
+        tft.fillRect(450, 50, 100, tft.getFontHeight(), RA8875_BLACK);
+        tft.setCursor(450, 50);
+        tft.print(calFreqOffset);
+        tft.setFontScale((enum RA8875tsize)0);
+        tft.setCursor(50, 115);
+        tft.print("Rec Cal Offset from Center Frequency");
+        tft.setCursor(50, 130);
+        tft.print("Directions");
+        tft.setCursor(50, 145);
+        tft.print("* Use Vol Encoder to adjust offset");
+        tft.setCursor(50, 160);
+        tft.print("* Select from the following offsets:");
+        tft.setCursor(50, 175);
+        tft.print("* -30KHz to +40KHz in 5K KHz increments");
+        tft.setCursor(50, 190);
+        tft.print("* Exit/save - Select");
+        tft.setCursor(50, 205);
+        tft.print("* Open Rec Cal - Calibrate/Rec Cal");
+        tft.setFontScale((enum RA8875tsize)1);
+        case 7:  //Calibrate SWR
+          DoSWRCal();
+             break;
+          val = ReadSelectedPushButton();  // Get ADC value
+          MyDelay(100L);
+          val = ProcessButtonPress(val);
+          if (val == MENU_OPTION_SELECT)  // If they made a choice...
+          {
+            recFreqCalFlag = 0;
+            IQChoice = 7;
+            return IQChoice;
+            break;
+          }
+      }
+      IQChoice = 8;
+      return IQChoice;
+      break;
 
-    case 5:
-
+    case 8:
       //EraseMenus();
       RedrawDisplayScreen();
       currentFreq = TxRxFreq = centerFreq + NCOFreq;
@@ -120,21 +149,18 @@ int CalibrateOptions(int IQChoice) {
       micChoice = -1;
       break;
   }
-  return 5;
+  return 8;
 }  //int CalibrateOptions(int IQChoice)
 // ==============  AFP 10-22-22 ==================
 /*****
-  Purpose: Present the CW options available and return the selection
-
+  Purpose: Present the CW options available and return the selectio
   Parameter list:
     void
-
   Return value
     int           an index into the band array
 *****/
 int CWOptions()  // new option for Sidetone and Delay JJP 9/1/22
 {
-
   switch (secondaryMenuIndex) {
     case 0:  // WPM
       SetWPM();
@@ -627,30 +653,37 @@ int RFOptions() {
   int val;
   switch (secondaryMenuIndex) {
     case 0:  // Power Level JJP 11/17/23 JJP
-      transmitPowerLevel = (float)GetEncoderValue(1, 20, transmitPowerLevel, 1, (char *)"Power: ");
+
       if (xmtMode == CW_MODE)  //AFP 10-13-22
       {
-        powerOutCW[currentBand] = (-.0133 * transmitPowerLevel * transmitPowerLevel + .7884 * transmitPowerLevel + 4.5146) * CWPowerCalibrationFactor[currentBand];  //  afp 10-21-22
-
+        transmitPowerLevelCW = GetEncoderValueCW(-20, 20, transmitPowerLevelCW, 1, (char *)"Power: ");
+        //powerOutCW[currentBand] = transmitPowerLevelCW;
+        powerOutCW[currentBand] = -0.017 * pow(transmitPowerLevelCW, 3) + 0.4501 * pow(transmitPowerLevelCW, 2) - 5.095 * (transmitPowerLevelCW) + 51.086;
         EEPROMData.powerOutCW[currentBand] = powerOutCW[currentBand];  //AFP 10-21-22
         //EEPROMWrite();//AFP 10-21-22
       } else  //AFP 10-13-22
       {
         if (xmtMode == SSB_MODE) {
-          powerOutSSB[currentBand] = (-.0133 * transmitPowerLevel * transmitPowerLevel + .7884 * transmitPowerLevel + 4.5146) * SSBPowerCalibrationFactor[currentBand];  // afp 10-21-22
-          EEPROMData.powerOutSSB[currentBand] = powerOutSSB[currentBand];                                                                                                //AFP 10-21-22
+          Serial.print(" RF Options before powerOutSSB[currentBand]= ");
+          Serial.println(powerOutSSB[currentBand]);
+          powerOutSSB[currentBand] = GetEncoderValuePower(0, 63, powerOutSSB[currentBand], 1, (char *)"Power");
+          Serial.print(" RF Options after powerOutSSB[currentBand]= ");
+          Serial.println(powerOutSSB[currentBand]);
+
+          EEPROMData.powerOutSSB[currentBand] = powerOutSSB[currentBand];  //AFP 10-21-22
         }
       }
       //EEPROMData.powerLevel = transmitPowerLevel;  //AFP 10-21-22
       EEPROMWrite();  //AFP 10-21-22
       BandInformation();
+
       returnValue = transmitPowerLevel;
       break;
 
     case 1:                                                                                  // Gain
       rfGainAllBands = GetEncoderValue(-60, 10, rfGainAllBands, 5, (char *)"RF Gain dB: ");  // Argument: min, max, start, increment
 
-      //EEPROMData.rfGainAllBands = rfGainAllBands;
+      EEPROMData.rfGainAllBands = rfGainAllBands;
       EEPROMWrite();
       returnValue = rfGainAllBands;
       break;

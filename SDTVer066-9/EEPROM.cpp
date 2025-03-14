@@ -167,6 +167,8 @@ FLASHMEM void EEPROMRead() {
     XAttenSSB[i] = EEPROMData.XAttenSSB[i];
     RAtten[i] = EEPROMData.RAtten[i];
     antennaSelection[i] = EEPROMData.antennaSelection[i];
+    SWR_PowerAdj[i] = EEPROMData.SWR_PowerAdj[i];
+    SWRSlopeAdj[i] = EEPROMData.SWRSlopeAdj[i];
   }
   for (int i = 0; i < MAX_FAVORITES; i++) {
     favoriteFrequencies[i] = EEPROMData.favoriteFreqs[i];
@@ -207,6 +209,10 @@ FLASHMEM void EEPROMRead() {
   receiveEQFlag = EEPROMData.receiveEQFlag;
   xmitEQFlag = EEPROMData.xmitEQFlag;
   CWToneIndex = EEPROMData.CWToneIndex;
+
+  transmitPowerLevelCW = EEPROMData.TransmitPowerLevelCW;    // Power level factors by mode
+  transmitPowerLevelSSB = EEPROMData.TransmitPowerLevelSSB;  // Power level factors by mode
+
 }
 
 
@@ -289,6 +295,10 @@ FLASHMEM void EEPROMWrite() {
     EEPROMData.XAttenSSB[i] = XAttenSSB[i];
     EEPROMData.RAtten[i] = RAtten[i];
     EEPROMData.antennaSelection[i] = antennaSelection[i];
+    EEPROMData.SWR_PowerAdj[i] = SWR_PowerAdj[i];
+    EEPROMData.SWR_R_Offset[i] = SWRSlopeAdj[i];
+    EEPROMData.SWR_R_Offset[i] = SWR_R_Offset[i];
+    
   }
   //  Note:favoriteFreqs are written as they are saved.
 
@@ -319,6 +329,12 @@ FLASHMEM void EEPROMWrite() {
   EEPROMData.receiveEQFlag = receiveEQFlag;
   EEPROMData.xmitEQFlag = xmitEQFlag;
   EEPROMData.CWToneIndex = CWToneIndex;
+
+
+  EEPROMData.TransmitPowerLevelCW = transmitPowerLevelCW;    // Power level factors by mode
+  EEPROMData.TransmitPowerLevelSSB = transmitPowerLevelSSB;  // Power level factors by mode
+ 
+
 
   EEPROM.put(EEPROM_BASE_ADDRESS, EEPROMData);
   // CopyEEPROMToSD();                                               // JJP 7/26/23
@@ -508,6 +524,10 @@ FLASHMEM void EEPROMShow() {
     Serial.print(i);
     Serial.print(F("] = "));
     Serial.println(EEPROMData.antennaSelection[i], 5);
+    Serial.println(EEPROMData.SWR_PowerAdj[i], 5);
+    Serial.println(EEPROMData.SWRSlopeAdj[i], 5);
+    Serial.println(EEPROMData.SWR_R_Offset[i], 5);
+    
   }
   Serial.println(F(" "));
   Serial.println(F("----- I/Q Calibration Parameters -----"));
@@ -576,7 +596,7 @@ FLASHMEM void EEPROMShow() {
     }
     Serial.println(EEPROMData.lastFrequencies[i][0]);
   }
-  
+
   for (int i = 0; i < NUMBER_OF_BANDS; i++) {
     Serial.print(F("          lastFrequencies["));
     Serial.print(i);
@@ -631,7 +651,11 @@ FLASHMEM void EEPROMShow() {
   Serial.print(F("CWToneIndex                     = "));
   Serial.println(EEPROMData.CWToneIndex);
 
-
+  Serial.print(F("TransmitPowerLevelCW            = "));
+  Serial.println(EEPROMData.TransmitPowerLevelCW);
+  Serial.print(F("TransmitPowerLevelSSB           = "));
+  Serial.println(EEPROMData.TransmitPowerLevelSSB);
+  //Serial.println(EEPROMData.SWR_R_Offset);
   Serial.println(F("----- End EEPROM Parameters -----"));
 }
 
@@ -756,25 +780,25 @@ void GetFavoriteFrequency() {
     centerFreq = EEPROMData.favoriteFreqs[index];  // current frequency  AFP 09-27-22
     if (centerFreq >= bands[BAND_80M].fBandLow && centerFreq <= bands[BAND_80M].fBandHigh) {
       currentBand2 = BAND_80M;
-    //} else if (centerFreq >= bands[BAND_80M].fBandHigh && centerFreq <= bands[BAND_80M].fBandHigh) {  // covers 5MHz WWV AFP 11-03-22
-     // currentBand2 = BAND_80M;
+      //} else if (centerFreq >= bands[BAND_80M].fBandHigh && centerFreq <= bands[BAND_80M].fBandHigh) {  // covers 5MHz WWV AFP 11-03-22
+      // currentBand2 = BAND_80M;
 
     } else if (centerFreq >= bands[BAND_60M].fBandLow && centerFreq <= bands[BAND_60M].fBandHigh) {  // covers 5MHz WWV AFP 11-03-22
       currentBand2 = BAND_60M;
 
     } else if (centerFreq >= bands[BAND_40M].fBandLow && centerFreq <= bands[BAND_40M].fBandHigh) {
       currentBand2 = BAND_40M;
-       //} else if (centerFreq >= bands[BAND_40M].fBandLow && centerFreq <= bands[BAND_40M].fBandHigh) {
+      //} else if (centerFreq >= bands[BAND_40M].fBandLow && centerFreq <= bands[BAND_40M].fBandHigh) {
       // currentBand2 = BAND_40M;
 
     } else if (centerFreq >= bands[BAND_30M].fBandLow && centerFreq <= bands[BAND_30M].fBandHigh) {  // covers 10MHz WWV AFP 11-03-22
       currentBand2 = BAND_30M;
 
-    //} else if (centerFreq >= bands[BAND_80M].fBandHigh && centerFreq <= 7000000L) {  // covers 5MHz WWV AFP 11-03-22
-     // currentBand2 = BAND_80M;
+      //} else if (centerFreq >= bands[BAND_80M].fBandHigh && centerFreq <= 7000000L) {  // covers 5MHz WWV AFP 11-03-22
+      // currentBand2 = BAND_80M;
     } else if (centerFreq >= bands[BAND_20M].fBandLow && centerFreq <= bands[BAND_20M].fBandHigh) {
       currentBand2 = BAND_20M;
-    //} else if (centerFreq >= 14000000L && centerFreq <= 18000000L) {  // covers 15MHz WWV AFP 11-03-22
+      //} else if (centerFreq >= 14000000L && centerFreq <= 18000000L) {  // covers 15MHz WWV AFP 11-03-22
       //currentBand2 = BAND_20M;
     } else if (centerFreq >= bands[BAND_17M].fBandLow && centerFreq <= bands[BAND_17M].fBandHigh) {
       currentBand2 = BAND_17M;
@@ -870,7 +894,7 @@ FLASHMEM void EEPROMSaveDefaults2() {
 
   EEPROMData.AGCMode = 1;
   EEPROMData.audioVolume = 40;  // 4 bytes
-  EEPROMData.rfGainAllBands = 1;
+  EEPROMData.rfGainAllBands = 0;
   EEPROMData.spectrumNoiseFloor = SPECTRUM_NOISE_FLOOR;
   EEPROMData.tuneIndex = 5;
   EEPROMData.stepFineTune = 50L;
@@ -951,9 +975,12 @@ FLASHMEM void EEPROMSaveDefaults2() {
 
   for (int i = 0; i < NUMBER_OF_BANDS; i++) {
     EEPROMData.XAttenCW[i] = 0;
-    EEPROMData.XAttenSSB[i] = 0;
+    EEPROMData.XAttenSSB[i] = 10;
     EEPROMData.RAtten[i] = 0;
     EEPROMData.antennaSelection[i] = 0;
+    EEPROMData.SWR_PowerAdj[i] = 0;
+    EEPROMData.SWRSlopeAdj[i] = 0;
+    EEPROMData.SWR_R_Offset[i] = 0;
   }
 
   for (int i = 0; i < NUMBER_OF_BANDS; i++) {
@@ -964,38 +991,38 @@ FLASHMEM void EEPROMSaveDefaults2() {
     EEPROMData.powerOutSSB[i] = 1.0;
   }
 
-  EEPROMData.CWPowerCalibrationFactor[0] = 0.023;   //V12HW
-  EEPROMData.CWPowerCalibrationFactor[1] = 0.023;   //V12HW
-  EEPROMData.CWPowerCalibrationFactor[2] = 0.023;   //AFP 10-29-22
-  EEPROMData.CWPowerCalibrationFactor[3] = 0.023;   //AFP 10-29-22
-  EEPROMData.CWPowerCalibrationFactor[4] = 0.038;   //AFP 10-29-22
-  EEPROMData.CWPowerCalibrationFactor[5] = 0.052;   //AFP 10-29-22
-  EEPROMData.CWPowerCalibrationFactor[6] = 0.051;   //AFP 10-29-22
-  EEPROMData.CWPowerCalibrationFactor[7] = 0.028;   //AFP 10-29-22
-  EEPROMData.CWPowerCalibrationFactor[8] = 0.028;   //AFP 10-29-22
-  EEPROMData.CWPowerCalibrationFactor[9] = 0.028;   //V12HW
+  EEPROMData.CWPowerCalibrationFactor[0] = 0.023;  //V12HW
+  EEPROMData.CWPowerCalibrationFactor[1] = 0.023;  //V12HW
+  EEPROMData.CWPowerCalibrationFactor[2] = 0.023;  //AFP 10-29-22
+  EEPROMData.CWPowerCalibrationFactor[3] = 0.023;  //AFP 10-29-22
+  EEPROMData.CWPowerCalibrationFactor[4] = 0.038;  //AFP 10-29-22
+  EEPROMData.CWPowerCalibrationFactor[5] = 0.052;  //AFP 10-29-22
+  EEPROMData.CWPowerCalibrationFactor[6] = 0.051;  //AFP 10-29-22
+  EEPROMData.CWPowerCalibrationFactor[7] = 0.028;  //AFP 10-29-22
+  EEPROMData.CWPowerCalibrationFactor[8] = 0.028;  //AFP 10-29-22
+  EEPROMData.CWPowerCalibrationFactor[9] = 0.028;  //V12HW
   if (NUMBER_OF_BANDS > 10) {
-  EEPROMData.CWPowerCalibrationFactor[10] = 0.028;  //V12HW
-  EEPROMData.CWPowerCalibrationFactor[11] = 0.028;  //V12HW
-  EEPROMData.CWPowerCalibrationFactor[12] = 0.028;  //V12HW
-  EEPROMData.CWPowerCalibrationFactor[13] = 0.028;  //V12HW
-  EEPROMData.CWPowerCalibrationFactor[14] = 0.028;  //V12HW
-  EEPROMData.CWPowerCalibrationFactor[15] = 0.028;  //V12HW
-  EEPROMData.CWPowerCalibrationFactor[16] = 0.028;  //V12HW
-  EEPROMData.CWPowerCalibrationFactor[17] = 0.028;  //V12HW
+    EEPROMData.CWPowerCalibrationFactor[10] = 0.028;  //V12HW
+    EEPROMData.CWPowerCalibrationFactor[11] = 0.028;  //V12HW
+    EEPROMData.CWPowerCalibrationFactor[12] = 0.028;  //V12HW
+    EEPROMData.CWPowerCalibrationFactor[13] = 0.028;  //V12HW
+    EEPROMData.CWPowerCalibrationFactor[14] = 0.028;  //V12HW
+    EEPROMData.CWPowerCalibrationFactor[15] = 0.028;  //V12HW
+    EEPROMData.CWPowerCalibrationFactor[16] = 0.028;  //V12HW
+    EEPROMData.CWPowerCalibrationFactor[17] = 0.028;  //V12HW
   }
 
 
-  EEPROMData.SSBPowerCalibrationFactor[0] = 0.017;   //AFP 10-29-22
-  EEPROMData.SSBPowerCalibrationFactor[1] = 0.017;   //AFP 10-29-22
-  EEPROMData.SSBPowerCalibrationFactor[2] = 0.017;   //AFP 10-29-22
-  EEPROMData.SSBPowerCalibrationFactor[3] = 0.019;   //AFP 10-29-22
-  EEPROMData.SSBPowerCalibrationFactor[4] = 0.017;   //AFP 10-29-22
-  EEPROMData.SSBPowerCalibrationFactor[5] = 0.019;   //AFP 10-29-22
-  EEPROMData.SSBPowerCalibrationFactor[6] = 0.021;   //AFP 10-29-22
-  EEPROMData.SSBPowerCalibrationFactor[7] = 0.020;   //AFP 10-29-22
-  EEPROMData.SSBPowerCalibrationFactor[8] = 0.022;   //AFP 10-29-22
-  EEPROMData.SSBPowerCalibrationFactor[9] = 0.022;   //V12HW
+  EEPROMData.SSBPowerCalibrationFactor[0] = 0.017;  //AFP 10-29-22
+  EEPROMData.SSBPowerCalibrationFactor[1] = 0.017;  //AFP 10-29-22
+  EEPROMData.SSBPowerCalibrationFactor[2] = 0.017;  //AFP 10-29-22
+  EEPROMData.SSBPowerCalibrationFactor[3] = 0.019;  //AFP 10-29-22
+  EEPROMData.SSBPowerCalibrationFactor[4] = 0.017;  //AFP 10-29-22
+  EEPROMData.SSBPowerCalibrationFactor[5] = 0.019;  //AFP 10-29-22
+  EEPROMData.SSBPowerCalibrationFactor[6] = 0.021;  //AFP 10-29-22
+  EEPROMData.SSBPowerCalibrationFactor[7] = 0.020;  //AFP 10-29-22
+  EEPROMData.SSBPowerCalibrationFactor[8] = 0.022;  //AFP 10-29-22
+  EEPROMData.SSBPowerCalibrationFactor[9] = 0.022;  //V12HW
   if (NUMBER_OF_BANDS > 10) {
     EEPROMData.SSBPowerCalibrationFactor[10] = 0.022;  //V12HW
     EEPROMData.SSBPowerCalibrationFactor[11] = 0.022;  //V12HW
@@ -1089,7 +1116,11 @@ FLASHMEM void EEPROMSaveDefaults2() {
 
   EEPROMData.receiveEQFlag = 0;  // JJP 2/29/2024
   EEPROMData.xmitEQFlag = 0;
-  EEPROMData.CWToneIndex = 2;
+  EEPROMData.CWToneIndex = 0;
+
+  EEPROMData.TransmitPowerLevelCW = 0.0;
+  EEPROMData.TransmitPowerLevelSSB = 0.0;
+  //EEPROMData.SWR_R_Offset2 = 0;
 }
 
 #if !defined(USE_JSON)
@@ -1268,7 +1299,7 @@ FLASHMEM int CopySDToEEPROM() {
       case 39:
         EEPROMData.equalizerRec[10] = atoi(temp);
         break;
-      
+
       case 40:
         EEPROMData.equalizerRec[11] = atoi(temp);
         break;
@@ -1717,6 +1748,15 @@ FLASHMEM int CopySDToEEPROM() {
       case 188:
         EEPROMData.CWToneIndex = atoi("2");
 
+      case 189:
+        EEPROMData.TransmitPowerLevelCW = atof(temp);
+        break;
+      case 190:
+        EEPROMData.TransmitPowerLevelSSB = atof(temp);
+        break;
+      case 191:
+        EEPROMDATA.SWR_R_Offset2 = atof(temp);
+        break;
       default:
         Serial.print(F("Shouldn't be here: lineCount = "));
         Serial.println(lineCount);
@@ -2182,6 +2222,21 @@ int CopyEEPROMToSD() {
   file.println(buffer);
 
 
+  strcpy(buffer, "TransmitPowerLevelCW = ");  // Latitude
+  dtostrf(EEPROMData.TransmitPowerLevelCW, 6, 4, temp);
+  strcat(buffer, temp);
+  file.println(buffer);
+
+  strcpy(buffer, "TransmitPowerLevelSSB = ");  // Latitude
+  dtostrf(EEPROMData.TransmitPowerLevelSSB, 6, 4, temp);
+  strcat(buffer, temp);
+  file.println(buffer);
+
+  strcpy(buffer, "SWR_R_Offset2 = ");  // Latitude
+  dtostrf(EEPROMData.SWR_R_Offset2, 6, 4, temp);
+  strcat(buffer, temp);
+  file.println(buffer);
+
   file.write(EOF);  // EOF marker
   file.close();
   RedrawDisplayScreen();
@@ -2289,7 +2344,7 @@ void ClearEEPROM() {
     void
 *****/
 void EEPROMStartup() {
-//  EEPROMSaveDefaults2();
+  //  EEPROMSaveDefaults2();
   EEPROMRead();                                                       // Read current stored data
                                                                       //EEPROMShow();
   if (strcmp(EEPROMData.versionSettings, EEPROMSetVersion()) == 0) {  // Are the versions the same?

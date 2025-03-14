@@ -1052,7 +1052,7 @@ void CW_DecodeLevelDisplay() {
 *****/
 FLASHMEM void SelectCWToneOffset() 
 {
-  const char *CWToneOffsets[] = { "562.5 Hz", "656.5 Hz", "750 Hz", "843.75 Hz", " Cancel " };
+  const char *CWToneOffsets[] = {"0 Hz", "562.5 Hz", "656.5 Hz", "750 Hz", "843.75 Hz", " Cancel " };
 //  const int numCycles[4] = { 6, 7, 8, 9 };
 
   int val;
@@ -1076,9 +1076,9 @@ FLASHMEM void SelectCWToneOffset()
       CWToneIndex += filterEncoderMove;   // Yep
 //      lastoneIndex = CWToneIndex;
       if (CWToneIndex < 0) {
-        CWToneIndex = 4;
+        CWToneIndex = 5;
       } else { 
-        if (CWToneIndex > 4)
+        if (CWToneIndex > 5)
           CWToneIndex = 0;
       }
       tft.fillRect(SECONDARY_MENU_X, MENUS_Y + 1, EACH_MENU_WIDTH, CHAR_HEIGHT, RA8875_MAGENTA);

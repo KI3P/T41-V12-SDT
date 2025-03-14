@@ -101,6 +101,10 @@ FLASHMEM void loadConfiguration(const char *filename, config_t &EEPROMData) {
   EEPROMData.xmitEQFlag = doc["xmitEQFlag"];
   EEPROMData.CWToneIndex = doc["CWToneIndex"];
 
+  EEPROMData.TransmitPowerLevelCW   = doc["TransmitPowerLevelCW"];          // Power level factors by mode
+  EEPROMData.TransmitPowerLevelSSB  = doc["TransmitPowerLevelSSB"];          // Power level factors by mode
+ 
+
   file.close();
 }
 
@@ -191,6 +195,10 @@ Serial.println(String(__FUNCTION__)+": "+String(filename));
   doc["receiveEQFlag"] = EEPROMData.receiveEQFlag;
   doc["xmitEQFlag"] = EEPROMData.xmitEQFlag;
   doc["CWToneIndex"] = EEPROMData.CWToneIndex;
+
+  doc["TransmitPowerLevelCW"]  = EEPROMData.TransmitPowerLevelCW;              // Power level factors by mode
+  doc["TransmitPowerLevelSSB"] = EEPROMData.TransmitPowerLevelSSB;              // Power level factors by mode
+
 
   if (toFile) {
 Serial.println(__LINE__);

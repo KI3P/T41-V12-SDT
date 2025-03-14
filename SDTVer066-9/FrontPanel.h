@@ -10,6 +10,7 @@
 #define SIDETONE_VOLUME 3
 #define NOISE_FLOOR_LEVEL 4
 #define SQUELCH_LEVEL 5
+#define FREQ_OFFSET 6
 
 extern Rotary_V12 volumeEncoder;
 extern Rotary_V12 filterEncoder;

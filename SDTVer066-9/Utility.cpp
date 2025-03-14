@@ -33,21 +33,62 @@ int getPowerLevelAdjustmentDB(){
   Return value;
     void
 *****/
-void sineTone(int numCycles) {
+void sineTone(int numCycles) {  // AFP 01-31-25
   float theta;
-  float freqSideTone2;
+  float theta2;
+  float theta4;
+  float theta5;
+  float freqSideTone2 = 1600;
   float freqSideTone3 = 3000;  // Refactored 32 * 24000 / 256; //AFP 2-7-23
+  float freqSideTone4 = 750;
   freqSideTone2 = numCycles * 24000 / 256;
   for (int kf = 0; kf < 256; kf++) {  //Calc: numCycles=8, 750 hz sine wave.
     theta = kf * 2 * PI * freqSideTone2 / 24000;
-    sinBuffer2[kf] = sin(theta);
-    cosBuffer2[kf] = cos(theta);
+    theta2 = kf * 2 * PI * 2250 / 24000;
+    sinBuffer2[kf] = sin(theta2);
+    cosBuffer2[kf] = cos(theta2);
     theta = kf * 2.0 * PI * freqSideTone3 / 24000;
     sinBuffer3[kf] = sin(theta);
     cosBuffer3[kf] = cos(theta);
+    theta4 = kf * 2.0 * PI * freqSideTone4 / 24000;
+    sinBuffer4[kf] = sin(theta4);
+    cosBuffer4[kf] = cos(theta4);
+    theta5 = kf * 2.0 * PI * freqSideTone2 / 24000;
+    sinBuffer5[kf] = sin(theta5);
+    cosBuffer5[kf] = cos(theta5);
+  }
+}
+void sineTone2(int numCycles) {  // AFP 01-31-25
+  float theta2;
+  float freqSideTone2;
+  freqSideTone2 = numCycles * 24000 / 256;
+  for (int kf = 0; kf < 256; kf++) {  //Calc: numCycles=8, 750 hz sine wave.
+    theta2 = kf * 2.0 * PI * freqSideTone2 / 24000;
+    cosBuffer4[kf] = cos(theta2);
+    sinBuffer4[kf] = sin(theta2);
+  }
+}
+void sineTone3(int numCycles) {  // AFP 01-31-25
+  float theta2;
+  float freqSideTone2;
+  freqSideTone2 = numCycles * 192000 / 2048;
+  for (int kf = 0; kf < 256; kf++) {  //Calc: numCycles=8, 750 hz sine wave.
+    theta2 = kf * 2.0 * PI * freqSideTone2 / 24000;
+    cosBuffer5[kf] = cos(theta2);
+    sinBuffer5[kf] = sin(theta2);
   }
 }
 
+void sineTone6(int numCycles) {  // AFP 01-31-25
+  float theta6;
+  float freqSideTone6;
+  freqSideTone6 = numCycles * 24000 / 256;
+  for (int kf = 0; kf < 256; kf++) {  //Calc: numCycles=8, 750 hz sine wave.
+    theta6 = kf * 2.0 * PI * freqSideTone6 / 24000;
+    cosBuffer6[kf] = cos(theta6);
+    sinBuffer6[kf] = sin(theta6);
+  }
+}
 
 const float32_t atanTable[68] = {
   -0.015623728620477f,
@@ -746,4 +787,5 @@ int ChangeBand(long f, bool updateRelays) {
   return b;
 }
 #endif // V12_CAT
+
 

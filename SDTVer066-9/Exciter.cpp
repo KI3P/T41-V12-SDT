@@ -23,12 +23,7 @@
 *****/
 void ExciterIQData() {
   uint32_t N_BLOCKS_EX = N_B_EX;
-  static int val;
-  int val2;
-  int task = -1;  // captures the button presses
-  int lastUsedTask = -2;
-  float exciteMaxL = 0;
-
+  int SSB_CalModeTask = 0;
 
   /**********************************************************************************  AFP 12-31-20
         Get samples from queue buffers
@@ -39,7 +34,8 @@ void ExciterIQData() {
         BUFFER_SIZE*N_BLOCKS = 2024 samples
      **********************************************************************************/
   // are there at least N_BLOCKS buffers in each channel available ?
-  if ((uint32_t)Q_in_L_Ex.available() > N_BLOCKS_EX + 0 && (uint32_t)Q_in_R_Ex.available() > N_BLOCKS_EX + 0) {
+  if ((uint32_t)Q_in_L_Ex.available() > N_BLOCKS_EX + 0 && (uint32_t)Q_in_R_Ex.available() > N_BLOCKS_EX + 0) 
+  {
 
     // get audio samples from the audio  buffers and convert them to float
     // read in 32 blocks á 128 samples in I and Q
@@ -56,9 +52,6 @@ void ExciterIQData() {
       Q_in_L_Ex.freeBuffer();
       Q_in_R_Ex.freeBuffer();
     }
-
-
-
     /**********************************************************************************  AFP 12-31-20
               Decimation is the process of downsampling the data stream and LP filtering
               Decimation is done in two stages to prevent reversal of the spectrum, which occure with each even
@@ -74,22 +67,56 @@ void ExciterIQData() {
     // decimation-by-2 in-place
     arm_fir_decimate_f32(&FIR_dec2_EX_I, float_buffer_L_EX, float_buffer_L_EX, 512);
     arm_fir_decimate_f32(&FIR_dec2_EX_Q, float_buffer_R_EX, float_buffer_R_EX, 512);
+    // 24KSPS effective sample rate here
+    // Set up for calibration routines
+    if (twoToneFlag == 0 && IQCalFlag == 0 && SSB_PA_CalFlag == 0) SSB_CalModeTask = 0;  // Regular operation
+    if (twoToneFlag == 1 && IQCalFlag == 0 && SSB_PA_CalFlag == 0) SSB_CalModeTask = 1;  // Two-tone Calibrate
+    if (twoToneFlag == 0 && IQCalFlag == 1 && SSB_PA_CalFlag == 0) SSB_CalModeTask = 2;  //Transmit IQ calibration
+    if (twoToneFlag == 0 && IQCalFlag == 0 && SSB_PA_CalFlag == 1) SSB_CalModeTask = 2;  //SSB initial Power calibrate as reference
+
+   switch (SSB_CalModeTask) {
+      //  ============= AFP 02-01-25
+      case (0):  // Passthrough
+        break;
+
+      case (1):  // Two-tone signal generation - uses Hilbert transfor to generate IQ signals
+        arm_add_f32(sinBuffer4, sinBuffer5, float_buffer_L_EX, 256);
+        arm_add_f32(sinBuffer4, sinBuffer5, float_buffer_R_EX, 256);
+        arm_scale_f32(float_buffer_L_EX, .1, float_buffer_L_EX, 256);
+        arm_scale_f32(float_buffer_R_EX, .1, float_buffer_R_EX, 256);
+        break;
+
+      case (2):  // //Sine wave generator for transmit IQ Calibrate and Transmit SSB power calibrate
+        arm_scale_f32(sinBuffer6, .03, float_buffer_L_EX, 256);
+        arm_scale_f32(sinBuffer6, .03, float_buffer_R_EX, 256);
+        break;
+    }
+   arm_scale_f32(float_buffer_L_EX, (float)XAttenSSB[currentBand] / 10, float_buffer_L_EX, 256);
+    arm_scale_f32(float_buffer_R_EX, (float)XAttenSSB[currentBand] / 10, float_buffer_R_EX, 256);
 
     //============================  Transmit EQ  ========================  AFP 10-02-22
     if (xmitEQFlag == ON) {
       DoExciterEQ();
     }
     //============================ End Receive EQ  AFP 10-02-22
-
-
     arm_copy_f32(float_buffer_L_EX, float_buffer_R_EX, 256);
+    //  The following converts th sample rate to 12K SPS, applies the Hilbert transforms and then interpolates back to 24K SP.
+    //The objective is to extend the lower frequency rnge of the Hilbert transfrom by moving the lowewr limit of the Hilbert usefullness down to below 200Hz.
 
-    //#ifdef V12_AUDIO_DISPLAY
-    //   arm_copy_f32 (float_buffer_R_EX, mic_audio_buffer, 256);
-    //#endif
+    //Decimate by 2 to 12K SPS sample rate
+    arm_fir_decimate_f32(&FIR_dec3_EX_I, float_buffer_L_EX, float_buffer_L_EX, 256);
+    arm_fir_decimate_f32(&FIR_dec3_EX_Q, float_buffer_R_EX, float_buffer_R_EX, 256);
+    //Hilbert transforms at 12K, with 5KHz bandwidth, buffer size 128
+    arm_fir_f32(&FIR_Hilbert_L, float_buffer_L_EX, float_buffer_L_EX, 128);
+    arm_fir_f32(&FIR_Hilbert_R, float_buffer_R_EX, float_buffer_R_EX, 128);
+    //Interpolate back to 24K SPS
+    arm_fir_interpolate_f32(&FIR_int3_EX_I, float_buffer_L_EX, float_buffer_LTemp, 128);
+    arm_fir_interpolate_f32(&FIR_int3_EX_Q, float_buffer_R_EX, float_buffer_RTemp, 128);
+    //Back to 24000 SPS
+    //Scale to equalize levels
+    arm_scale_f32(float_buffer_LTemp, 3.5, float_buffer_L_EX, 256);
+    arm_scale_f32(float_buffer_RTemp, 3.5, float_buffer_R_EX, 256);
 
-    // =========================    End CW Xmit
-    //--------------  Hilbert Transformers
 
     /**********************************************************************************
              R and L channels are processed though the two Hilbert Transformers, L at 0 deg and R at 90 deg
@@ -98,58 +125,24 @@ void ExciterIQData() {
              Two Hilbert Transformers are used to preserve eliminate the relative time delays created during processing of the data
     **********************************************************************************/
 
-    if (IQCalFlag == 0) {
-      arm_fir_f32(&FIR_Hilbert_L, float_buffer_L_EX, float_buffer_L_EX, 256);
-      arm_fir_f32(&FIR_Hilbert_R, float_buffer_R_EX, float_buffer_R_EX, 256);
-
-    } else {
-      arm_scale_f32(cosBuffer2, -.1, float_buffer_L_EX, 256);
-      arm_scale_f32(sinBuffer2, .1, float_buffer_R_EX, 256);
-      SetRF_OutAtten(0);
-      //=================
-      val2 = ReadSelectedPushButton();
-      if (val2 != BOGUS_PIN_READ) {
-        val2 = ProcessButtonPress(val);
-        if (val2 != lastUsedTask && task == -100) {
-          task = val2;
-        } else 
-          task = BOGUS_PIN_READ;
-      }
-      lastUsedTask = val2;
-
- 
-      //===================
-      //IQXAmpCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQXAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain");
-      if (IQEXChoice == 0) {  // AFP 2-11-23
-        IQXAmpCorrectionFactor[currentBand] = GetEncoderValueLiveXCal(-2.0, 2.0, IQXAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain", 3, IQEXChoice);
-
-      } else {
-        IQXPhaseCorrectionFactor[currentBand] = GetEncoderValueLiveXCal(-2.0, 2.0, IQXPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase", 3, IQEXChoice);
-      }
-      
+    //==== Uising Vol and Filter encoders afjust IQ calibration factors
+    if (twoToneFlag == 0 && IQCalFlag == 1 && SSB_PA_CalFlag == 0) {
+      IQXAmpCorrectionFactor[currentBand] = GetEncoderValueLiveXCal(-2.0, 2.0, IQXAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain", 3, IQEXChoice);
+      IQXPhaseCorrectionFactor[currentBand] = GetEncoderValueLiveXCal2(-2.0, 2.0, IQXPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase", 3, IQEXChoice);
     }
-
-    /**********************************************************************************
-              Additional scaling, if nesessary to compensate for down-stream gain variations
-     **********************************************************************************/
-    //Serial.print("IQCalFlag1= "); Serial.println(IQCalFlag);
+    // ==== Apply IQ calibration factors
     if (bands[currentBand].mode == DEMOD_LSB) {                                                        //AFP 12-27-21
       arm_scale_f32(float_buffer_L_EX, IQXAmpCorrectionFactor[currentBandA], float_buffer_L_EX, 256);  // Flip SSB sideband KF5N, minus sign was original
       //arm_scale_f32 (float_buffer_L_EX, 1.0, float_buffer_L_EX, 256);     // Flip SSB sideband KF5N, minus sign was original
       IQXPhaseCorrection(float_buffer_L_EX, float_buffer_R_EX, IQXPhaseCorrectionFactor[currentBandA], 256);
       //IQPhaseCorrection(float_buffer_L_EX, float_buffer_R_EX, 0.0, 256);
-    } else if (bands[currentBand].mode == DEMOD_USB) {                                                 //AFP 12-27-21
-      arm_scale_f32(float_buffer_L_EX, IQXAmpCorrectionFactor[currentBandA], float_buffer_L_EX, 256);  // Flip SSB sideband KF5N
+    } else if (bands[currentBand].mode == DEMOD_USB) {                                                  //AFP 12-27-21
+      arm_scale_f32(float_buffer_L_EX, -IQXAmpCorrectionFactor[currentBandA], float_buffer_L_EX, 256);  // Flip SSB sideband KF5N
       IQPhaseCorrection(float_buffer_L_EX, float_buffer_R_EX, IQXPhaseCorrectionFactor[currentBandA], 256);
     }
     arm_scale_f32(float_buffer_R_EX, 1.00, float_buffer_R_EX, 256);
 
-    exciteMaxL = 0;
-    for (int k = 0; k < 256; k++) {
-      if (float_buffer_L_EX[k] > exciteMaxL) {
-        exciteMaxL = float_buffer_L_EX[k];
-      }
-    }
+    //exciteMaxL = 0;
 
     /**********************************************************************************
               Interpolate (upsample the data streams by 8X to create the 192KHx sample rate for output
@@ -177,9 +170,12 @@ void ExciterIQData() {
       arm_float_to_q15(&float_buffer_R_EX[BUFFER_SIZE * i], sp_R2, BUFFER_SIZE);
       Q_out_L_Ex.playBuffer();  // play it !
       Q_out_R_Ex.playBuffer();  // play it !
+     
     }
   }
+  
 }
+
 
 /*****
   Purpose: Set the current band relay ON or OFF

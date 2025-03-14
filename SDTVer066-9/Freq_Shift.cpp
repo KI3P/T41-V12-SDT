@@ -139,3 +139,29 @@ void FreqShift2()
  
   }
 }
+
+void FreqShiftEx(long freqShiftAmt)
+{
+  NCO_INC = 2.0 * PI * (freqShiftAmt) / 192000.0; //192000 SPS is the actual sample rate used in the Receive ADC
+
+  OSC_COS = cos (NCO_INC);
+  OSC_SIN = sin (NCO_INC);
+
+  for (uint32_t i = 0; i < BUFFER_SIZE * N_BLOCKS; i++) {
+    // generate local oscillator on-the-fly:  This takes a lot of processor time!
+    Osc_Q = (Osc_Vect_Q * OSC_COS) - (Osc_Vect_I * OSC_SIN);  // Q channel of oscillator
+    Osc_I = (Osc_Vect_I * OSC_COS) + (Osc_Vect_Q * OSC_SIN);  // I channel of oscillator
+    Osc_Gain = 1.95 - ((Osc_Vect_Q * Osc_Vect_Q) + (Osc_Vect_I * Osc_Vect_I));  // Amplitude control of oscillator
+
+    // rotate vectors while maintaining constant oscillator amplitude
+    Osc_Vect_Q = Osc_Gain * Osc_Q;
+    Osc_Vect_I = Osc_Gain * Osc_I;
+    //
+    // do actual frequency conversion
+    float freqAdjFactor = 1.1;
+
+    float_buffer_L_EX[i] = (float_buffer_L_EX[i] * freqAdjFactor * Osc_Q) + (float_buffer_L_EX[i] * freqAdjFactor * Osc_I); // multiply I/Q data by sine/cosine data to do translation
+    float_buffer_R_EX[i] = (float_buffer_R_EX[i] * freqAdjFactor * Osc_Q) - (float_buffer_R_EX[i] * freqAdjFactor * Osc_I);
+ 
+  }
+}

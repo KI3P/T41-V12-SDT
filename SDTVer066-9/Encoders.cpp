@@ -29,12 +29,13 @@ unsigned long FT_delay;                  // HMB
 *****/
 void FilterSetSSB() {
   long filter_change;
-    if (recCalOnFlag == 1) {
-    //IQAmpCorrectionFactor[currentBand] = GetEncoderValueLiveRCal(-2.0, 2.0, IQAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain", 3, 0);
-    //IQPhaseCorrectionFactor[currentBand] = GetEncoderValueLiveRCal(-2.0, 2.0, IQPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase", 4, 0);
-    return;
-  }
-  if (calOnFlag == 1) return;
+  if (recCalOnFlag == 1 || calOnFlag == 1 || SWRCalFlag== 1 || IQCalFlag == 1)  return;
+ 
+  //if (calOnFlag == 1) return;
+
+ // if (IQCalFlag == 1) return;
+//if (SWRCalFlag== 1) return;
+
   //========
   if (filterEncoderMove != 0) {
     filter_pos += filterEncoderMove;  // Bump up or down...
@@ -183,86 +184,99 @@ void EncoderVolume()  //============================== AFP 10-22-22  Begin new
 
   result = volumeEncoder.process();  // Read the encoder
 
+
   if (result == 0) {  // Nothing read
     return;
   }
 
   adjustVolEncoder = result;
+if (SWRCalFlag == 1) return;
+  if (recFreqCalFlag == 1) {
+    calFreqOffsetIndex += adjustVolEncoder;
+
+    return;
+  }
   if (recCalOnFlag == 1) {
     IQPhaseCorrectionFactor[currentBand] += (float)adjustVolEncoder * corrChangeIQIncrement;
+
     return;
   } else {
 
-  switch (volumeFunction) {
-    case AUDIO_VOLUME:
-      audioVolume += adjustVolEncoder;
+    switch (volumeFunction) {
+      case AUDIO_VOLUME:
+        audioVolume += adjustVolEncoder;
 
-      if (audioVolume > 100) {  // In range?
-        audioVolume = 100;
-      } else {
-        if (audioVolume < 0) {
-          audioVolume = 0;
+        if (audioVolume > 100) {  // In range?
+          audioVolume = 100;
+        } else {
+          if (audioVolume < 0) {
+            audioVolume = 0;
+          }
         }
-      }
-      break;
-    case AGC_GAIN:
-      bands[currentBand].AGC_thresh += adjustVolEncoder;
-      if (bands[currentBand].AGC_thresh < -20) {
-        bands[currentBand].AGC_thresh = -20;
-      } else if (bands[currentBand].AGC_thresh > 120) {
-        bands[currentBand].AGC_thresh = 120;
-      }
-      AGCLoadValues();
-      volumeChangeFlag2 = true;
-      volTimer = millis();
-      break;
-    case MIC_GAIN:
-      currentMicGain += adjustVolEncoder;
-      if (currentMicGain < -40) {
-        currentMicGain = -40;
-      } else if (currentMicGain > 30) {
-        currentMicGain = 30;
-      }
-      if (radioState == SSB_TRANSMIT_STATE) {
-        comp1.setPreGain_dB(currentMicGain);
-        comp2.setPreGain_dB(currentMicGain);
-      }
-      volumeChangeFlag2 = true;
-      volTimer = millis();
-      break;
-    case SIDETONE_VOLUME:
-      sidetoneVolume += adjustVolEncoder;
-      if (sidetoneVolume < 0.0) {
-        sidetoneVolume = 0.0;
-      } else if (sidetoneVolume > 100.0) {
-        sidetoneVolume = 100.0;
-      }
-      if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {
-        modeSelectOutL.gain(1, sidetoneVolume / 100.0);
-        modeSelectOutR.gain(1, sidetoneVolume / 100.0);
-      }
-      volumeChangeFlag2 = true;
-      volTimer = millis();
-      break;
-    case NOISE_FLOOR_LEVEL:
-      currentNoiseFloor[currentBand] += adjustVolEncoder;
-      if (currentNoiseFloor[currentBand] < 0) {
-        currentNoiseFloor[currentBand] = 0;
-      } else if (currentNoiseFloor[currentBand] > 100) {
-        currentNoiseFloor[currentBand] = 100;
-      }
-      volumeChangeFlag2 = true;
-      volTimer = millis();
-      break;
-  }
+        break;
+      case AGC_GAIN:
+        bands[currentBand].AGC_thresh += adjustVolEncoder;
+        if (bands[currentBand].AGC_thresh < -20) {
+          bands[currentBand].AGC_thresh = -20;
+        } else if (bands[currentBand].AGC_thresh > 120) {
+          bands[currentBand].AGC_thresh = 120;
+        }
+        AGCLoadValues();
+        volumeChangeFlag2 = true;
+        volTimer = millis();
+        break;
+      case MIC_GAIN:
+        currentMicGain += adjustVolEncoder;
+        if (currentMicGain < -40) {
+          currentMicGain = -40;
+        } else if (currentMicGain > 30) {
+          currentMicGain = 30;
+        }
+        if (radioState == SSB_TRANSMIT_STATE) {
+          //comp1.setPreGain_dB(currentMicGain);
+          sgtl5000_1.micGain(currentMicGain);
+          //comp2.setPreGain_dB(currentMicGain);
+        }
+        volumeChangeFlag2 = true;
+        volTimer = millis();
+        IQCalFlag = 0;
+        break;
+      case SIDETONE_VOLUME:
+        sidetoneVolume += adjustVolEncoder;
+        if (sidetoneVolume < 0.0) {
+          sidetoneVolume = 0.0;
+        } else if (sidetoneVolume > 100.0) {
+          sidetoneVolume = 100.0;
+        }
+        if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {
+          modeSelectOutL.gain(1, sidetoneVolume / 100.0);
+          modeSelectOutR.gain(1, sidetoneVolume / 100.0);
+        }
+        volumeChangeFlag2 = true;
+        volTimer = millis();
+        break;
+      case NOISE_FLOOR_LEVEL:
+        currentNoiseFloor[currentBand] += adjustVolEncoder;
+        if (currentNoiseFloor[currentBand] < 0) {
+          currentNoiseFloor[currentBand] = 0;
+        } else if (currentNoiseFloor[currentBand] > 100) {
+          currentNoiseFloor[currentBand] = 100;
+        }
+        volumeChangeFlag2 = true;
+        volTimer = millis();
+        break;
 
+        //case FREQ_OFFSET:
+
+        //
+        // volumeChangeFlag2 = true;
+        //volTimer = millis();
+    }
+  }
 
   //=================== AFP 04-3-24 V012 Bode Plot start
 
-  if (IQCalFlag == 1) {
 
-    corrPlotYValue += (float)adjustVolEncoder * corrChangeIQIncrement;
-  }
 
   if (BodePlotFlag == 1) {
     refLevelBode += adjustVolEncoder;  //AFP 03-30-24
@@ -274,7 +288,7 @@ void EncoderVolume()  //============================== AFP 10-22-22  Begin new
   volumeChangeFlag = true;  // Need this because of unknown timing in display updating.
 
 }  //============================== AFP 10-22-22  End new
-}
+
 
 
 
@@ -329,15 +343,43 @@ float GetEncoderValueLiveFreq(float minValue, float maxValue, float startValue, 
   float currentValue = startValue;
 
   if (filterEncoderMove != 0) {
-    
+
     currentValue += filterEncoderMove * increment;  // Bump up or down...
     if (currentValue < minValue)
       currentValue = minValue;
     else if (currentValue > maxValue)
       currentValue = maxValue;
-     startValue= currentValue;
-      volumeFunction = AUDIO_VOLUME;
-      volumeChangeFlag2 = false;
+    startValue = currentValue;
+    volumeFunction = AUDIO_VOLUME;
+    volumeChangeFlag2 = false;
+    filterEncoderMove = 0;
+  }
+  return currentValue;
+}
+
+/*****
+  Purpose: Use the encoder to change the value of a number in some other function
+
+  Parameter list:
+    int minValue                the lowest value allowed
+    int maxValue                the largest value allowed
+    int startValue              the numeric value to begin the count
+    int increment               the amount by which each increment changes the value
+    char prompt[]               the input prompt
+  Return value;
+    int                         the new value
+*****/
+int GetFineTuneValueLiveSWR(int minValue, int maxValue, int startValue, float increment) {
+  float currentValue = startValue;
+
+  if (filterEncoderMove != 0) {
+
+    currentValue += filterEncoderMove * increment;  // Bump up or down...
+    if (currentValue < minValue)
+      currentValue = minValue;
+    else if (currentValue > maxValue)
+      currentValue = maxValue;
+    startValue = currentValue;
     filterEncoderMove = 0;
   }
   return currentValue;
@@ -446,33 +488,14 @@ float GetEncoderValueLiveXCal(float minValue, float maxValue, float startValue, 
   tft.setFontScale((enum RA8875tsize)1);
   tft.setTextColor(RA8875_WHITE);
 
-  if (IQEXChoice == 0) {
-    tft.setTextColor(RA8875_YELLOW);
-    tft.fillRect(458, 20, 230, CHAR_HEIGHT, RA8875_BLACK);
-    tft.setCursor(460, 20);
-    tft.print("IQ Gain");
-    tft.setCursor(610, 20);
-    tft.print(IQXAmpCorrectionFactor[currentBand], Ndecimals);
-    tft.setTextColor(RA8875_WHITE);
-    tft.fillRect(458, 50, 230, CHAR_HEIGHT, RA8875_BLACK);
-    tft.setCursor(460, 50);
-    tft.print("IQ Phase");
-    tft.setCursor(610, 50);
-    tft.print(IQXPhaseCorrectionFactor[currentBand], Ndecimals);
-  } else {
-    tft.setTextColor(RA8875_WHITE);
-    tft.fillRect(458, 20, 230, CHAR_HEIGHT, RA8875_BLACK);
-    tft.setCursor(460, 20);
-    tft.print("IQ Gain");
-    tft.setCursor(610, 20);
-    tft.print(IQXAmpCorrectionFactor[currentBand], Ndecimals);
-    tft.setTextColor(RA8875_YELLOW);
-    tft.fillRect(458, 50, 230, CHAR_HEIGHT, RA8875_BLACK);
-    tft.setCursor(460, 50);
-    tft.print("IQ Phase");
-    tft.setCursor(610, 50);
-    tft.print(IQXPhaseCorrectionFactor[currentBand], Ndecimals);
-  }
+  //if (IQEXChoice == 0) {
+  tft.setTextColor(RA8875_YELLOW);
+  tft.fillRect(458, 20, 230, CHAR_HEIGHT, RA8875_BLACK);
+  tft.setCursor(460, 20);
+  tft.print("IQ Gain");
+  tft.setCursor(610, 20);
+  tft.print(IQXAmpCorrectionFactor[currentBand], Ndecimals);
+
   if (filterEncoderMove != 0) {
     currentValue += filterEncoderMove * increment;  // Bump up or down...
     if (currentValue < minValue)
@@ -480,38 +503,135 @@ float GetEncoderValueLiveXCal(float minValue, float maxValue, float startValue, 
     else if (currentValue > maxValue)
       currentValue = maxValue;
 
-    if (IQEXChoice == 0) {
-      tft.setTextColor(RA8875_YELLOW);
-      tft.fillRect(458, 20, 230, CHAR_HEIGHT, RA8875_BLACK);
-      tft.setCursor(460, 20);
-      tft.print("IQ Gain");
-      tft.setCursor(610, 20);
-      tft.print(IQXAmpCorrectionFactor[currentBand], Ndecimals);
-      tft.setTextColor(RA8875_WHITE);
-      tft.fillRect(458, 50, 230, CHAR_HEIGHT, RA8875_BLACK);
-      tft.setCursor(460, 50);
-      tft.print("IQ Phase");
-      tft.setCursor(610, 50);
-      tft.print(IQXPhaseCorrectionFactor[currentBand], Ndecimals);
-    } else {
-      tft.setTextColor(RA8875_WHITE);
-      tft.fillRect(458, 20, 230, CHAR_HEIGHT, RA8875_BLACK);
-      tft.setCursor(460, 20);
-      tft.print("IQ Gain");
-      tft.setCursor(610, 20);
-      tft.print(IQXAmpCorrectionFactor[currentBand], Ndecimals);
-      tft.setTextColor(RA8875_YELLOW);
-      tft.fillRect(458, 50, 230, CHAR_HEIGHT, RA8875_BLACK);
-      tft.setCursor(460, 50);
-      tft.print("IQ Phase");
-      tft.setCursor(610, 50);
-      tft.print(IQXPhaseCorrectionFactor[currentBand], Ndecimals);
-    }
+    //if (IQEXChoice == 0) {
+    tft.setTextColor(RA8875_YELLOW);
+    tft.fillRect(458, 20, 230, CHAR_HEIGHT, RA8875_BLACK);
+    tft.setCursor(460, 20);
+    tft.print("IQ Gain");
+    tft.setCursor(610, 20);
+    tft.print(IQXAmpCorrectionFactor[currentBand], Ndecimals);
+
     filterEncoderMove = 0;
+  }
+  return currentValue;
+}
+
+/*****
+  Purpose: Use the encoder to change the value of a number in some other function
+
+  Parameter list:
+    int minValue                the lowest value allowed
+    int maxValue                the largest value allowed
+    int startValue              the numeric value to begin the count
+    int increment               the amount by which each increment changes the value
+    char prompt[]               the input prompt
+  Return value;
+    int                         the new value
+*****/
+float GetEncoderValueLiveSWRAdj(float minValue, float maxValue, float startValue, float increment) {
+  float currentValue = startValue;
+  tft.setFontScale((enum RA8875tsize)1);
+  tft.setTextColor(RA8875_WHITE);
+  if (filterEncoderMove != 0) {
+    currentValue += filterEncoderMove * increment;  // Bump up or down...
+    if (currentValue < minValue)
+      currentValue = minValue;
+    else if (currentValue > maxValue)
+      currentValue = maxValue;
+    filterEncoderMove = 0;
+  }
+  return currentValue;
+}
+/*****
+  Purpose: Use the encoder to change the value of a number in some other function
+
+  Parameter list:
+    int minValue                the lowest value allowed
+    int maxValue                the largest value allowed
+    int startValue              the numeric value to begin the count
+    int increment               the amount by which each increment changes the value
+    char prompt[]               the input prompt
+  Return value;
+    int                         the new value
+*****/
+float GetEncoderValueLiveXCal2(float minValue, float maxValue, float startValue, float increment, char prompt[], int Ndecimals, int IQEXChoice) {
+  float currentValue = startValue;
+
+  tft.setFontScale((enum RA8875tsize)1);
+  tft.setTextColor(RA8875_WHITE);
+
+  if (adjustVolEncoder != 0) {
+    currentValue += adjustVolEncoder * increment;  // Bump up or down...
+    if (currentValue < minValue)
+      currentValue = minValue;
+    else if (currentValue > maxValue)
+      currentValue = maxValue;
+    tft.setTextColor(RA8875_YELLOW);
+    tft.fillRect(458, 50, 230, CHAR_HEIGHT, RA8875_BLACK);
+    tft.setCursor(460, 50);
+    tft.print("IQ Phase");
+    tft.setCursor(610, 50);
+    IQXPhaseCorrectionFactor[currentBand] = currentValue;
+    tft.print(IQXPhaseCorrectionFactor[currentBand], Ndecimals);
+
+    adjustVolEncoder = 0;
   }
   //tft.setTextColor(RA8875_WHITE);
   return currentValue;
 }
+/*****
+  Purpose: Use the encoder to change the value of a number in some other function
+
+  Parameter list:
+    int minValue                the lowest value allowed
+    int maxValue                the largest value allowed
+    int startValue              the numeric value to begin the count
+    int increment               the amount by which each increment changes the value
+    char prompt[]               the input prompt
+  Return value;
+    int                         the new value
+*****/
+float GetEncoderValueLiveXSWRSlope(float minValue, float maxValue, float startValue, float increment) {
+  float currentValue = startValue;
+
+  if (adjustVolEncoder != 0) {
+    currentValue += adjustVolEncoder * increment;  // Bump up or down...
+    if (currentValue < minValue)
+      currentValue = minValue;
+    else if (currentValue > maxValue)
+      currentValue = maxValue;
+    adjustVolEncoder = 0;
+  }
+  return currentValue;
+}
+
+/*****
+  Purpose: Use the encoder to change the value of a number in some other function
+
+  Parameter list:
+    int minValue                the lowest value allowed
+    int maxValue                the largest value allowed
+    int startValue              the numeric value to begin the count
+    int increment               the amount by which each increment changes the value
+    char prompt[]               the input prompt
+  Return value;
+    int                         the new value
+*****/
+float GetEncoderValueLiveXSWROffset(float minValue, float maxValue, float startValue, float increment) {
+  float currentValue = startValue;
+
+ 
+  if (adjustVolEncoder != 0) {
+    currentValue += adjustVolEncoder * increment;  // Bump up or down...
+    if (currentValue < minValue)
+      currentValue = minValue;
+    else if (currentValue > maxValue)
+      currentValue = maxValue;
+    adjustVolEncoder = 0;
+  }
+  return currentValue;
+}
+
 /*****
   Purpose: Use the encoder to change the value of a number in some other function
 
@@ -529,18 +649,18 @@ int GetEncoderValueLiveInt(int minValue, int maxValue, int startValue, int incre
   int currentValue = startValue;
   tft.setFontScale((enum RA8875tsize)1);
   tft.setTextColor(RA8875_WHITE);
-  tft.fillRect(250, 0, 285, CHAR_HEIGHT, RA8875_BLACK);  // Increased rectangle size to full erase value.  KF5N August 12, 2023
-  tft.setCursor(257, 1);
-  tft.print(prompt);
-  tft.setCursor(440, 1);
+  //tft.fillRect(100, 300, 285, CHAR_HEIGHT, RA8875_BLACK);  // Increased rectangle size to full erase value.  KF5N August 12, 2023
+  // tft.setCursor(100, 300);
+  // tft.print(prompt);
+  tft.setCursor(320, 360);
   tft.print((float)startValue / 2.0, 2);
   if (filterEncoderMove != 0) {
-    currentValue += filterEncoderMove * increment;  // Bump up or down...
+    currentValue -= filterEncoderMove * increment;  // Bump up or down...
     if (currentValue < minValue)
       currentValue = minValue;
     else if (currentValue > maxValue)
       currentValue = maxValue;
-    tft.setCursor(440, 1);
+    tft.setCursor(320, 360);
     tft.print((float)startValue / 2.0, 2);
     filterEncoderMove = 0;
   }
@@ -591,7 +711,6 @@ int GetEncoderValue(int minValue, int maxValue, int startValue, int increment, c
         currentValue = minValue;
       else if (currentValue > maxValue)
         currentValue = maxValue;
-
       tft.fillRect(465, 0, 65, CHAR_HEIGHT, RA8875_MAGENTA);
       tft.setCursor(470, 1);
       tft.print(currentValue);
@@ -604,6 +723,116 @@ int GetEncoderValue(int minValue, int maxValue, int startValue, int increment, c
       val = ProcessButtonPress(val);    // Use ladder value to get menu choice
       if (val == MENU_OPTION_SELECT) {  // Make a choice??
         return currentValue;
+      }
+    }
+  }
+}
+/*****
+  Purpose: Use the encoder to change the value of a number in some other function
+
+  Parameter list:
+    int minValue                the lowest value allowed
+    int maxValue                the largest value allowed
+    int startValue              the numeric value to begin the count
+    int increment               the amount by which each increment changes the value
+    char prompt[]               the input prompt
+    
+  Return value;
+    int                         the new value
+*****/
+int GetEncoderValuePower(int minValue, int maxValue, int startValue, int increment, char prompt[]) {
+  float transmitPowerLevelSSBTemp;
+
+  int val;
+
+  tft.setFontScale((enum RA8875tsize)1);
+
+  tft.setTextColor(RA8875_WHITE);
+  tft.fillRect(250, 0, 280, CHAR_HEIGHT, RA8875_MAGENTA);
+  tft.setCursor(257, 1);
+  tft.print(prompt);
+  tft.setCursor(440, 1);
+  transmitPowerLevelSSBTemp = (0.0022 * pow(startValue, 3) - 0.0598 * pow(startValue, 2) - 0.2644 * (startValue) + 13.7);
+  tft.print(round(transmitPowerLevelSSBTemp), 0);
+
+  while (true) {
+    if (filterEncoderMove != 0) {
+      startValue -= filterEncoderMove * increment;  // Bump up or down...
+      if (startValue < minValue)
+        startValue = minValue;
+      else if (startValue > maxValue)
+        startValue = maxValue;
+
+      tft.fillRect(440, 0, 65, CHAR_HEIGHT, RA8875_MAGENTA);
+      tft.setCursor(440, 1);
+      Serial.print("encoder powerOutSSB[currentBand]= ");
+      Serial.println(startValue);
+      transmitPowerLevelSSBTemp = (0.0022 * pow(startValue, 3) - 0.0598 * pow(startValue, 2) - 0.2644 * (startValue) + 13.7);
+      tft.print(round(transmitPowerLevelSSBTemp), 0);
+
+      filterEncoderMove = 0;
+    }
+
+    val = ReadSelectedPushButton();  // Read the ladder value
+    //MyDelay(100L); //AFP 09-22-22
+    if (val != -1 && val < (EEPROMData.switchValues[0] + WIGGLE_ROOM)) {
+      val = ProcessButtonPress(val);    // Use ladder value to get menu choice
+      if (val == MENU_OPTION_SELECT) {  // Make a choice??
+        return startValue;
+      }
+    }
+  }
+}
+
+
+/*****
+  Purpose: Use the encoder to change the value of a number in some other function
+
+  Parameter list:
+    int minValue                the lowest value allowed
+    int maxValue                the largest value allowed
+    int startValue              the numeric value to begin the count
+    int increment               the amount by which each increment changes the value
+    char prompt[]               the input prompt
+    
+  Return value;
+    int                         the new value
+*****/
+float GetEncoderValueCW(float minValue, float maxValue, float startValue, int increment, char prompt[]) {
+  int val;
+
+  tft.setFontScale((enum RA8875tsize)1);
+  tft.setTextColor(RA8875_WHITE);
+  tft.fillRect(250, 0, 280, CHAR_HEIGHT, RA8875_MAGENTA);
+  tft.setCursor(257, 1);
+  tft.print(prompt);
+  tft.setCursor(440, 1);
+  tft.print(round(startValue), 0);
+
+  while (true) {
+    if (filterEncoderMove != 0) {
+      startValue += filterEncoderMove * increment;  // Bump up or down...
+      if (startValue < minValue)
+        startValue = minValue;
+      else if (startValue > maxValue)
+        startValue = maxValue;
+
+      tft.fillRect(440, 0, 65, CHAR_HEIGHT, RA8875_MAGENTA);
+      tft.setCursor(440, 1);
+      Serial.print("encoder powerOutSSB[currentBand]= ");
+      Serial.println(startValue);
+      //transmitPowerLevelCW  =-0.0001 * pow(startValue, 4)+ 0.0169 * pow(startValue, 3) - 0.8695 * pow(startValue, 2) + 18.522 * (startValue) -124.91;
+      tft.print(startValue, 0);
+
+      filterEncoderMove = 0;
+    }
+
+    val = ReadSelectedPushButton();  // Read the ladder value
+    //MyDelay(100L); //AFP 09-22-22
+    if (val != -1 && val < (EEPROMData.switchValues[0] + WIGGLE_ROOM)) {
+      val = ProcessButtonPress(val);    // Use ladder value to get menu choice
+      if (val == MENU_OPTION_SELECT) {  // Make a choice??
+        return startValue;
       }
     }
   }
@@ -730,13 +959,22 @@ FASTRUN  // Causes function to be allocated in RAM1 at startup for fastest perfo
   if (result == 0) {                   // Nothing read
     fineTuneEncoderMove = 0L;
     return;
+
+
   } else {
 
     fineTuneEncoderMove = result;
   }
+
+
+  if (IQCalFlag == 1) {
+
+    corrPlotYValue += (float)fineTuneEncoderMove * corrChangeIQIncrement;
+    return;
+  }
   // stop function execution at this point if we're using the fine tune
   // encoder as part of the calibration process
-  if (calOnFlag) return;
+  if (calOnFlag == 1 || IQCalFlag == 1) return;
     // if not, then continue using the fine tune encoder for its named purpose
 
 #ifdef FAST_TUNE

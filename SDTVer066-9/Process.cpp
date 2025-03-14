@@ -5,9 +5,9 @@
 char atom, currentAtom;
 int stateMachine;
 bool FFTupdated;
-  int16_t adjAmplitude = 0;  // Was float; cast to float in dB calculation.
-  int16_t refAmplitude = 0;
-  uint32_t index_of_max = 0;
+int16_t adjAmplitude = 0;  // Was float; cast to float in dB calculation.
+int16_t refAmplitude = 0;
+uint32_t index_of_max = 0;
 /*****
   Purpose: Read audio from Teensy Audio Library
              Calculate FFT for display
@@ -23,9 +23,10 @@ bool FFTupdated;
    CAUTION: Assumes a spaces[] array is defined
  *****/
 void ProcessIQData() {
-  if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {  //AFP 09-01-22
-    return;
-  }
+  //if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {  //AFP 09-01-22
+  // return;
+  // }
+
   /**********************************************************************************  AFP 12-31-20
         Get samples from queue buffers
         Teensy Audio Library stores ADC data in two buffers size=128, Q_in_L and Q_in_R as initiated from the audio lib.
@@ -37,13 +38,7 @@ void ProcessIQData() {
   float32_t audioMaxSquared;
   uint32_t AudioMaxIndex;
   float rfGainValue;
-  int cal_bins[2] = { 0, 0 };
-  int capture_bins;
-
-
-  int val = 0;
-  int task = 0;
-  //int recCalDirections = 0;
+  
   // are there at least N_BLOCKS buffers in each channel available ?
   if ((uint32_t)Q_in_L.available() > N_BLOCKS + 0 && (uint32_t)Q_in_R.available() > N_BLOCKS + 0) {
     usec = 0;
@@ -63,9 +58,9 @@ void ProcessIQData() {
       Q_in_L.freeBuffer();
       Q_in_R.freeBuffer();
     }
-    if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {  //AFP 09-01-22
-      return;
-    }
+    //if (radioState == CW_TRANSMIT_STRAIGHT_STATE || radioState == CW_TRANSMIT_KEYER_STATE) {  //AFP 09-01-22
+    //   return;
+    //  }
     // Set frequency here only to minimize interruption to signal stream during tuning
     // This code was unnecessary in the revised tuning scheme.  KF5N July 22, 2023
     if (centerTuneFlag == 1) {  //AFP 10-04-22
@@ -155,167 +150,93 @@ void ProcessIQData() {
 
       IQ amplitude and phase correction
     ***********************************************************************************************/
-
+    //for(int k=0;k<2048;k++){
+    //  Serial.println(float_buffer_L[k]);
+    //}
 
     if (recCalOnFlag == 1) {
       spectrum_zoom = SPECTRUM_ZOOM_1;
       if (updateCalDisplayFlag == 1) {
-
-
         CalibratePreamble(0);
       }
-      //tft.fillRect(INFORMATION_WINDOW_X - 8, INFORMATION_WINDOW_Y, 250, 170, RA8875_BLACK);
-      tft.fillRect(550, 280, 150, tft.getFontHeight(), RA8875_BLACK);
-      tft.setFontScale((enum RA8875tsize)1);
-      tft.setTextColor(RA8875_CYAN);
-      tft.setCursor(550, 280);
-      tft.print("RX Calibrate");
-      tft.setTextColor(RA8875_WHITE);
-      //tft.fillRect(550, 350, 230, CHAR_HEIGHT, RA8875_BLACK);
-      tft.setCursor(550, 320);
-      tft.print("IQ Gain");
-      // tft.fillRect(550, 380, 230, CHAR_HEIGHT, RA8875_BLACK);
-      tft.setCursor(550, 360);
-      tft.print("IQ Phase");
+      if (filterEncoderMove != 0) {
+        IQAmpCorrectionFactor[currentBand] += filterEncoderMove * corrChangeIQIncrement;  // Bump up or down...
+        filterEncoderMove = 0;
+      }
+      //if (IQCalType == 0) {  // AFP 2-11-23
+
+      //IQAmpCorrectionFactor[currentBand] = GetEncoderValueLiveRCal(-2.0, 2.0, IQAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain1", 3, 0);
+      //IQAmpCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain");
+      //} else {
+      // IQPhaseCorrectionFactor[currentBand] = GetEncoderValueLiveRCal(-2.0, 2.0, IQPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase1", 3, 0);
+      //IQPhaseCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase");
+      // }
+
       updateCalDisplayFlag = 0;
       // }
-      IQAmpCorrectionFactor[currentBand] += (float)filterEncoderMove * corrChangeIQIncrement;  // Bump up or down...
-      filterEncoderMove = 0;
+      /*if (IQCalType == 0) {  // AFP 2-11-23
+
+        IQAmpCorrectionFactor[currentBand] = GetEncoderValueLiveRCal(-2.0, 2.0, IQAmpCorrectionFactor[currentBand], corrChangeIQIncrement, (char *)"IQ Gain", 3, 0);
+        //IQAmpCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQAmpCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Gain");
+      } else {
+        IQPhaseCorrectionFactor[currentBand] = GetEncoderValueLiveRCal(-2.0, 2.0, IQPhaseCorrectionFactor[currentBand], corrChangeIQIncrement, (char *)"IQ Phase", 3, 0);
+        //IQPhaseCorrectionFactor[currentBand] = GetEncoderValueLive(-2.0, 2.0, IQPhaseCorrectionFactor[currentBand], correctionIncrement, (char *)"IQ Phase");
+      }*/
+
       if (IQAmpCorrectionFactor[currentBand] != IQAmpCorrectionFactorOld || IQPhaseCorrectionFactor[currentBand] != IQPhaseCorrectionFactorOld) {
 
         //tft.fillRect(INFORMATION_WINDOW_X - 8, INFORMATION_WINDOW_Y, 250, 170, RA8875_BLACK);
-        tft.fillRect(550, 280, 150, tft.getFontHeight(), RA8875_BLACK);
-        tft.setFontScale((enum RA8875tsize)1);
-        tft.setTextColor(RA8875_CYAN);
-        tft.setCursor(550, 280);
-        tft.print("RX Calibrate");
-        tft.setTextColor(RA8875_WHITE);
-        //tft.fillRect(550, 350, 230, CHAR_HEIGHT, RA8875_BLACK);
-        tft.setCursor(550, 320);
-        tft.print("IQ Gain");
-        // tft.fillRect(550, 380, 230, CHAR_HEIGHT, RA8875_BLACK);
-        tft.setCursor(550, 360);
-        tft.print("IQ Phase");
+        if (IQCalType == 0) {
+          tft.setFontScale((enum RA8875tsize)1);
+          tft.setTextColor(RA8875_YELLOW);
+          tft.setCursor(530, 320);
+          tft.print("IQ Gain");
+          tft.fillRect(680, 320, 150, CHAR_HEIGHT, RA8875_BLACK);
+          tft.setCursor(680, 320);
+          tft.print(IQAmpCorrectionFactor[currentBand], 3);
+          tft.setTextColor(RA8875_WHITE);
+          tft.setCursor(530, 360);
+          tft.print("IQ Phase");
+          tft.fillRect(680, 360, 150, CHAR_HEIGHT, RA8875_BLACK);
+          tft.setCursor(680, 360);
+          tft.print(IQPhaseCorrectionFactor[currentBand], 3);
+          tft.fillRect(680, 400, 150, CHAR_HEIGHT, RA8875_BLACK);
+          tft.setCursor(680, 400);
+          tft.print(aveAdjdB2, 1);
+        } else {
+          tft.setFontScale((enum RA8875tsize)1);
+          tft.setTextColor(RA8875_WHITE);
+          tft.setCursor(530, 320);
+          tft.print("IQ Gain");
+          tft.fillRect(680, 320, 150, CHAR_HEIGHT, RA8875_BLACK);
+          tft.setCursor(680, 320);
+          tft.print(IQAmpCorrectionFactor[currentBand], 3);
+          tft.setTextColor(RA8875_YELLOW);
+          tft.setCursor(530, 360);
+          tft.print("IQ Phase");
+          tft.fillRect(680, 360, 150, CHAR_HEIGHT, RA8875_BLACK);
+          tft.setCursor(680, 360);
+          tft.print(IQPhaseCorrectionFactor[currentBand], 3);
+        }
+        tft.fillRect(680, 400, 150, CHAR_HEIGHT, RA8875_BLACK);
+        tft.setCursor(680, 400);
+        tft.print(aveAdjdB2, 1);
 
-        tft.setFontScale((enum RA8875tsize)1);
-        tft.setTextColor(RA8875_YELLOW);
-        tft.fillRect(700, 320, 150, CHAR_HEIGHT, RA8875_BLACK);
-        tft.setCursor(700, 320);
-        tft.print(IQAmpCorrectionFactor[currentBand], 3);
-        IQAmpCorrectionFactorOld = IQAmpCorrectionFactor[currentBand];
-        tft.fillRect(700, 360, 150, CHAR_HEIGHT, RA8875_BLACK);
-        tft.setCursor(700, 360);
-        tft.print(IQPhaseCorrectionFactor[currentBand], 3);
-        IQPhaseCorrectionFactorOld = IQPhaseCorrectionFactor[currentBand];
-        tft.setCursor(550, 400);
-        tft.print("adjdB= ");
-        tft.setFontScale((enum RA8875tsize)0);
-        tft.setCursor(550, 450);
-        tft.print("Incr= ");
+        //tft.setFontScale((enum RA8875tsize)0);
+        //tft.setCursor(550, 450);
+        //tft.print("Incr= ");
         tft.setFontScale((enum RA8875tsize)1);
         // Sets the number of bins to scan for signal peak.
+        IQPhaseCorrectionFactorOld = IQPhaseCorrectionFactor[currentBand];
+        IQAmpCorrectionFactorOld = IQAmpCorrectionFactor[currentBand];
       }
-      val = ReadSelectedPushButton();
-      if (val != BOGUS_PIN_READ)  // Any button press??
-      {
-        val = ProcessButtonPress(val);  // Use ladder value to get menu choice
-      }
-
-      task = val;
-      switch (task) {
-        case (CAL_AUTOCAL):  //13 Decode
-          {
-            // Run through the autocal routine
-            Serial.println("in auto cal");
-            correctionIncrement = 0.001,
-            autotuneRec(&IQAmpCorrectionFactor[currentBand], &IQPhaseCorrectionFactor[currentBand],
-                        GAIN_COARSE_MAX, GAIN_COARSE_MIN,
-                        PHASE_COARSE_MAX, PHASE_COARSE_MIN,
-                        GAIN_COARSE_STEP2_N, PHASE_COARSE_STEP2_N,
-                        GAIN_FINE_N, PHASE_FINE_N, false);
-            Serial.println("aftr autotune");
-            break;
-          }
-
-        case (MENU_OPTION_SELECT):
-          {
-            //tft.fillRect(INFORMATION_WINDOW_X - 8, INFORMATION_WINDOW_Y, 250, 170, RA8875_BLACK);
-            // tft.clearScreen(RA8875_BLACK);
-            recCalOnFlag = 0;
-            ButtonZoom();     // Restore the user's zoom setting.  Note that this function also modifies spectrum_zoom.
-            EEPROMWrite();    // Save calibration numbers and configuration.   August 12, 2023
-            tft.writeTo(L2);  // Clear layer 2.   July 31, 2023
-            tft.clearMemory();
-            tft.writeTo(L1);  // Exit function in layer 1.   August 3, 2023     // Restore the user's zoom setting.  Note that this function also modifies spectrum_zoom.
-            EEPROMWrite();    // Save calibration numbers and configuration.   August 12, 2023
-            tft.writeTo(L2);  // Clear layer 2.   July 31, 2023
-            tft.clearMemory();
-            tft.writeTo(L1);  // Exit function in layer 1.   August 3, 2023
-            tft.clearScreen(RA8875_BLACK);
-
-            RedrawDisplayScreen();
-            UpdateInfoWindow();
-            si5351.output_enable(SI5351_CLK2, 0);
-            // CalibratePost();
-            IQChoice = 5;
-            return;
-            break;
-          }
+     
+      // capture_bins = 15;
+      //cal_bins[0] = 128;
+      // cal_bins[1] = 384;
 
 
-        case (CAL_CHANGE_INC):  //CAL_CHANGE_INC =17 =User3
-          {
-            recIQIncrementIndex++;
-            if (recIQIncrementIndex > 2) recIQIncrementIndex = 0;
-            corrChangeIQIncrement = recIQIncrementValues[recIQIncrementIndex];
-            break;
-          }
-        case (CAL_DIRECTIONS):  //Filter
-          {
-
-            while (1) {
-              tft.setFontScale((enum RA8875tsize)0);
-              tft.setTextColor(RA8875_CYAN);
-              tft.setCursor(10, 270);
-              tft.print("Directions");
-              tft.setCursor(25, 285);
-              tft.print("* Jumper JP4: Cal Isolation");
-              tft.setCursor(25, 300);
-               tft.print("Option 1 Manual Adjust");;
-              tft.setCursor(25, 315);
-             tft.print("* Adjust Gain (Filter Encoder) for min IQ image (Red)");
-              tft.setCursor(25, 330);
-              tft.print("* Adjust Phase (Vol Encoder) for min IQ image (Red)");
-              tft.setCursor(25, 345);
-              tft.print("* Alternate between Gain and Phase adjustment");
-              tft.setCursor(25, 360);
-              tft.print("OPtion 2 - Auto IQ Tune");
-              tft.setCursor(25, 375);
-             tft.print("* Press Decode - Auto Tune will start");
-              tft.setCursor(25, 390);
-              tft.print("* User3 to change Incr.");
-              tft.setCursor(25, 405);
-              tft.print("* Select to Save/Exit");
-              //tft.setCursor(25, 420);
-
-              val = ReadSelectedPushButton();
-              if (val != BOGUS_PIN_READ) {
-                val = ProcessButtonPress(val);
-
-                if (task == CAL_DIRECTIONS) break;
-              }
-            }
-
-            tft.fillRect(0, 272, 517, 207, RA8875_BLACK);  // Erase waterfall
-            break;
-          }
-      }
-      capture_bins = 15;
-      cal_bins[0] = 128;
-      cal_bins[1] = 384;
-
-
-      arm_max_q15(&pixelnew[(cal_bins[0] - capture_bins)], capture_bins * 2, &refAmplitude, &index_of_max);
+      /* arm_max_q15(&pixelnew[(cal_bins[0] - capture_bins)], capture_bins * 2, &refAmplitude, &index_of_max);
       arm_max_q15(&pixelnew[(cal_bins[1] - capture_bins)], capture_bins * 2, &adjAmplitude, &index_of_max);
       tft.writeTo(L2);
       tft.fillRect(cal_bins[0] - capture_bins, SPECTRUM_TOP_Y + 20, 2 * capture_bins, h - 6, RA8875_BLUE);  // SPECTRUM_TOP_Y = 100
@@ -332,7 +253,7 @@ void ProcessIQData() {
       tft.setCursor(620, 450);
       tft.print(corrChangeIQIncrement, 3);
 
-      /* Serial.print("refAmplitude= ");
+       Serial.print("refAmplitude= ");
         Serial.println(refAmplitude);
         Serial.print("adjAmplitude= ");
         Serial.println(adjAmplitude);
@@ -341,7 +262,7 @@ void ProcessIQData() {
     } else {
       recCalOnFlag = 0;
       //UpdateInfoWindow();
-    }
+    }  //End Rec Cal
 
     // Manual IQ amplitude and phase correction
     // to be honest: we only correct the amplitude of the I channel ;-)
@@ -395,7 +316,7 @@ void ProcessIQData() {
         Larger magnification are not needed in practice.
 
         Spectrum Zoom uses the shifted spectrum, so the center "hump" around DC is shifted by fs/4
-    **********************************************************************************/
+     **********************************************************************************/
     if (spectrum_zoom != SPECTRUM_ZOOM_1) {
       //AFP  Used to process Zoom>1 for display
       ZoomFFTExe(BUFFER_SIZE * N_BLOCKS);  // there seems to be a BUG here, because the blocksize has to be adjusted according to magnification,
@@ -425,7 +346,7 @@ void ProcessIQData() {
      *************************************************************************************************/
 
     FreqShift2();  //AFP 12-14-21
-    /**********************************************************************************  AFP 12-31-20
+                   /**********************************************************************************  AFP 12-31-20
         Decimation
         Resample (Decimate) the shifted time signal, first by 4, then by 2.  Each time the
         signal is decimated by an even number, the spectrum is reversed.  Resampling twice
@@ -436,6 +357,7 @@ void ProcessIQData() {
         now 192K/8 = 24K SPS.  The array size is also reduced by 8, making FFT calculations much faster.
         The effective bandwidth (up to Nyquist frequency) is 12KHz.
      **********************************************************************************/
+
     // decimation-by-4 in-place!
     arm_fir_decimate_f32(&FIR_dec1_I, float_buffer_L, float_buffer_L, BUFFER_SIZE * N_BLOCKS);
     arm_fir_decimate_f32(&FIR_dec1_Q, float_buffer_R, float_buffer_R, BUFFER_SIZE * N_BLOCKS);
@@ -538,15 +460,15 @@ void ProcessIQData() {
         if (audioYPixel[k] < 0)
           audioYPixel[k] = 0;
       }
-      arm_max_f32(audioSpectBuffer, 1024, &audioMaxSquared, &AudioMaxIndex);  // AFP 09-18-22 Max value of squared abin magnitued in audio
-      audioMaxSquaredAve = .5 * audioMaxSquared + .5 * audioMaxSquaredAve;    //AFP 09-18-22Running averaged values
-      if(freqCalFlag==0){ //AFP 01-30-25
-         DisplaydbM();
-      } else {
-
+      if (recCalOnFlag != 1) {
+        arm_max_f32(audioSpectBuffer, 1024, &audioMaxSquared, &AudioMaxIndex);  // AFP 09-18-22 Max value of squared abin magnitued in audio
+        audioMaxSquaredAve = .5 * audioMaxSquared + .5 * audioMaxSquaredAve;    //AFP 09-18-22Running averaged values
+        if (freqCalFlag == 0) {                                                 //AFP 01-30-25
+          DisplaydbM();
+        } else {
+        }
       }
     }
-
     /**********************************************************************************
           Additional Convolution Processes:
               // filter by just deleting bins - principle of Linrad
@@ -657,7 +579,7 @@ void ProcessIQData() {
       NR_Kim
       Spectral NR
       LMS variable leak NR
-    **********************************************************************************/
+       **********************************************************************************/
     switch (NR_Index) {
       case 0:  // NR Off
         break;
@@ -687,7 +609,7 @@ void ProcessIQData() {
     /**********************************************************************************
       EXPERIMENTAL: noise blanker
       by Michael Wild
-    **********************************************************************************/
+      **********************************************************************************/
 
     //=============================================================
     if (NB_on != 0) {
@@ -747,7 +669,7 @@ void ProcessIQData() {
 
     /**********************************************************************************  AFP 12-31-20
       Digital Volume Control
-    **********************************************************************************/
+      **********************************************************************************/
 
 
 
@@ -760,7 +682,7 @@ void ProcessIQData() {
     }
     /**********************************************************************************  AFP 12-31-20
       CONVERT TO INTEGER AND PLAY AUDIO
-    **********************************************************************************/
+      *  *********************************************************************************/
 
     for (unsigned i = 0; i < N_BLOCKS; i++) {
       sp_L1 = Q_out_L.getBuffer();
@@ -776,8 +698,9 @@ void ProcessIQData() {
     }
     elapsed_micros_sum = elapsed_micros_sum + usec;
     elapsed_micros_idx_t++;
-  }                         // end of if(audio blocks available)
-  if (ms_500.check() == 1 && freqCalFlag==0)  // For clock updates AFP 10-26-22
+    // end of if(audio blocks available)
+  }
+  if (ms_500.check() == 1 && freqCalFlag == 0)  // For clock updates AFP 10-26-22
   {
     //wait_flag = 0;
     DisplayClock();
@@ -802,22 +725,28 @@ void ProcessIQData() {
       void
  *****/
 void tuneCalParameterRec(int indexStart, int indexEnd, float increment, float *IQCorrectionFactor, char prompt[]) {
-  Serial.println("in tuneCalParameterRec");
+
   float adjMin = 100;
   int adjMinIndex = 0;
   int cal_bins[2] = { 0, 0 };
   int capture_bins;
   capture_bins = 10;
-  cal_bins[0] = 128;
-  cal_bins[1] = 384;
+  cal_bins[0] = 128 + calFreqOffset / 375;
+  cal_bins[1] = 384 - calFreqOffset / 375;
   float correctionFactor = *IQCorrectionFactor;
   for (int i = indexStart; i < indexEnd; i++) {
     *IQCorrectionFactor = correctionFactor + i * increment;
+
+    tft.setFontScale((enum RA8875tsize)0);
+    tft.fillRect(650, 90, 50, tft.getFontHeight(), RA8875_BLACK);
+    tft.setTextColor(RA8875_YELLOW);
+    tft.setCursor(650, 90);
+    tft.print(i * increment, 3);
     FFTupdated = false;
     //int XmitCalDirections = 0;
     while (!FFTupdated) {
       //===============
-      ShowSpectrum();
+      ShowSpectrum2();
       arm_max_q15(&pixelnew[(cal_bins[0] - capture_bins)], capture_bins * 2, &refAmplitude, &index_of_max);
       arm_max_q15(&pixelnew[(cal_bins[1] - capture_bins)], capture_bins * 2, &adjAmplitude, &index_of_max);
       adjdB = ((float)adjAmplitude - (float)refAmplitude) / 1.95;
@@ -828,14 +757,14 @@ void tuneCalParameterRec(int indexStart, int indexEnd, float increment, float *I
       // span a change in the correction factor
       FFTupdated = false;
       while (!FFTupdated) {
-        ShowSpectrum();
+        ShowSpectrum2();
         arm_max_q15(&pixelnew[(cal_bins[0] - capture_bins)], capture_bins * 2, &refAmplitude, &index_of_max);
         arm_max_q15(&pixelnew[(cal_bins[1] - capture_bins)], capture_bins * 2, &adjAmplitude, &index_of_max);
         adjdB = ((float)adjAmplitude - (float)refAmplitude) / 1.95;
         //ShowSpectrum();
       }
     } else {
-      ShowSpectrum();
+      ShowSpectrum2();
       arm_max_q15(&pixelnew[(cal_bins[0] - capture_bins)], capture_bins * 2, &refAmplitude, &index_of_max);
       arm_max_q15(&pixelnew[(cal_bins[1] - capture_bins)], capture_bins * 2, &adjAmplitude, &index_of_max);
       adjdB = ((float)adjAmplitude - (float)refAmplitude) / 1.95;
@@ -846,23 +775,27 @@ void tuneCalParameterRec(int indexStart, int indexEnd, float increment, float *I
       adjMin = adjdB;
       adjMinIndex = i;
     }
+    tft.fillRect(145, 150, 230, CHAR_HEIGHT, RA8875_BLACK);
     tft.setFontScale((enum RA8875tsize)1);
     tft.setTextColor(RA8875_WHITE);
-    tft.setCursor(145, 160);
-    tft.print("Auto Tune On");
-    tft.fillRect(145, 200, 230, CHAR_HEIGHT, RA8875_BLACK);  // Increased rectangle size to full erase value.  KF5N August 12, 2023
-    tft.setCursor(145, 200);
+    tft.setCursor(145, 150);
+    tft.print("Auto Cal On");
+    tft.fillRect(145, 190, 230, CHAR_HEIGHT, RA8875_BLACK);  // Increased rectangle size to full erase value.
+
+    tft.setCursor(145, 190);
     tft.print(prompt);
-    tft.setCursor(280, 200);
+    tft.setCursor(280, 190);
     tft.print(*IQCorrectionFactor, 3);
   }
   *IQCorrectionFactor = correctionFactor + adjMinIndex * increment;
   //*IQCorrectionFactor=-*IQCorrectionFactor
-  tft.setTextColor(RA8875_WHITE);
-  //tft.setCursor(160, 160);
-  // tft.print("Auto Complete");
-  // MyDelay(3000);
-  tft.fillRect(145, 160, 230, 100, RA8875_BLACK);
+
+  tft.fillRect(145, 150, 230, 80, RA8875_BLACK);
+  tft.fillRect(650, 90, 50, tft.getFontHeight(), RA8875_BLACK);
+  tft.setFontScale((enum RA8875tsize)0);
+  tft.setTextColor(RA8875_YELLOW);
+  tft.setCursor(650, 90);
+  tft.print(corrChangeIQIncrement, 3);
 }
 
 void autotuneRec(float *amp, float *phase, float gain_coarse_max, float gain_coarse_min,

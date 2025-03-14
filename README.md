@@ -2,7 +2,7 @@
 
 This repository hosts Version 63-1 of the source code for the T41-EP Software Defined Transceiver (SDT). Originally designed by Al Peter-AC8GY and Jack Purdum-W8TEE, the T41-EP is a 20W, HF, 7 band, CW/SSB Software Defined Transceiver (SDT) with features not even found in commercial radios costing ten times as much (e.g., up to 192kHz spectrum display bandwidth, ALP CW decoder, Bode Plots). The T41-EP is a self-contain SDT that does not require an external PC, laptop, or tablet to use. Al and Jack wrote a book, available on [Amazon](https://a.co/d/drLsJlJ) (note: link is to 3rd edition), describing the theory and operation of the T41-EP.
 
-## Version 63-1
+## Version 66-9
 
 This version of the code corresponds to the upcoming 4th edition of "Digital Signal Processing and Software Defined Radio: Theory and Construction of the T41-EP Software Defined Transceiver" by Albert F. Peter, AC8GY and Dr Jack Purdum, W8TEE. It is a point release of the software which contains the features and capabilities described in the book and works on V12 hardware only. Ongoing development of the code base is captured in the companion repository [T41-V12-SDT](https://github.com/KI3P/T41-V12-SDT).
 
@@ -39,14 +39,14 @@ Select the Teensy 4.1 board, and select the following build configuration option
 
 * Tools->Optimize->Fast with LTO
 * Tools->USB Type->Dual Serial
-* Tools->CPU Speed->600 MHz
+* Tools->CPU Speed->528 MHz
 
-Some people report success running the CPU at 528 MHz. The memory usage after compiling should look like this:
+The memory usage after compiling should look like this:
 
 ```
-   FLASH: code:272292, data:129336, headers:8988   free for files:7715848
-   RAM1: variables:178112, code:249800, padding:12344   free for local variables:84032
-   RAM2: variables:474720  free for malloc/new:49568
+   FLASH: code:282444, data:133432, headers:9076   free for files:7701512
+   RAM1: variables:195744, code:259848, padding:2296   free for local variables:66400
+   RAM2: variables:483744  free for malloc/new:40544
 ```
 
 
