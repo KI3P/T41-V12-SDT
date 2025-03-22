@@ -688,17 +688,8 @@ void SetBand() {
   SetFreq();
   ShowFrequency();
   FilterBandwidth();
-
-  // Set the LPF bands, added by KI3P
-  //#ifdef V12_LPF
   setLPFBand(currentBand);
-  //#endif // V12_LPF
-
-  // Set the BPF bands, added by KI3P
-  //#ifdef V12BPF
   setBPFBand(currentBand);
-  //#endif // V12BPF
-
 }
 
 // G0ORX - Split code out ot allow use from other code

@@ -2760,8 +2760,8 @@ void I2C_display() {
   tft.setCursor(XPIXELS / 3 - 100, YPIXELS / 10);
   tft.print("I2C Status Report");
 
-  //                                              decide on short splash if all pass, long splash if fail
-  //  bool short_splash = true;
+  //decide on short splash if all pass, long splash if fail
+  bool short_splash = true;
   //	tft.setFontScale( 1 );
   tft.setFont(&FreeSansBold9pt7b);
 
@@ -2773,7 +2773,7 @@ void I2C_display() {
     tft.setTextColor(RA8875_RED);
     sprintf(tmpbuf, "Front panel MCP23017 I2C not found at 0x%02X & 0x%02X", V12_PANEL_MCP23017_ADDR_1, V12_PANEL_MCP23017_ADDR_2);
     tft.print(tmpbuf);
-    //    short_splash = false;
+    short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
     tft.setCursor(3 * tft.getFontWidth(), YPIXELS / 4 + yoff);
@@ -2792,7 +2792,7 @@ void I2C_display() {
     tft.setTextColor(RA8875_RED);
     sprintf(tmpbuf, "BPF MCP23017 I2C not found at 0x%02X", BPF_MCP23017_ADDR);
     tft.print(tmpbuf);
-    //    short_splash = false;
+    short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
     tft.setCursor(7 * tft.getFontWidth(), YPIXELS / 4 + yoff);
@@ -2810,7 +2810,7 @@ void I2C_display() {
     tft.setTextColor(RA8875_RED);
     sprintf(tmpbuf, "RF MCP23017 I2C not found at 0x%02X", RF_MCP23017_ADDR);
     tft.print(tmpbuf);
-    //    short_splash = false;
+    short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
     tft.setCursor(8 * tft.getFontWidth(), YPIXELS / 4 + yoff);
@@ -2828,7 +2828,7 @@ void I2C_display() {
     tft.setTextColor(RA8875_RED);
     sprintf(tmpbuf, "RF SI5351 I2C not found at 0x%02X", SI5351_BUS_BASE_ADDR);
     tft.print(tmpbuf);
-    //    short_splash = false;
+    short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
     tft.setCursor(10 * tft.getFontWidth(), YPIXELS / 4 + yoff);
@@ -2846,7 +2846,7 @@ void I2C_display() {
     tft.setTextColor(RA8875_RED);
     sprintf(tmpbuf, "K9HZ LPF MCP23017 I2C not found at 0x%02X", V12_LPF_MCP23017_ADDR);
     tft.print(tmpbuf);
-    //    short_splash = false;
+    short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
     tft.setCursor(4 * tft.getFontWidth(), YPIXELS / 4 + yoff);
@@ -2865,7 +2865,7 @@ void I2C_display() {
     tft.setTextColor(RA8875_RED);
     sprintf(tmpbuf, "K9HZ LPF AD7991 I2C not found at 0x%02X or 0x%02X", AD7991_I2C_ADDR1, AD7991_I2C_ADDR2);
     tft.print(tmpbuf);
-    //    short_splash = false;
+    short_splash = false;
   } else {
     tft.setTextColor(RA8875_GREEN);
     sprintf(tmpbuf, "0x%02X", bit_results.AD7991_I2C_ADDR);
@@ -2879,14 +2879,11 @@ void I2C_display() {
   yoff += 30;
 #endif  //V12_LPF_SWR_AD7991
 
-  //if ( short_splash )
-  //	{
-  //MyDelay(I2C_DELAY_SHORT);
-  //}
-  //else
-  //	{
-MyDelay(I2C_DELAY_LONG);
-  //	}
+  if ( short_splash ){
+    MyDelay(I2C_DELAY_SHORT);
+  }else{
+    MyDelay(I2C_DELAY_LONG);
+  }
   tft.setFontDefault();
   tft.fillWindow(RA8875_BLACK);
 }
@@ -3291,7 +3288,8 @@ void setup() {
   ShowBandwidth();
   FilterBandwidth();
   ShowFrequency();
-  //SetFreq();
+  Debug("Current band = " + String(currentBand,DEC));
+  SetBand();
   zoomIndex = spectrum_zoom - 1;  // ButtonZoom() increments zoomIndex, so this cancels it so the read from EEPROM is accurately restored.  KF5N August 3, 2023
   ButtonZoom();                   // Restore zoom settings.  KF5N August 3, 2023
   knee_dBFS = -15.0;              // Is this variable actually used???
@@ -3302,23 +3300,27 @@ void setup() {
   comp2.setPreGain_dB(-10);  //set the gain of the Right-channel gain processor
 
   sdCardPresent = SDPresentCheck();  // JJP 7/18/23
-  sdCardPresent = 1;
   lastState = 1111;       // To make sure the receiver will be configured on the first pass through.  KF5N September 3, 2023
   decodeStates = state0;  // Initialize the Morse decoder.
   sineTone6(12);
   sidetone_oscillator.amplitude(0.0);
   sidetone_oscillator.frequency(SIDETONE_FREQUENCY);
-  Debug("Setup complete");
   IQCalType = 0;
   decoderFlag = 0;
   freqCalFlag = 0;  //AFP 01-30-25
   SetupMyCompressors(use_HP_filter, 0.0, comp_ratio, 0.01, 0.01);
-  setupSWR();
-
+  Debug("Setup complete");
 }
 //============================================================== END setup() =================================================================
 //===============================================================================================================================
-
+#ifdef DEBUG
+extern unsigned long _heap_start;
+extern unsigned long _heap_end;
+extern char *__brkval;
+int freeram() {
+  return (char *)&_heap_end - __brkval;
+}
+#endif
 elapsedMicros usec = 0;  // Automatically increases as time passes; no ++ necessary.
 
 /*****
@@ -3331,6 +3333,7 @@ elapsedMicros usec = 0;  // Automatically increases as time passes; no ++ necess
   Return value:
     void
 *****/
+int Ncnt;
 FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
 {
 #ifdef MAIN_BOARD_ATTINY_SHUTDOWN
@@ -3339,6 +3342,19 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
     ShutdownTeensy();
   }
 #endif
+
+  #ifdef DEBUG
+  // Print some status variables roughly every 10 seconds for debug purposes
+  Ncnt += 1;
+  if (Ncnt == 100){
+    Ncnt = 0;
+    printLPFState();
+    printBPFState();
+    printRFState();
+    Serial.println("free  ram = " + String(freeram(),DEC));
+    Serial.println("audio mem = " + String(AudioMemoryUsage(),DEC));
+  }
+  #endif
 
   int pushButtonSwitchIndex = -1;
   valPin = ReadSelectedPushButton();  // Poll UI push buttons
@@ -3376,8 +3392,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
           modeSelectInR.gain(0, 1);
           modeSelectInL.gain(0, 1);
           digitalWrite(RXTX, LOW);  //xmit off
-          //setBPFPath(BPF_IN_RX_PATH);
-          setBPFPath(BPF_NOT_IN_PATH);
+          setBPFPath(BPF_IN_RX_PATH);
           currentRF_InAtten = RAtten[currentBand];
           SetRF_InAtten(currentRF_InAtten);
           T41State = SSB_RECEIVE;
@@ -3412,7 +3427,6 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         comp1.setPreGain_dB(10);
         comp2.setPreGain_dB(10);
         sgtl5000_1.micGain(currentMicGain);
-        setBPFPath(BPF_IN_TX_PATH);
         SSB_PA_CalFlag = 0;
         twoToneFlag = 0;
         IQCalFlag = 0;
@@ -3427,7 +3441,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
         centerFreq = centerFreq - IFFreq + NCOFreq;
         SetFreq();
         digitalWrite(XMIT_MODE, XMIT_SSB);  // KI3P, July 28, 2024
-        //setBPFPath(BPF_IN_TX_PATH);
+        setBPFPath(BPF_IN_TX_PATH);
         SetRF_OutAtten(powerOutSSB[currentBand]);
         digitalWrite(RXTX, HIGH);  //xmit on
         xrState = TRANSMIT_STATE;
@@ -3446,8 +3460,8 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
 
         while (digitalRead(PTT) == LOW) {
           SetRF_OutAtten(powerOutSSB[currentBand]);
-          Serial.print(" RF Options after powerOutSSB[currentBand]= ");
-          Serial.println(powerOutSSB[currentBand]);
+          //Serial.print(" RF Options after powerOutSSB[currentBand]= ");
+          //Serial.println(powerOutSSB[currentBand]);
           //ShowTXAudio();
           ExciterIQData();
           read_SWR();
@@ -3462,7 +3476,7 @@ FASTRUN void loop()  // Replaced entire loop() with Greg's code  JJP  7/14/23
 #endif  // V12_CAT
         }
         digitalWrite(RXTX, LOW);
-         digitalWrite(XMIT_MODE, 0);
+        digitalWrite(XMIT_MODE, 0);
         RedrawDisplayScreen();
         lastState = SSB_TRANSMIT_STATE;
         centerFreq = centerFreq + IFFreq - NCOFreq;

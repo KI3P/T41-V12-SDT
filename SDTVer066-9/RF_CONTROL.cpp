@@ -109,6 +109,11 @@ void SetRF_InAtten(int attenInx2) {
   }
 }
 
+void printRFState(){
+  Debug("RF GPA state: "+String(GPA_state,BIN));
+  Debug("RF GPB state: "+String(GPB_state,BIN));
+}
+
 /*****
   Purpose: Set RF output Attenuator
   Parameter list:

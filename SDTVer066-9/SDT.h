@@ -2349,6 +2349,9 @@ void CW_ExciterIQData();  // AFP 08-18-22
 void CW_PA_Calibrate();
 void SSB_PA_Calibrate();
 
+void printLPFState();
+void printBPFState();
+void printRFState();
 void Dah();
 void start_sending_cw();
 void stop_sending_cw();

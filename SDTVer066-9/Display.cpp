@@ -639,10 +639,10 @@ void ShowCurrentPowerSetting() {
   {
     if (xmtMode == SSB_MODE) {
       transmitPowerLevelSSBTemp = (0.0022 * pow((int)powerOutSSB[currentBand], 3) - 0.0598 * pow((int)powerOutSSB[currentBand], 2) - 0.2644 * ((int)powerOutSSB[currentBand]) + 13.7);
-      Serial.print("show powerOutSSB[currentBand]= ");
-      Serial.println(powerOutSSB[currentBand]);
-      Serial.print("show transmitPowerLevelSSBTemp]= ");
-      Serial.println(transmitPowerLevelSSBTemp);
+      //Serial.print("show powerOutSSB[currentBand]= ");
+      //Serial.println(powerOutSSB[currentBand]);
+      //Serial.print("show transmitPowerLevelSSBTemp]= ");
+      //Serial.println(transmitPowerLevelSSBTemp);
       tft.print(round(transmitPowerLevelSSBTemp), 0);
     }
   }

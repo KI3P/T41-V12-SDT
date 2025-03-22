@@ -36,7 +36,7 @@ void V12_LPFControlInit() {
     mcpLPF.writeGPIOA(LPF_GPA_state); 
     LPF_GPB_state = LPF_STARTUP_STATE_B;
     mcpLPF.writeGPIOB(LPF_GPB_state); 
-    Debug("Startup LPF GPB state: "+String(LPF_GPB_state,DEC));
+    Debug("Startup LPF GPB state: "+String(LPF_GPB_state,BIN));
     bit_results.V12_LPF_I2C_present = true;
   } else {
     Debug("LPF MCP23017 not found at 0x"+String(V12_LPF_MCP23017_ADDR,HEX));
@@ -122,8 +122,13 @@ void setLPFBand(int currentBand) {
   }
   mcpLPF.writeGPIOA(LPF_GPA_state);
   mcpLPF.writeGPIOB(LPF_GPB_state);
-  Debug("Set LPF GPA state: "+String(LPF_GPA_state,DEC));
-  Debug("Set LPF GPB state: "+String(LPF_GPB_state,DEC));
+  Debug("Set LPF GPA state: "+String(LPF_GPA_state,BIN));
+  Debug("Set LPF GPB state: "+String(LPF_GPB_state,BIN));
+}
+
+void printLPFState(){
+  Debug("LPF GPA state: "+String(LPF_GPA_state,BIN));
+  Debug("LPF GPB state: "+String(LPF_GPB_state,BIN));
 }
 
 /*****
@@ -153,6 +158,7 @@ void setBPFPath(int pathSelection){
       break;
   }
   mcpLPF.writeGPIOA(LPF_GPA_state); 
+  Debug("Set LPF GPA state: "+String(LPF_GPA_state,BIN));
 }
 
 /*****

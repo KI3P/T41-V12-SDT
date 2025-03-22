@@ -31,6 +31,10 @@ void BPFControlInit() {
   }
 }
 
+void printBPFState(){
+  Debug("BPF GPAB state: "+String(BPF_GPAB_state,BIN));
+}
+
 void setBPFBand(int currentBand) {
   switch (currentBand){
 
