@@ -973,7 +973,7 @@ void DoReceiveCalibrate() {
   tft.setCursor(25, 365);
   tft.print("* Alternate between Gain and Phase adjustment");
   tft.setCursor(25, 380);
-  tft.print("OPtion 2 - Auto IQ Tune");
+  tft.print("Option 2 - Auto IQ Tune");
   tft.setCursor(25, 395);
   tft.print("* Press User2 - Auto Tune will start");
   tft.setCursor(25, 410);
@@ -1983,7 +1983,7 @@ void SSB_PA_Calibrate() {
   tft.setCursor(50, 125);
   tft.print("Correction Factor");
   tft.setCursor(50, 155);
-  tft.print("Attnenuator Setting");
+  tft.print("Attenuator Setting");
   //===========
   tft.setFontScale((enum RA8875tsize)0);
   tft.setTextColor(RA8875_CYAN);
@@ -2218,13 +2218,13 @@ void DoSWRCal() {
             tft.setCursor(25, 205);
             tft.print("* User Filter En to set Pwr reading to = output");
             tft.setCursor(25, 220);
-            tft.print("8 Adjust output level on Power Meter to 2W");
+            tft.print("* Adjust output level on Power Meter to 2W");
             tft.setCursor(25, 235);
             tft.print("* Using Vol En set Pwr reading to 2Wr");
             tft.setCursor(25, 250);
             tft.print("* Repeat last 2 steps as needed");
             tft.setCursor(25, 265);
-            tft.print("8 Set DL resistance to 100 ohms");
+            tft.print("* Set DL resistance to 100 ohms");
             tft.setCursor(25, 280);
             tft.print("* Press User to switch Vol to Offset");
             tft.setCursor(25, 295);
