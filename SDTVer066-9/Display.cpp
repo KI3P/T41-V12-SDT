@@ -903,11 +903,9 @@ void UpdateInfoWindow() {
   } else {
     if (recCalOnFlag == 0) {
       tft.drawRect(BAND_INDICATOR_X - 10, BAND_INDICATOR_Y - 2, 260, 200, RA8875_LIGHT_GREY);  // Redraw Info Window Box
-
       tft.setFontScale((enum RA8875tsize)1);
       UpdateVolumeField();
       UpdateAGCField();
-      UpdateIncrementField();
       tft.setFontScale((enum RA8875tsize)0);
       UpdateCompressionField();
       UpdateDecoderField();
@@ -1490,17 +1488,18 @@ void DrawInfoWindowFrame() {
 *****/
 void RedrawDisplayScreen() {
   tft.fillWindow();
+
   DisplayIncrementField();
   AGCPrep();
   UpdateAGCField();
   EncoderVolume();
-
+  
   SetBand();
   BandInformation();
   ShowCurrentPowerSetting();
   //  ShowFrequency();
   SetFreq();
-
+  
   SetBandRelay(HIGH);
   SpectralNoiseReductionInit();
   UpdateNoiseField();
@@ -1513,8 +1512,9 @@ void RedrawDisplayScreen() {
   DrawSpectrumDisplayContainer();
   DrawFrequencyBarValue();
   ShowSpectrumdBScale();
-
+  
   UpdateInfoWindow();
+  
 }
 
 /*****

@@ -65,9 +65,7 @@ void ExecuteButtonPress(int val)
         break;
       }
       SetSecondaryMenuIndex();  // Use the primary index selection to redraw the secondary menu and set its index
-
       secondaryMenuChoiceMade = functionPtr[mainMenuIndex]();
-
       tft.fillRect(1, SPECTRUM_TOP_Y + 1, 513, 379, RA8875_BLACK);  // Erase Menu box
 
       EraseMenus();
