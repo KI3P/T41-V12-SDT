@@ -30,6 +30,7 @@ int CalibrateOptions(int IQChoice) {
   switch (IQChoice) {
     case 0:             // Calibrate Frequency  - uses WWV
       freqCalFlag = 1;  //AFP 01-30-25
+      ResetTuning();
       CalibrateFrequency();
       IQChoice = 8;
       return IQChoice;
