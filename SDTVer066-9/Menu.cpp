@@ -263,6 +263,6 @@ int SetSecondaryMenuIndex()
       }
     }
   }  // End while True
-
+  mainMenuWindowActive = false;
   return secondaryMenuIndex;
 }

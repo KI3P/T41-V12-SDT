@@ -35,7 +35,6 @@ void FilterSetSSB() {
 
  // if (IQCalFlag == 1) return;
 //if (SWRCalFlag== 1) return;
-
   //========
   if (filterEncoderMove != 0) {
     filter_pos += filterEncoderMove;  // Bump up or down...
@@ -66,7 +65,7 @@ void FilterSetSSB() {
         {
           bands[currentBand].FLoCut = bands[currentBand].FLoCut + filter_change * 50 * ENCODER_FACTOR;
           //fHiCutOld= bands[currentBand].FHiCut;
-          FilterBandwidth();
+          //FilterBandwidth();
         } else if (switchFilterSideband == 1) {
           //if (abs(bands[currentBand].FHiCut) < 500) {
           bands[currentBand].FHiCut = bands[currentBand].FHiCut + filter_change * 50 * ENCODER_FACTOR;
@@ -77,7 +76,7 @@ void FilterSetSSB() {
         if (switchFilterSideband == 0) {
           bands[currentBand].FHiCut = bands[currentBand].FHiCut - filter_change * 50 * ENCODER_FACTOR;
           //bands[currentBand].FLoCut= fLoCutOld;
-          FilterBandwidth();
+          //FilterBandwidth();
         } else if (switchFilterSideband == 1) {
           bands[currentBand].FLoCut = bands[currentBand].FLoCut - filter_change * 50 * ENCODER_FACTOR;
           // bands[currentBand].FHiCut= fHiCutOld;
@@ -139,7 +138,7 @@ void EncoderCenterTune() {
   tuneChange = result;
 
 //=================== AFP 03-30-24 V012 Bode Plot start
-#
+
   if (BodePlotFlag == 1) {  //AFP 03-30-24
 
     freqStartBode += (1000000L * tuneChange);  //AFP 03-30-24
@@ -1049,9 +1048,7 @@ FASTRUN  // Causes function to be allocated in RAM1 at startup for fastest perfo
     return;
   }
 
-
   filterEncoderMove = result;
-
   if (calibrateFlag == 0 && !mainMenuWindowActive) {       // AFP 10-22-22
     filter_pos = last_filter_pos - 5 * filterEncoderMove;  // AFP 10-22-22
   }                                                        // AFP 10-22-22

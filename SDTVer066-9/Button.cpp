@@ -48,7 +48,7 @@ int ReadSelectedPushButton() {
 *****/
 void ExecuteButtonPress(int val) 
 {
-
+  
   switch (val) {
     case MENU_OPTION_SELECT:        // 0
       break;
