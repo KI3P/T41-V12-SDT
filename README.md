@@ -37,15 +37,15 @@ Completing a FLASH erase of the Teensy is strongly recommended before uploading 
 
 Select the Teensy 4.1 board, and select the following build configuration options: 
 
-* Tools->Optimize->Fast with LTO
+* Tools->Optimize->Faster with LTO
 * Tools->USB Type->Dual Serial
 * Tools->CPU Speed->528 MHz
 
 The memory usage after compiling should look like this:
 
 ```
-   FLASH: code:282444, data:133432, headers:9076   free for files:7701512
-   RAM1: variables:195744, code:259848, padding:2296   free for local variables:66400
+   FLASH: code:312132, data:132408, headers:9084   free for files:7672840
+   RAM1: variables:194720, code:288440, padding:6472   free for local variables:34656
    RAM2: variables:483744  free for malloc/new:40544
 ```
 
