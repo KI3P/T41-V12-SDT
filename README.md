@@ -1,10 +1,12 @@
 ## Introduction
 
-This repository hosts Version 66-9 of the source code for the T41-EP Software Defined Transceiver (SDT). Originally designed by Al Peter-AC8GY and Jack Purdum-W8TEE, the T41-EP is a 20W, HF, 7 band, CW/SSB Software Defined Transceiver (SDT) with features not even found in commercial radios costing ten times as much (e.g., up to 192kHz spectrum display bandwidth, ALP CW decoder, Bode Plots). The T41-EP is a self-contain SDT that does not require an external PC, laptop, or tablet to use. Al and Jack wrote a book, available on [Amazon](https://a.co/d/drLsJlJ) (note: link is to 3rd edition), describing the theory and operation of the T41-EP.
+This repository hosts Version 66-9 of the source code for the T41-EP Software Defined Transceiver (SDT). Originally designed by Al Peter-AC8GY and Jack Purdum-W8TEE, the T41-EP is a 20W, HF, 7 band, CW/SSB Software Defined Transceiver (SDT) with features not even found in commercial radios costing ten times as much (e.g., up to 192kHz spectrum display bandwidth, ALP CW decoder, Bode Plots). The T41-EP is a self-contain SDT that does not require an external PC, laptop, or tablet to use. Al and Jack wrote a book, available on [Amazon](https://www.amazon.com/Digital-Signal-Processing-Software-Defined/dp/B0D25FV48C), describing the theory and operation of the T41-EP.
 
 ## Version 66-9
 
-This version of the code corresponds to the upcoming 4th edition of "Digital Signal Processing and Software Defined Radio: Theory and Construction of the T41-EP Software Defined Transceiver" by Albert F. Peter, AC8GY and Dr Jack Purdum, W8TEE. It is a point release of the software which contains the features and capabilities described in the book and works on V12 hardware only. Ongoing development of the code base is captured in the companion repository [T41-V12-SDT](https://github.com/KI3P/T41-V12-SDT).
+This version of the code corresponds to the 4th edition of "Digital Signal Processing and Software Defined Radio: Theory and Construction of the T41-EP Software Defined Transceiver" by Albert F. Peter, AC8GY and Dr Jack Purdum, W8TEE. It is a point release of the software which contains the features and capabilities described in the book and works on V12 hardware only. This version will be updated for bug fixes only.
+
+New features and other continuing development of the code base is captured in the companion repository [T41-V12-SDT](https://github.com/KI3P/T41-V12-SDT).
 
 ### Configuring the IDE and libraries
 
