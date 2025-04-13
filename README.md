@@ -1,14 +1,14 @@
 ## Introduction
 
-This repository hosts Version 66-9 of the source code for the T41-EP Software Defined Transceiver (SDT). Originally designed by Al Peter-AC8GY and Jack Purdum-W8TEE, the T41-EP is a 20W, HF, 7 band, CW/SSB Software Defined Transceiver (SDT) with features not even found in commercial radios costing ten times as much (e.g., up to 192kHz spectrum display bandwidth, ALP CW decoder, Bode Plots). The T41-EP is a self-contain SDT that does not require an external PC, laptop, or tablet to use. Al and Jack wrote a book, available on [Amazon](https://www.amazon.com/Digital-Signal-Processing-Software-Defined/dp/B0D25FV48C), describing the theory and operation of the T41-EP.
+This repository hosts ongoing development of the code base for the T41-EP Software Defined Transceiver (SDT). Originally designed by Al Peter-AC8GY and Jack Purdum-W8TEE, the T41-EP is a 20W, HF, 7 band, CW/SSB Software Defined Transceiver (SDT) with features not even found in commercial radios costing ten times as much (e.g., up to 192kHz spectrum display bandwidth, ALP CW decoder, Bode Plots). The T41-EP is a self-contain SDT that does not require an external PC, laptop, or tablet to use. Al and Jack wrote a book, available on [Amazon](https://www.amazon.com/Digital-Signal-Processing-Software-Defined/dp/B0D25FV48C), describing the theory and operation of the T41-EP.
 
-## Version 66-9
+### Version 66-9
 
-This version of the code corresponds to the 4th edition of "Digital Signal Processing and Software Defined Radio: Theory and Construction of the T41-EP Software Defined Transceiver" by Albert F. Peter, AC8GY and Dr Jack Purdum, W8TEE. It is a point release of the software which contains the features and capabilities described in the book and works on V12 hardware only. This version will be updated for bug fixes only.
+A [companion repository](https://github.com/KI3P/SDTVer066-9) hosts the version of the code corresponds to the 4th edition of "Digital Signal Processing and Software Defined Radio: Theory and Construction of the T41-EP Software Defined Transceiver" by Albert F. Peter, AC8GY and Dr Jack Purdum, W8TEE. It is a point release of the software which contains the features and capabilities described in the book and works on V12 hardware only. It is updated for bug fixes only.
 
-New features and other continuing development of the code base is captured in the companion repository [T41-V12-SDT](https://github.com/KI3P/T41-V12-SDT).
+New features and other continuing development of the code base is captured in this repository.
 
-### Configuring the IDE and libraries
+## Configuring the IDE and libraries
 
 Use V2 of the [Arduino IDE](https://www.arduino.cc/en/software). This code has been tested with V2.3.4. Configure your Arduino IDE to use the Teensyduino library following the instructions [here](https://www.pjrc.com/teensy/td_download.html).
 
@@ -31,7 +31,7 @@ The libraries to install using this process are:
 * Regressino: [https://github.com/cubiwan/Regressino/tree/master](https://github.com/cubiwan/Regressino/tree/master)
 * Arduino Regression: [https://github.com/nkaaf/Arduino-Regression](https://github.com/nkaaf/Arduino-Regression)
 
-### Compiler settings
+## Compiler settings
 
 The file `Config.h` includes several compiler options which add, subtract, or adjust parameters of some features. Please review this file prior to compilation. 
 
