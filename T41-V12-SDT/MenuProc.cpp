@@ -745,6 +745,7 @@ int RFOptions() {
             adjuster = adjuster + filterEncoderMove;
             if (adjuster > 63) adjuster = 63;
             if (adjuster < 0) adjuster = 0;
+            SetRF_OutAtten(adjuster);
             tft.fillRect(SECONDARY_MENU_X + 180, MENUS_Y, 80, CHAR_HEIGHT, RA8875_MAGENTA);
             tft.setCursor(SECONDARY_MENU_X + 180, MENUS_Y + 1);
             tft.print((float)adjuster / 2.0, 2);
