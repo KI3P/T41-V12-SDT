@@ -54,6 +54,8 @@ The memory usage after compiling should look like this:
 
 ## Other web resources
 
+The [project's website](https://t41sdrtransceiver.wordpress.com/) gives an overview of the project and its history.
+
 The T41-EP is a fully open-source radio. This repository hosts the transceiver software. The hardware designs are hosted on Bill-K9HZ's [GitHub repository](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24). The primary forum for discussions on the T41-EP radio is on [Groups.io](https://groups.io/g/SoftwareControlledHamRadio/topics).
 
 The EP stands for Experimenter's Platform because the T41-EP is designed around 5 small printed circuit boards (100mm x 100mm) that can be easily swapped for boards of your own design. Because the T41-EP project is completely Open Source, you have complete access to the C/C++ source code that controls the T41-EP as well as the KiCad design files, schematics, and Gerber files. 
