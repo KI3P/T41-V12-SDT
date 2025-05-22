@@ -62,9 +62,9 @@ The EP stands for Experimenter's Platform because the T41-EP is designed around 
 
 The hardware design files for the V12 radio modules can be found at the following links:
 
-* [Main board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24/T41_V012_KiCad/T41-main-board-V012)
-* [RF board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24/T41_V012_KiCad/T41-RF-board-V012)
-* [BPF board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24/T41_V012_KiCad/T41-BPF-filter-board)
+* [Main board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files/T41_V012_PCBs/T41_V012_PCBs_KiCad/T41-main-board-V012)
+* [RF board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files/T41_V012_PCBs/T41_V012_PCBs_KiCad/T41-RF-board-V012)
+* [BPF board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files/T41_V012_PCBs/T41_V012_PCBs_KiCad/T41-BPF-filter-board)
 * [Front panel switch board](https://github.com/DRWJSCHMIDT/K9HZ/tree/main/K9HZ_Front_Panel_Boards)
 * [Front panel encoder boards](https://github.com/DRWJSCHMIDT/K9HZ/tree/main/K9HZ_Encoder_Boards)
 * [LPF module](https://github.com/DRWJSCHMIDT/K9HZ/tree/main/K9HZ_LPF_Module)
