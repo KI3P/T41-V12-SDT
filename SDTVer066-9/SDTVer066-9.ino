@@ -1106,6 +1106,11 @@ float32_t FIR_dec3_EX_Q_state[279];
 
 //==
 
+// Audio lowpass filter
+arm_biquad_casd_df1_inst_f32 biquadTXAudioLowPass;
+const uint32_t N_stages_TX_biquad_lowpass1 = 1;
+float32_t biquad_tx_lowpass1_state[4];
+float32_t biquad_tx_lowpass1_coeffs[5] = { 0, 0, 0, 0, 0 };
 
 //==
 
@@ -3138,6 +3143,23 @@ void setup() {
   //2x interpolate fron 12K to 24K sps 4K LPF
   arm_fir_interpolate_init_f32(&FIR_int3_EX_I, 2, 48, coeffs12K_8K_LPF_FIR, FIR_int3_EX_I_state, 128);
   arm_fir_interpolate_init_f32(&FIR_int3_EX_Q, 2, 48, coeffs12K_8K_LPF_FIR, FIR_int3_EX_Q_state, 128);
+
+  // *********************************************
+  // * Transmit audio lowpass filter
+  // *********************************************
+  biquadTXAudioLowPass.numStages = N_stages_TX_biquad_lowpass1;
+  biquadTXAudioLowPass.pState = biquad_tx_lowpass1_state;
+  biquadTXAudioLowPass.pCoeffs = biquad_tx_lowpass1_coeffs;
+
+  for (unsigned i = 0; i < 4 * biquadTXAudioLowPass.numStages; i++) {
+    biquadTXAudioLowPass.pState[i] = 0.0;  // set state variables to zero
+  }
+  // adjust IIR AM filter
+  float32_t LP_F_help = 3000;
+  SetIIRCoeffs(LP_F_help, 1.3, (float32_t)SR[SampleRate].rate / DF, 0);
+  for (int i = 0; i < 5; i++){
+    biquad_tx_lowpass1_coeffs[i] = coefficient_set[i];
+  }
 
   //====
 

@@ -1406,6 +1406,7 @@ extern const arm_cfft_instance_f32 *spec_FFT;
 extern arm_biquad_casd_df1_inst_f32 biquad_lowpass1;
 extern arm_biquad_casd_df1_inst_f32 IIR_biquad_Zoom_FFT_I;
 extern arm_biquad_casd_df1_inst_f32 IIR_biquad_Zoom_FFT_Q;
+extern arm_biquad_casd_df1_inst_f32 biquadTXAudioLowPass;
 
 extern arm_fir_decimate_instance_f32 FIR_dec1_I;
 extern arm_fir_decimate_instance_f32 FIR_dec1_Q;
