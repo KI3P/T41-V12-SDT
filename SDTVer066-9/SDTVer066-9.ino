@@ -1101,20 +1101,19 @@ arm_fir_decimate_instance_f32 FIR_dec3_EX_I;
 arm_fir_decimate_instance_f32 FIR_dec3_EX_Q;
 arm_fir_interpolate_instance_f32 FIR_int3_EX_I;
 arm_fir_interpolate_instance_f32 FIR_int3_EX_Q;
-float32_t FIR_dec3_EX_I_state[267];
-float32_t FIR_dec3_EX_Q_state[267];
+float32_t FIR_dec3_EX_I_state[279];// State vector size should be numtaps+blocksize-1 = 24+256-1 = 279
+float32_t FIR_dec3_EX_Q_state[279];
 
 //==
 
 
 //==
 
-float32_t DMAMEM FIR_dec1_EX_I_state[2095];
+float32_t DMAMEM FIR_dec1_EX_I_state[2095];// State vector size should be numtaps+blocksize-1 = 48+2048-1 = 2095
 float32_t DMAMEM FIR_dec1_EX_Q_state[2095];
 
 float32_t audioMaxSquaredAve;
-
-float32_t DMAMEM FIR_dec2_EX_I_state[535];
+float32_t DMAMEM FIR_dec2_EX_I_state[535];// State vector size should be numtaps+blocksize-1 = 24+512-1 = 535
 float32_t DMAMEM FIR_dec2_EX_Q_state[535];
 //==
 
@@ -1129,8 +1128,8 @@ float32_t DMAMEM FIR_int2_EX_Q_state[519];
 float32_t DMAMEM FIR_int1_EX_coeffs[48];
 float32_t DMAMEM FIR_int2_EX_coeffs[48];
 //==
-float32_t DMAMEM FIR_int3_EX_I_state[519];
-float32_t DMAMEM FIR_int3_EX_Q_state[519];
+float32_t DMAMEM FIR_int3_EX_I_state[151]; // was 519 
+float32_t DMAMEM FIR_int3_EX_Q_state[151]; 
 //==
 float32_t DMAMEM FIR_int1_EX_I_state[279];
 float32_t DMAMEM FIR_int1_EX_Q_state[279];
