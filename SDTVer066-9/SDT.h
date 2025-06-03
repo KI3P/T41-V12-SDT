@@ -951,6 +951,7 @@ extern float32_t coeffs192K_10K_LPF_FIR[];
 extern float32_t coeffs48K_8K_LPF_FIR[];
 
 extern float32_t coeffs12K_8K_LPF_FIR[];
+extern float32_t FIR_int3_12ksps_48tap_2k7[];
 //==
 extern const uint32_t N_B_EX;
 extern float32_t recEQ_Level[];

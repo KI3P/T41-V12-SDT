@@ -100,9 +100,10 @@ void ExciterIQData() {
     }
     //============================ End Receive EQ  AFP 10-02-22
     // Filter the trasmit audio
-    arm_biquad_cascade_df1_f32(&biquadTXAudioLowPass, float_buffer_L_EX, 
-                               float_buffer_R_EX, 256);
-    arm_copy_f32(float_buffer_R_EX, float_buffer_L_EX, 256); 
+    //arm_biquad_cascade_df1_f32(&biquadTXAudioLowPass, float_buffer_L_EX, 
+    //                           float_buffer_R_EX, 256);
+    //arm_copy_f32(float_buffer_R_EX, float_buffer_L_EX, 256); 
+    arm_copy_f32(float_buffer_L_EX, float_buffer_R_EX, 256); 
     //  The following converts th sample rate to 12K SPS, applies the Hilbert transforms and then interpolates back to 24K SP.
     //The objective is to extend the lower frequency rnge of the Hilbert transfrom by moving the lowewr limit of the Hilbert usefullness down to below 200Hz.
 
