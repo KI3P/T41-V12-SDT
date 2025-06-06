@@ -54,15 +54,17 @@ The memory usage after compiling should look like this:
 
 ## Other web resources
 
+The [project's website](https://t41sdrtransceiver.wordpress.com/) gives an overview of the project and its history.
+
 The T41-EP is a fully open-source radio. This repository hosts the transceiver software. The hardware designs are hosted on Bill-K9HZ's [GitHub repository](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24). The primary forum for discussions on the T41-EP radio is on [Groups.io](https://groups.io/g/SoftwareControlledHamRadio/topics).
 
 The EP stands for Experimenter's Platform because the T41-EP is designed around 5 small printed circuit boards (100mm x 100mm) that can be easily swapped for boards of your own design. Because the T41-EP project is completely Open Source, you have complete access to the C/C++ source code that controls the T41-EP as well as the KiCad design files, schematics, and Gerber files. 
 
 The hardware design files for the V12 radio modules can be found at the following links:
 
-* [Main board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24/T41_V012_KiCad/T41-main-board-V012)
-* [RF board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24/T41_V012_KiCad/T41-RF-board-V012)
-* [BPF board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files_01-15-24/T41_V012_KiCad/T41-BPF-filter-board)
+* [Main board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files/T41_V012_PCBs/T41_V012_PCBs_KiCad/T41-main-board-V012)
+* [RF board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files/T41_V012_PCBs/T41_V012_PCBs_KiCad/T41-RF-board-V012)
+* [BPF board](https://github.com/DRWJSCHMIDT/T41/tree/main/T41_V012_Files/T41_V012_PCBs/T41_V012_PCBs_KiCad/T41-BPF-filter-board)
 * [Front panel switch board](https://github.com/DRWJSCHMIDT/K9HZ/tree/main/K9HZ_Front_Panel_Boards)
 * [Front panel encoder boards](https://github.com/DRWJSCHMIDT/K9HZ/tree/main/K9HZ_Encoder_Boards)
 * [LPF module](https://github.com/DRWJSCHMIDT/K9HZ/tree/main/K9HZ_LPF_Module)

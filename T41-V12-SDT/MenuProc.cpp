@@ -259,7 +259,7 @@ int SpectrumOptions() {
   //const char *spectrumChoices[] = { "20 dB/unit", "10 dB/unit", "5 dB/unit", "2 dB/unit", "1 dB/unit", "Cancel" };
   int spectrumSet = EEPROMData.currentScale;  // JJP 7/14/23
   spectrumSet = secondaryMenuIndex;
-  if (strcmp(*secondaryChoices[spectrumSet], "Cancel") == 0) {
+  if (spectrumSet == 5) {
     return currentScale;  // Nope.
   }
   currentScale = spectrumSet;  // Yep...

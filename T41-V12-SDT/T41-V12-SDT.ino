@@ -1101,39 +1101,40 @@ arm_fir_decimate_instance_f32 FIR_dec3_EX_I;
 arm_fir_decimate_instance_f32 FIR_dec3_EX_Q;
 arm_fir_interpolate_instance_f32 FIR_int3_EX_I;
 arm_fir_interpolate_instance_f32 FIR_int3_EX_Q;
-float32_t FIR_dec3_EX_I_state[267];
-float32_t FIR_dec3_EX_Q_state[267];
+float32_t FIR_dec3_EX_I_state[303];//numtaps+blocksize-1 = 48+256-1 = 303
+float32_t FIR_dec3_EX_Q_state[303];
 
 //==
 
+// Audio lowpass filter
+arm_biquad_casd_df1_inst_f32 biquadTXAudioLowPass;
+const uint32_t N_stages_TX_biquad_lowpass1 = 1;
+float32_t biquad_tx_lowpass1_state[4];
+float32_t biquad_tx_lowpass1_coeffs[5] = { 0, 0, 0, 0, 0 };
 
 //==
 
-float32_t DMAMEM FIR_dec1_EX_I_state[2095];
+float32_t DMAMEM FIR_dec1_EX_I_state[2095];// numtaps+blocksize-1 = 48+2048-1 = 2095
 float32_t DMAMEM FIR_dec1_EX_Q_state[2095];
 
 float32_t audioMaxSquaredAve;
-
-float32_t DMAMEM FIR_dec2_EX_I_state[535];
-float32_t DMAMEM FIR_dec2_EX_Q_state[535];
+float32_t DMAMEM FIR_dec2_EX_I_state[559];// numtaps+blocksize-1 = 48+512-1 = 559
+float32_t DMAMEM FIR_dec2_EX_Q_state[559];
 //==
 
 
-
-//float32_t DMAMEM FIR_int3_EX_coeffs[24];
-float32_t DMAMEM FIR_int3_EX_coeffs[24];
 //==
 
-float32_t DMAMEM FIR_int2_EX_I_state[519];
-float32_t DMAMEM FIR_int2_EX_Q_state[519];
+float32_t DMAMEM FIR_int2_EX_I_state[559];// 512+48-1 = 559
+float32_t DMAMEM FIR_int2_EX_Q_state[559];
 float32_t DMAMEM FIR_int1_EX_coeffs[48];
 float32_t DMAMEM FIR_int2_EX_coeffs[48];
 //==
-float32_t DMAMEM FIR_int3_EX_I_state[519];
-float32_t DMAMEM FIR_int3_EX_Q_state[519];
+float32_t DMAMEM FIR_int3_EX_I_state[175];// numtaps+blocksize-1 = 48+128-1 = 175
+float32_t DMAMEM FIR_int3_EX_Q_state[175]; 
 //==
-float32_t DMAMEM FIR_int1_EX_I_state[279];
-float32_t DMAMEM FIR_int1_EX_Q_state[279];
+float32_t DMAMEM FIR_int1_EX_I_state[303];// 256 + 48 - 1 = 303
+float32_t DMAMEM FIR_int1_EX_Q_state[303];
 
 float32_t DMAMEM float_buffer_L_EX[2048];
 float32_t DMAMEM float_buffer_R_EX[2048];
@@ -3126,19 +3127,36 @@ void setup() {
   arm_fir_init_f32(&FIR_CW_DecodeR, 64, CW_Filter_Coeffs2, FIR_CW_DecodeR_state, 256);
   arm_fir_decimate_init_f32(&FIR_dec1_EX_I, 48, 4, coeffs192K_10K_LPF_FIR, FIR_dec1_EX_I_state, 2048);
   arm_fir_decimate_init_f32(&FIR_dec1_EX_Q, 48, 4, coeffs192K_10K_LPF_FIR, FIR_dec1_EX_Q_state, 2048);
-  arm_fir_decimate_init_f32(&FIR_dec2_EX_I, 24, 2, coeffs48K_8K_LPF_FIR, FIR_dec2_EX_I_state, 512);
-  arm_fir_decimate_init_f32(&FIR_dec2_EX_Q, 24, 2, coeffs48K_8K_LPF_FIR, FIR_dec2_EX_Q_state, 512);
+  arm_fir_decimate_init_f32(&FIR_dec2_EX_I, 48, 2, coeffs48K_8K_LPF_FIR, FIR_dec2_EX_I_state, 512);
+  arm_fir_decimate_init_f32(&FIR_dec2_EX_Q, 48, 2, coeffs48K_8K_LPF_FIR, FIR_dec2_EX_Q_state, 512);
 
   arm_fir_interpolate_init_f32(&FIR_int1_EX_I, 2, 48, coeffs48K_8K_LPF_FIR, FIR_int1_EX_I_state, 256);
   arm_fir_interpolate_init_f32(&FIR_int1_EX_Q, 2, 48, coeffs48K_8K_LPF_FIR, FIR_int1_EX_Q_state, 256);
-  arm_fir_interpolate_init_f32(&FIR_int2_EX_I, 4, 32, coeffs192K_10K_LPF_FIR, FIR_int2_EX_I_state, 512);
-  arm_fir_interpolate_init_f32(&FIR_int2_EX_Q, 4, 32, coeffs192K_10K_LPF_FIR, FIR_int2_EX_Q_state, 512);
+  arm_fir_interpolate_init_f32(&FIR_int2_EX_I, 4, 48, coeffs192K_10K_LPF_FIR, FIR_int2_EX_I_state, 512);
+  arm_fir_interpolate_init_f32(&FIR_int2_EX_Q, 4, 48, coeffs192K_10K_LPF_FIR, FIR_int2_EX_Q_state, 512);
 
-  arm_fir_decimate_init_f32(&FIR_dec3_EX_I, 24, 2, coeffs12K_8K_LPF_FIR, FIR_dec3_EX_I_state, 256);  //3rd Decimate Excite 2x to 12K SPS
-  arm_fir_decimate_init_f32(&FIR_dec3_EX_Q, 24, 2, coeffs12K_8K_LPF_FIR, FIR_dec3_EX_Q_state, 256);
+  arm_fir_decimate_init_f32(&FIR_dec3_EX_I, 48, 2, coeffs12K_8K_LPF_FIR, FIR_dec3_EX_I_state, 256);  //3rd Decimate Excite 2x to 12K SPS
+  arm_fir_decimate_init_f32(&FIR_dec3_EX_Q, 48, 2, coeffs12K_8K_LPF_FIR, FIR_dec3_EX_Q_state, 256);
   //2x interpolate fron 12K to 24K sps 4K LPF
-  arm_fir_interpolate_init_f32(&FIR_int3_EX_I, 2, 48, coeffs12K_8K_LPF_FIR, FIR_int3_EX_I_state, 128);
-  arm_fir_interpolate_init_f32(&FIR_int3_EX_Q, 2, 48, coeffs12K_8K_LPF_FIR, FIR_int3_EX_Q_state, 128);
+  arm_fir_interpolate_init_f32(&FIR_int3_EX_I, 2, 48, FIR_int3_12ksps_48tap_2k7, FIR_int3_EX_I_state, 128);
+  arm_fir_interpolate_init_f32(&FIR_int3_EX_Q, 2, 48, FIR_int3_12ksps_48tap_2k7, FIR_int3_EX_Q_state, 128);
+
+  // *********************************************
+  // * Transmit audio lowpass filter
+  // *********************************************
+  biquadTXAudioLowPass.numStages = N_stages_TX_biquad_lowpass1;
+  biquadTXAudioLowPass.pState = biquad_tx_lowpass1_state;
+  biquadTXAudioLowPass.pCoeffs = biquad_tx_lowpass1_coeffs;
+
+  for (unsigned i = 0; i < 4 * biquadTXAudioLowPass.numStages; i++) {
+    biquadTXAudioLowPass.pState[i] = 0.0;  // set state variables to zero
+  }
+  // adjust IIR AM filter
+  float32_t LP_F_help = 3000;
+  SetIIRCoeffs(LP_F_help, 1.3, (float32_t)SR[SampleRate].rate / DF, 0);
+  for (int i = 0; i < 5; i++){
+    biquad_tx_lowpass1_coeffs[i] = coefficient_set[i];
+  }
 
   //====
 

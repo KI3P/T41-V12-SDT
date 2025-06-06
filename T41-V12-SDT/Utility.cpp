@@ -12,14 +12,18 @@
   Return value;
     void
 *****/
+int t_press = 0;
 void ShutdownTeensy()  // KI3P
 {
   /* Do shutdown stuff. Nothing here yet */
 
   /* Tell the ATTiny that we have finished shutdown and it's safe to power off */
-  digitalWrite(SHUTDOWN_COMPLETE, 1);
-  delay(100);
-  digitalWrite(SHUTDOWN_COMPLETE, 0);
+  if (t_press - (int)millis() > 100 ){
+    digitalWrite(SHUTDOWN_COMPLETE, 0);
+  } else {
+    digitalWrite(SHUTDOWN_COMPLETE, 1);
+    t_press = millis();  
+  }
 }
 
 int getPowerLevelAdjustmentDB(){
