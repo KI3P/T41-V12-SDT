@@ -1,6 +1,6 @@
 ## Introduction
 
-This repository hosts Version 66-9 of the source code for the T41-EP Software Defined Transceiver (SDT). Originally designed by Al Peter-AC8GY and Jack Purdum-W8TEE, the T41-EP is a 20W, HF, 7 band, CW/SSB Software Defined Transceiver (SDT) with features not even found in commercial radios costing ten times as much (e.g., up to 192kHz spectrum display bandwidth, ALP CW decoder, Bode Plots). The T41-EP is a self-contain SDT that does not require an external PC, laptop, or tablet to use. Al and Jack wrote a book, available on [Amazon](https://www.amazon.com/Digital-Signal-Processing-Software-Defined/dp/B0D25FV48C), describing the theory and operation of the T41-EP.
+This repository hosts Version 66-9 of the source code for the T41-EP Software Defined Transceiver (SDT). Originally designed by Al Peter-AC8GY and Jack Purdum-W8TEE, the T41-EP is a 20W, HF, 7 band, CW/SSB Software Defined Transceiver (SDT) with features not even found in commercial radios costing ten times as much (e.g., up to 192kHz spectrum display bandwidth, ALP CW decoder, Bode Plots). The T41-EP is a self-contain SDT that does not require an external PC, laptop, or tablet to use. Al and Jack wrote a book, available on [Amazon](https://www.amazon.com/Digital-Signal-Processing-Software-Defined/dp/B0F5BDQZW3), describing the theory and operation of the T41-EP.
 
 ## Version 66-9
 
