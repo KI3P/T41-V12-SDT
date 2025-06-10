@@ -70,11 +70,6 @@ void DoReceiveEQ()  //AFP 08-09-22
 *****/
 void DoExciterEQ()  //AFP 10-02-22
 {
-  #ifdef NOTDEF                 // this messes up the equalizer settings in EEPROM
-  for (int i = 0; i < 14; i++) {
-    xmtEQ_Level[i] = (float)EEPROMData.equalizerXmt[i] / 100.0;
-  }
-  #endif
   arm_biquad_cascade_df2T_f32(&S1_Xmt, float_buffer_L_EX, xmt_EQ1_float_buffer_L, 256);
   arm_biquad_cascade_df2T_f32(&S2_Xmt, float_buffer_L_EX, xmt_EQ2_float_buffer_L, 256);
   arm_biquad_cascade_df2T_f32(&S3_Xmt, float_buffer_L_EX, xmt_EQ3_float_buffer_L, 256);
@@ -90,20 +85,20 @@ void DoExciterEQ()  //AFP 10-02-22
   arm_biquad_cascade_df2T_f32(&S13_Xmt, float_buffer_L_EX, xmt_EQ13_float_buffer_L, 256);
   arm_biquad_cascade_df2T_f32(&S14_Xmt, float_buffer_L_EX, xmt_EQ14_float_buffer_L, 256);
 
-  arm_scale_f32(xmt_EQ1_float_buffer_L, -xmtEQ_Level[0], xmt_EQ1_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ2_float_buffer_L, xmtEQ_Level[1], xmt_EQ2_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ3_float_buffer_L, -xmtEQ_Level[2], xmt_EQ3_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ4_float_buffer_L, xmtEQ_Level[3], xmt_EQ4_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ5_float_buffer_L, -xmtEQ_Level[4], xmt_EQ5_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ6_float_buffer_L, xmtEQ_Level[5], xmt_EQ6_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ7_float_buffer_L, -xmtEQ_Level[6], xmt_EQ7_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ8_float_buffer_L, xmtEQ_Level[7], xmt_EQ8_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ9_float_buffer_L, -xmtEQ_Level[8], xmt_EQ9_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ10_float_buffer_L, xmtEQ_Level[9], xmt_EQ10_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ11_float_buffer_L, -xmtEQ_Level[10], xmt_EQ11_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ12_float_buffer_L, xmtEQ_Level[11], xmt_EQ12_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ13_float_buffer_L, -xmtEQ_Level[12], xmt_EQ13_float_buffer_L, 256);
-  arm_scale_f32(xmt_EQ14_float_buffer_L, xmtEQ_Level[13], xmt_EQ14_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ1_float_buffer_L, -xmtEQ_Level[0]/100, xmt_EQ1_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ2_float_buffer_L, xmtEQ_Level[1]/100, xmt_EQ2_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ3_float_buffer_L, -xmtEQ_Level[2]/100, xmt_EQ3_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ4_float_buffer_L, xmtEQ_Level[3]/100, xmt_EQ4_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ5_float_buffer_L, -xmtEQ_Level[4]/100, xmt_EQ5_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ6_float_buffer_L, xmtEQ_Level[5]/100, xmt_EQ6_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ7_float_buffer_L, -xmtEQ_Level[6]/100, xmt_EQ7_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ8_float_buffer_L, xmtEQ_Level[7]/100, xmt_EQ8_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ9_float_buffer_L, -xmtEQ_Level[8]/100, xmt_EQ9_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ10_float_buffer_L, xmtEQ_Level[9]/100, xmt_EQ10_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ11_float_buffer_L, -xmtEQ_Level[10]/100, xmt_EQ11_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ12_float_buffer_L, xmtEQ_Level[11]/100, xmt_EQ12_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ13_float_buffer_L, -xmtEQ_Level[12]/100, xmt_EQ13_float_buffer_L, 256);
+  arm_scale_f32(xmt_EQ14_float_buffer_L, xmtEQ_Level[13]/100, xmt_EQ14_float_buffer_L, 256);
 
   arm_add_f32(xmt_EQ1_float_buffer_L, xmt_EQ2_float_buffer_L, float_buffer_L_EX, 256);
 
