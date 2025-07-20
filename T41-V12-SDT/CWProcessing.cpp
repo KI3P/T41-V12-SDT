@@ -25,7 +25,7 @@ void SelectCWFilter()
 
   filterEncoderMove = 0;
   CWFilterIndex = 0;
-
+  // Nonsense change to test github.dev
   tft.setFontScale((enum RA8875tsize)1);
 
   tft.fillRect(SECONDARY_MENU_X, MENUS_Y, EACH_MENU_WIDTH, CHAR_HEIGHT, RA8875_MAGENTA);

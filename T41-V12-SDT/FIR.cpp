@@ -1067,7 +1067,7 @@ void CalcFIRCoeffs(float *coeffs_I, int numCoeffs, float32_t fc, float32_t Astop
       Beta = 0.5842 * powf((Astop - 20.96), 0.4) + 0.07886 * (Astop - 20.96);
     }
   }
-  memset(coeffs_I, 0.0, sizeof(n_dec1_taps));    //zero entire buffer, important for variables from DMAMEM
+  memset(coeffs_I, 0.0, sizeof(float) * n_dec1_taps);    //zero entire buffer, important for variables from DMAMEM
 
   izb = Izero(Beta);
   if (type == 0) { // low pass filter
@@ -1152,8 +1152,8 @@ void CalcCplxFIRCoeffs(float * coeffs_I, float * coeffs_Q, int numCoeffs, float3
   float32_t x;
   float32_t z;
 
-  memset(coeffs_I, 0.0, (size_t) sizeof(n_dec1_taps));    //zero entire buffer, important for variables from DMAMEM
-  memset(coeffs_Q, 0.0, (size_t) sizeof(n_dec1_taps));
+  memset(coeffs_I, 0.0, sizeof(float) * n_dec1_taps);    //zero entire buffer, important for variables from DMAMEM
+  memset(coeffs_Q, 0.0, sizeof(float) * n_dec1_taps);
 
   //create LP FIR windowed sinc, sin(x)/x complex LP filter coefficients
   for (int i = 0; i < numCoeffs; i++)  {

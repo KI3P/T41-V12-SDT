@@ -479,7 +479,7 @@ void CalibrateFrequency() {
             }
             break;
 
-          case (DDE):  // 14  Direct Freq Button - Show Directions freqDescrptFlag = !freqDescrptFlag;
+          case (14):  // 14  Direct Freq Button - Show Directions freqDescrptFlag = !freqDescrptFlag;
 
             freqCalDirections = !freqCalDirections;
             if (freqCalDirections != 0) {
